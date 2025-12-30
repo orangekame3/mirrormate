@@ -169,6 +169,78 @@ This error means the service account cannot access the calendar.
 
 ---
 
+## Reminder Plugin
+
+Automatically reminds you of upcoming calendar events with customizable timing.
+
+### Configuration
+
+```yaml
+plugins:
+  reminder:
+    enabled: true
+    pollingInterval: 30  # seconds
+    reminders:
+      - minutes: 10
+        urgent: false
+      - minutes: 5
+        urgent: true
+      - minutes: 1
+        urgent: true
+```
+
+### Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `enabled` | boolean | Enable/disable the reminder feature |
+| `pollingInterval` | number | How often to check for upcoming events (in seconds) |
+| `reminders` | array | List of reminder configurations |
+| `reminders[].minutes` | number | Minutes before event to trigger reminder |
+| `reminders[].urgent` | boolean | If true, shows red pulsing card; otherwise green card |
+
+### How It Works
+
+1. The system polls the calendar API at the configured interval
+2. When an event matches a configured reminder time, a card appears with TTS notification
+3. Each reminder is only shown once per event per configured time
+
+### Requirements
+
+- Calendar plugin must be enabled and configured
+- Google Calendar credentials must be set up (see Calendar Plugin section)
+
+### Behavior
+
+| urgent | Card Color | Animation |
+|--------|------------|-----------|
+| false | Green | None |
+| true | Red | Pulsing + Bounce |
+
+### Example Configurations
+
+**Default (10min and 5min warnings):**
+```yaml
+reminders:
+  - minutes: 10
+    urgent: false
+  - minutes: 5
+    urgent: true
+```
+
+**More aggressive (15min, 5min, 1min warnings):**
+```yaml
+reminders:
+  - minutes: 15
+    urgent: false
+  - minutes: 5
+    urgent: false
+  - minutes: 1
+    urgent: true
+```
+
+---
+
 ## Time Plugin
 
 Provides current date and time information to the AI.

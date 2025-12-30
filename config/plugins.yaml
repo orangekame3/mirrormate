@@ -18,3 +18,12 @@ plugins:
   time:
     enabled: true
     timezone: "Asia/Tokyo"
+
+  reminder:
+    enabled: true
+    pollingInterval: 30  # seconds
+    reminders:
+      - minutes: 10
+        urgent: false
+      - minutes: 5
+        urgent: true

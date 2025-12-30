@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import SimpleAvatar from "@/components/SimpleAvatar";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useReminder, Reminder } from "@/hooks/useReminder";
 import { FloatingInfo, InfoCard, detectInfoFromResponse } from "@/components/FloatingInfo";
 
 interface BroadcastMessage {
@@ -119,6 +120,51 @@ export default function AvatarPage() {
       }
     });
   }, [analyzeAudio]);
+
+  // リマインダー通知時の処理
+  const handleReminder = useCallback(
+    async (reminder: Reminder) => {
+      const timeText = `${reminder.configuredMinutes}分後`;
+
+      // リマインダーカードを追加
+      const card: InfoCard = {
+        id: reminder.id,
+        type: "reminder",
+        title: `${timeText}に予定があります`,
+        items: [reminder.summary],
+        urgent: reminder.urgent,
+      };
+      setInfoCards((prev) => [...prev, card]);
+
+      // 話し中でなければTTSで通知
+      if (!isSpeaking && !isProcessing) {
+        const message = `${timeText}に「${reminder.summary}」の予定があります。`;
+        setDisplayText(message);
+
+        try {
+          const res = await fetch("/api/tts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: message }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.audio) {
+              await playAudio(data.audio);
+            }
+          }
+        } catch (e) {
+          console.error("Reminder TTS error:", e);
+        }
+      }
+    },
+    [isSpeaking, isProcessing, playAudio]
+  );
+
+  // リマインダーフック（設定はYAMLから自動取得）
+  useReminder({
+    onReminder: handleReminder,
+  });
 
   // 音声認識の結果を処理
   const handleSpeechResult = useCallback(

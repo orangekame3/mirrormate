@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 
 export interface InfoCard {
   id: string;
-  type: "weather" | "calendar" | "time";
+  type: "weather" | "calendar" | "time" | "reminder";
   title: string;
   items: string[];
+  urgent?: boolean;
 }
 
 interface FloatingInfoProps {
@@ -75,6 +76,12 @@ function InfoCardComponent({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         );
+      case "reminder":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+        );
     }
   };
 
@@ -98,6 +105,18 @@ function InfoCardComponent({
           borderColor: "border-amber-500/30",
           iconColor: "text-amber-400",
         };
+      case "reminder":
+        return card.urgent
+          ? {
+              bgColor: "from-red-500/30 to-rose-500/30",
+              borderColor: "border-red-500/50",
+              iconColor: "text-red-400",
+            }
+          : {
+              bgColor: "from-emerald-500/20 to-teal-500/20",
+              borderColor: "border-emerald-500/30",
+              iconColor: "text-emerald-400",
+            };
     }
   };
 
@@ -112,10 +131,11 @@ function InfoCardComponent({
         shadow-lg shadow-black/20
         transition-all duration-300 ease-out
         ${isVisible && !isLeaving ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"}
+        ${card.urgent ? "animate-pulse" : ""}
       `}
     >
       <div className="flex items-center gap-2 mb-2">
-        <span className={iconColor}>{icon}</span>
+        <span className={`${iconColor} ${card.urgent ? "animate-bounce" : ""}`}>{icon}</span>
         <span className="text-white/80 text-sm font-medium">{card.title}</span>
       </div>
       <ul className="space-y-1">

@@ -28,11 +28,22 @@ export interface TimePluginConfig extends PluginConfig {
   timezone?: string;
 }
 
+export interface ReminderConfig {
+  minutes: number;
+  urgent?: boolean;
+}
+
+export interface ReminderPluginConfig extends PluginConfig {
+  pollingInterval: number; // in seconds
+  reminders: ReminderConfig[];
+}
+
 export interface PluginsConfig {
   plugins: {
     weather?: WeatherPluginConfig;
     calendar?: CalendarPluginConfig;
     time?: TimePluginConfig;
+    reminder?: ReminderPluginConfig;
     [key: string]: PluginConfig | undefined;
   };
 }
