@@ -1,6 +1,7 @@
 import { Plugin } from "./types";
 import { loadPluginsConfig } from "./config-loader";
 import { WeatherPlugin } from "./weather";
+import { CalendarPlugin } from "./calendar";
 
 const plugins: Map<string, Plugin> = new Map();
 let initialized = false;
@@ -14,6 +15,10 @@ export function initializePlugins(): void {
 
   if (config.plugins.weather?.enabled) {
     plugins.set("weather", new WeatherPlugin(config.plugins.weather));
+  }
+
+  if (config.plugins.calendar?.enabled) {
+    plugins.set("calendar", new CalendarPlugin(config.plugins.calendar));
   }
 
   initialized = true;

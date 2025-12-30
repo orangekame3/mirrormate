@@ -10,3 +10,7 @@ plugins:
         latitude: 34.6937
         longitude: 135.5023
     defaultLocation: "東京"
+
+  calendar:
+    enabled: true
+    maxResults: 5

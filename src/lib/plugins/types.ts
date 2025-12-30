@@ -20,9 +20,14 @@ export interface WeatherPluginConfig extends PluginConfig {
   defaultLocation: string;
 }
 
+export interface CalendarPluginConfig extends PluginConfig {
+  maxResults: number;
+}
+
 export interface PluginsConfig {
   plugins: {
     weather?: WeatherPluginConfig;
+    calendar?: CalendarPluginConfig;
     [key: string]: PluginConfig | undefined;
   };
 }
