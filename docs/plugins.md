@@ -169,6 +169,42 @@ This error means the service account cannot access the calendar.
 
 ---
 
+## Time Plugin
+
+Provides current date and time information to the AI.
+
+### Configuration
+
+```yaml
+plugins:
+  time:
+    enabled: true
+    timezone: "Asia/Tokyo"
+```
+
+### Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `enabled` | boolean | Enable/disable the plugin |
+| `timezone` | string | IANA timezone identifier (default: `Asia/Tokyo`) |
+
+### Output Example
+
+```
+現在時刻: 2024年12月30日（月） 14:30
+```
+
+### Supported Timezones
+
+Common timezone values:
+- `Asia/Tokyo` - Japan Standard Time (JST)
+- `America/New_York` - Eastern Time (ET)
+- `Europe/London` - Greenwich Mean Time (GMT)
+- `UTC` - Coordinated Universal Time
+
+---
+
 ## Creating Custom Plugins
 
 To create a new plugin:

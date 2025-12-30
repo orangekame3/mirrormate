@@ -24,10 +24,15 @@ export interface CalendarPluginConfig extends PluginConfig {
   maxResults: number;
 }
 
+export interface TimePluginConfig extends PluginConfig {
+  timezone?: string;
+}
+
 export interface PluginsConfig {
   plugins: {
     weather?: WeatherPluginConfig;
     calendar?: CalendarPluginConfig;
+    time?: TimePluginConfig;
     [key: string]: PluginConfig | undefined;
   };
 }

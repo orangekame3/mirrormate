@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 export interface InfoCard {
   id: string;
-  type: "weather" | "calendar";
+  type: "weather" | "calendar" | "time";
   title: string;
   items: string[];
 }
@@ -55,19 +55,54 @@ function InfoCardComponent({
     return () => clearTimeout(timer);
   }, [autoHideDuration, onDismiss]);
 
-  const icon = card.type === "weather" ? (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-    </svg>
-  ) : (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
-  );
+  const getIcon = () => {
+    switch (card.type) {
+      case "weather":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+          </svg>
+        );
+      case "calendar":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        );
+      case "time":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+    }
+  };
 
-  const bgColor = card.type === "weather" ? "from-sky-500/20 to-blue-500/20" : "from-violet-500/20 to-purple-500/20";
-  const borderColor = card.type === "weather" ? "border-sky-500/30" : "border-violet-500/30";
-  const iconColor = card.type === "weather" ? "text-sky-400" : "text-violet-400";
+  const getStyles = () => {
+    switch (card.type) {
+      case "weather":
+        return {
+          bgColor: "from-sky-500/20 to-blue-500/20",
+          borderColor: "border-sky-500/30",
+          iconColor: "text-sky-400",
+        };
+      case "calendar":
+        return {
+          bgColor: "from-violet-500/20 to-purple-500/20",
+          borderColor: "border-violet-500/30",
+          iconColor: "text-violet-400",
+        };
+      case "time":
+        return {
+          bgColor: "from-amber-500/20 to-orange-500/20",
+          borderColor: "border-amber-500/30",
+          iconColor: "text-amber-400",
+        };
+    }
+  };
+
+  const icon = getIcon();
+  const { bgColor, borderColor, iconColor } = getStyles();
 
   return (
     <div
@@ -158,6 +193,53 @@ export function detectInfoFromResponse(response: string): InfoCard | null {
         type: "calendar",
         title: "今日の予定",
         items: items.slice(0, 5),
+      };
+    }
+  }
+
+  // Time detection
+  const timePatterns = [
+    /現在.{0,5}時刻/,
+    /今.{0,3}(\d{1,2}時|\d{1,2}[：:]\d{2})/,
+    /(\d{1,2})月(\d{1,2})日.{0,5}（[日月火水木金土]）/,
+    /\d{4}年\d{1,2}月\d{1,2}日/,
+  ];
+
+  const hasTime = timePatterns.some((pattern) => pattern.test(response));
+
+  if (hasTime) {
+    // Extract time/date info
+    const items: string[] = [];
+
+    // Extract date
+    const dateMatch = response.match(/(\d{4}年)?(\d{1,2}月\d{1,2}日)[（(]?([日月火水木金土])[）)]?/);
+    if (dateMatch) {
+      const year = dateMatch[1] || "";
+      items.push(`${year}${dateMatch[2]}（${dateMatch[3]}）`);
+    }
+
+    // Extract time
+    const timeMatch = response.match(/(\d{1,2})[時：:](\d{2})?分?/);
+    if (timeMatch) {
+      const hour = timeMatch[1];
+      const minute = timeMatch[2] || "00";
+      items.push(`${hour}:${minute}`);
+    }
+
+    // If no structured match, extract lines mentioning time
+    if (items.length === 0) {
+      const lines = response.split(/[。\n]/).filter((line) => {
+        return timePatterns.some((pattern) => pattern.test(line));
+      });
+      items.push(...lines.slice(0, 2).map((line) => line.trim()));
+    }
+
+    if (items.length > 0) {
+      return {
+        id,
+        type: "time",
+        title: "現在時刻",
+        items,
       };
     }
   }

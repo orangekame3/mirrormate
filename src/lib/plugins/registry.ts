@@ -2,6 +2,7 @@ import { Plugin } from "./types";
 import { loadPluginsConfig } from "./config-loader";
 import { WeatherPlugin } from "./weather";
 import { CalendarPlugin } from "./calendar";
+import { TimePlugin } from "./time";
 
 const plugins: Map<string, Plugin> = new Map();
 let initialized = false;
@@ -19,6 +20,10 @@ export function initializePlugins(): void {
 
   if (config.plugins.calendar?.enabled) {
     plugins.set("calendar", new CalendarPlugin(config.plugins.calendar));
+  }
+
+  if (config.plugins.time?.enabled) {
+    plugins.set("time", new TimePlugin(config.plugins.time));
   }
 
   initialized = true;

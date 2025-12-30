@@ -14,3 +14,7 @@ plugins:
   calendar:
     enabled: true
     maxResults: 5
+
+  time:
+    enabled: true
+    timezone: "Asia/Tokyo"
