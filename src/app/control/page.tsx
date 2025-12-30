@@ -10,7 +10,7 @@ interface Message {
 }
 
 interface BroadcastMessage {
-  type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "audio" | "user_message" | "play_audio";
+  type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "audio" | "user_message" | "play_audio" | "mic_start" | "mic_stop" | "mic_status" | "mic_request_status";
   payload?: string;
 }
 
@@ -18,11 +18,23 @@ export default function ControlPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [micStatus, setMicStatus] = useState<"off" | "listening" | "paused">("off");
   const channelRef = useRef<BroadcastChannel | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     channelRef.current = new BroadcastChannel("mirror-channel");
+
+    // アバター画面からのマイク状態を受信
+    channelRef.current.onmessage = (event: MessageEvent<BroadcastMessage>) => {
+      if (event.data.type === "mic_status") {
+        setMicStatus(event.data.payload as "off" | "listening" | "paused");
+      }
+    };
+
+    // 接続時にアバター画面に状態を要求
+    channelRef.current.postMessage({ type: "mic_request_status" });
+
     return () => {
       channelRef.current?.close();
     };
@@ -120,9 +132,65 @@ export default function ControlPage() {
   return (
     <main className="h-screen w-screen bg-zinc-950 flex flex-col">
       {/* Header */}
-      <div className="border-b border-zinc-800 px-6 py-4">
-        <h1 className="text-white/80 text-sm tracking-widest uppercase">Control Panel</h1>
-        <p className="text-white/40 text-xs mt-1">アバター画面: <span className="text-white/60">localhost:3001</span></p>
+      <div className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-white/80 text-sm tracking-widest uppercase">Control Panel</h1>
+          <p className="text-white/40 text-xs mt-1">アバター画面: <span className="text-white/60">localhost:3000</span></p>
+        </div>
+
+        {/* Mic Control */}
+        <div className="flex items-center gap-3">
+          {/* Status Indicator */}
+          <div className="flex items-center gap-2">
+            {micStatus === "listening" ? (
+              <>
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-green-400 text-sm">Listening</span>
+              </>
+            ) : micStatus === "paused" ? (
+              <>
+                <span className="w-2 h-2 bg-yellow-500 rounded-full" />
+                <span className="text-yellow-400 text-sm">Paused</span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 bg-zinc-600 rounded-full" />
+                <span className="text-white/40 text-sm">Off</span>
+              </>
+            )}
+          </div>
+
+          {/* Start Button */}
+          <button
+            onClick={() => {
+              broadcast({ type: "mic_start" });
+              setMicStatus("listening");
+            }}
+            disabled={micStatus === "listening"}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+            <span className="text-sm">Start</span>
+          </button>
+
+          {/* Stop Button */}
+          <button
+            onClick={() => {
+              broadcast({ type: "mic_stop" });
+              setMicStatus("off");
+            }}
+            disabled={micStatus === "off"}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+            </svg>
+            <span className="text-sm">Stop</span>
+          </button>
+        </div>
       </div>
 
       {/* Messages */}

@@ -2,9 +2,10 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import SimpleAvatar from "@/components/SimpleAvatar";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 
 interface BroadcastMessage {
-  type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "play_audio" | "user_message";
+  type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "play_audio" | "user_message" | "mic_start" | "mic_stop" | "mic_status" | "mic_request_status";
   payload?: string;
 }
 
@@ -13,12 +14,16 @@ export default function AvatarPage() {
   const [isThinking, setIsThinking] = useState(false);
   const [mouthOpenness, setMouthOpenness] = useState(0);
   const [userText, setUserText] = useState("");
+  const [interimText, setInterimText] = useState("");
   const [displayText, setDisplayText] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [speechEnabled, setSpeechEnabled] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const animationRef = useRef<number>(0);
   const channelRef = useRef<BroadcastChannel | null>(null);
+  const messagesRef = useRef<Array<{ role: string; content: string }>>([]);
 
   // 音声振幅をリアルタイムで解析
   const analyzeAudio = useCallback(() => {
@@ -97,7 +102,96 @@ export default function AvatarPage() {
     });
   }, [analyzeAudio]);
 
-  // 画面クリックでAudioContextを初期化
+  // 音声認識の結果を処理
+  const handleSpeechResult = useCallback(
+    async (transcript: string) => {
+      if (isProcessing || isSpeaking) return;
+
+      setIsProcessing(true);
+      setUserText(transcript);
+      setInterimText("");
+      setDisplayText("");
+      setIsThinking(true);
+
+      // メッセージ履歴に追加
+      messagesRef.current.push({ role: "user", content: transcript });
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: messagesRef.current,
+            withAudio: false,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setIsThinking(false);
+          setDisplayText(data.message);
+
+          // メッセージ履歴に追加
+          messagesRef.current.push({ role: "assistant", content: data.message });
+
+          // TTS再生
+          if (data.message) {
+            const ttsRes = await fetch("/api/tts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text: data.message }),
+            });
+
+            if (ttsRes.ok) {
+              const ttsData = await ttsRes.json();
+              if (ttsData.audio) {
+                await playAudio(ttsData.audio);
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Chat error:", e);
+        setIsThinking(false);
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [isProcessing, isSpeaking, playAudio]
+  );
+
+  // 音声認識フック
+  const { isListening, isSupported, start, stop, pause, resume } = useSpeechRecognition({
+    onResult: handleSpeechResult,
+    onInterimResult: setInterimText,
+    lang: "ja-JP",
+  });
+
+  // 話している間は音声認識を一時停止
+  useEffect(() => {
+    if (isSpeaking || isProcessing) {
+      pause();
+    } else if (speechEnabled) {
+      resume();
+    }
+  }, [isSpeaking, isProcessing, speechEnabled, pause, resume]);
+
+  // マイク状態を送信する関数
+  const broadcastMicStatus = useCallback((enabled: boolean, listening: boolean) => {
+    const status = !enabled ? "off" : listening ? "listening" : "paused";
+    try {
+      channelRef.current?.postMessage({ type: "mic_status", payload: status });
+    } catch {
+      // Channel is closed - ignore
+    }
+  }, []);
+
+  // マイク状態をコントロールパネルに通知
+  useEffect(() => {
+    broadcastMicStatus(speechEnabled, isListening);
+  }, [speechEnabled, isListening, broadcastMicStatus]);
+
+  // 画面クリックでAudioContextを初期化（TTS再生に必要）
   const initAudioContext = useCallback(async () => {
     if (!audioContextRef.current) {
       audioContextRef.current = new AudioContext();
@@ -155,6 +249,18 @@ export default function AvatarPage() {
           setIsSpeaking(false);
           setMouthOpenness(0);
           break;
+        case "mic_start":
+          setSpeechEnabled(true);
+          start();
+          break;
+        case "mic_stop":
+          setSpeechEnabled(false);
+          stop();
+          break;
+        case "mic_request_status":
+          // コントロールパネルからの状態要求に応答
+          broadcastMicStatus(speechEnabled, isListening);
+          break;
       }
     };
 
@@ -165,18 +271,38 @@ export default function AvatarPage() {
       }
       channelRef.current?.close();
     };
-  }, [playAudio]);
+  }, [playAudio, start, stop, broadcastMicStatus, speechEnabled, isListening]);
 
   return (
     <main
       className="h-screen w-screen bg-black flex flex-col items-center overflow-hidden relative cursor-pointer"
       onClick={initAudioContext}
     >
+      {/* Mic Status Indicator */}
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        {!speechEnabled ? (
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-zinc-600 rounded-full" />
+            <span className="text-white/30 text-xs">Mic Off</span>
+          </div>
+        ) : isListening ? (
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-white/50 text-xs">Listening</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-yellow-500 rounded-full" />
+            <span className="text-white/50 text-xs">Paused</span>
+          </div>
+        )}
+      </div>
+
       {/* User Message - Top */}
       <div className="w-full h-[15%] flex items-end justify-center px-8 pb-4">
-        {userText && (
+        {(userText || interimText) && (
           <p className="text-white/50 text-base text-center font-light tracking-wide max-w-xl">
-            {userText}
+            {userText || <span className="text-white/30 italic">{interimText}</span>}
           </p>
         )}
       </div>
