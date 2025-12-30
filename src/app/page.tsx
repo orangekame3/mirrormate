@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import SimpleAvatar from "@/components/SimpleAvatar";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { FloatingInfo, InfoCard, detectInfoFromResponse } from "@/components/FloatingInfo";
 
 interface BroadcastMessage {
   type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "play_audio" | "user_message" | "mic_start" | "mic_stop" | "mic_status" | "mic_request_status";
@@ -18,12 +19,26 @@ export default function AvatarPage() {
   const [displayText, setDisplayText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [speechEnabled, setSpeechEnabled] = useState(false);
+  const [infoCards, setInfoCards] = useState<InfoCard[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const animationRef = useRef<number>(0);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const messagesRef = useRef<Array<{ role: string; content: string }>>([]);
+
+  // InfoCardを追加
+  const addInfoCard = useCallback((response: string) => {
+    const card = detectInfoFromResponse(response);
+    if (card) {
+      setInfoCards((prev) => [...prev, card]);
+    }
+  }, []);
+
+  // InfoCardを削除
+  const dismissInfoCard = useCallback((id: string) => {
+    setInfoCards((prev) => prev.filter((card) => card.id !== id));
+  }, []);
 
   // 音声振幅をリアルタイムで解析
   const analyzeAudio = useCallback(() => {
@@ -137,6 +152,9 @@ export default function AvatarPage() {
           // メッセージ履歴に追加
           messagesRef.current.push({ role: "assistant", content: data.message });
 
+          // 天気・予定情報を検出してカード表示
+          addInfoCard(data.message);
+
           // TTS再生
           if (data.message) {
             const ttsRes = await fetch("/api/tts", {
@@ -160,7 +178,7 @@ export default function AvatarPage() {
         setIsProcessing(false);
       }
     },
-    [isProcessing, isSpeaking, playAudio]
+    [isProcessing, isSpeaking, playAudio, addInfoCard]
   );
 
   // 音声認識フック
@@ -224,6 +242,13 @@ export default function AvatarPage() {
           break;
         case "response":
           setDisplayText(payload || "");
+          // 天気・予定情報を検出してカード表示
+          if (payload) {
+            const card = detectInfoFromResponse(payload);
+            if (card) {
+              setInfoCards((prev) => [...prev, card]);
+            }
+          }
           break;
         case "play_audio":
           if (payload) {
@@ -312,7 +337,16 @@ export default function AvatarPage() {
 
       {/* Avatar - Center */}
       <div className="w-full h-[55%] relative">
-        <SimpleAvatar isSpeaking={isSpeaking} isThinking={isThinking} mouthOpenness={mouthOpenness} />
+        {/* Avatar with slide animation */}
+        <div
+          className={`absolute inset-0 transition-transform duration-500 ease-out ${
+            infoCards.length > 0 ? "-translate-x-[15%]" : "translate-x-0"
+          }`}
+        >
+          <SimpleAvatar isSpeaking={isSpeaking} isThinking={isThinking} mouthOpenness={mouthOpenness} />
+        </div>
+        {/* Floating Info Cards */}
+        <FloatingInfo cards={infoCards} onDismiss={dismissInfoCard} autoHideDuration={10000} />
       </div>
 
       {/* Response Text - Bottom */}
