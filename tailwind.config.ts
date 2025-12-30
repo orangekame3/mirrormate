@@ -49,6 +49,9 @@ export default {
       fontFamily: {
         mono: ["Consolas", "Monaco", "monospace"],
       },
+      transitionDuration: {
+        "2000": "2000ms",
+      },
     },
   },
   plugins: [],

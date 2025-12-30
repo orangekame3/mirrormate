@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export interface InfoCard {
   id: string;
@@ -42,19 +42,37 @@ function InfoCardComponent({
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [progress, setProgress] = useState(100);
+  const startTimeRef = useRef(Date.now());
+  const onDismissRef = useRef(onDismiss);
+
+  // Keep onDismiss ref up to date
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
 
   useEffect(() => {
     // Animate in
     requestAnimationFrame(() => setIsVisible(true));
 
+    // Progress animation
+    const progressInterval = setInterval(() => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const remaining = Math.max(0, 100 - (elapsed / autoHideDuration) * 100);
+      setProgress(remaining);
+    }, 50);
+
     // Auto-hide after duration
     const timer = setTimeout(() => {
       setIsLeaving(true);
-      setTimeout(onDismiss, 300);
+      setTimeout(() => onDismissRef.current(), 300);
     }, autoHideDuration);
 
-    return () => clearTimeout(timer);
-  }, [autoHideDuration, onDismiss]);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(progressInterval);
+    };
+  }, [autoHideDuration]); // Only depend on autoHideDuration
 
   const getIcon = () => {
     switch (card.type) {
@@ -123,13 +141,27 @@ function InfoCardComponent({
   const icon = getIcon();
   const { bgColor, borderColor, iconColor } = getStyles();
 
+  // Progress bar color based on type
+  const getProgressColor = () => {
+    switch (card.type) {
+      case "weather":
+        return "bg-sky-400";
+      case "calendar":
+        return "bg-violet-400";
+      case "time":
+        return "bg-amber-400";
+      case "reminder":
+        return card.urgent ? "bg-red-400" : "bg-emerald-400";
+    }
+  };
+
   return (
     <div
       className={`
         bg-gradient-to-br ${bgColor} backdrop-blur-md
         border ${borderColor} rounded-xl p-4 min-w-[200px] max-w-[280px]
         shadow-lg shadow-black/20
-        transition-all duration-300 ease-out
+        transition-all duration-300 ease-out overflow-hidden
         ${isVisible && !isLeaving ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"}
         ${card.urgent ? "animate-pulse" : ""}
       `}
@@ -138,13 +170,20 @@ function InfoCardComponent({
         <span className={`${iconColor} ${card.urgent ? "animate-bounce" : ""}`}>{icon}</span>
         <span className="text-white/80 text-sm font-medium">{card.title}</span>
       </div>
-      <ul className="space-y-1">
+      <ul className="space-y-1 mb-3">
         {card.items.map((item, index) => (
           <li key={index} className="text-white/60 text-xs leading-relaxed">
             {item}
           </li>
         ))}
       </ul>
+      {/* Progress bar */}
+      <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+        <div
+          className={`h-full ${getProgressColor()} transition-all duration-100 ease-linear`}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
     </div>
   );
 }

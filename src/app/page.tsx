@@ -18,10 +18,12 @@ export default function AvatarPage() {
   const [userText, setUserText] = useState("");
   const [interimText, setInterimText] = useState("");
   const [displayText, setDisplayText] = useState("");
+  const [isTextFading, setIsTextFading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [speechEnabled, setSpeechEnabled] = useState(false);
   const [infoCards, setInfoCards] = useState<InfoCard[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const textFadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const animationRef = useRef<number>(0);
@@ -40,6 +42,33 @@ export default function AvatarPage() {
   const dismissInfoCard = useCallback((id: string) => {
     setInfoCards((prev) => prev.filter((card) => card.id !== id));
   }, []);
+
+  // テキスト自動フェードアウト
+  useEffect(() => {
+    if (displayText && !isThinking) {
+      // 既存のタイマーをクリア
+      if (textFadeTimeoutRef.current) {
+        clearTimeout(textFadeTimeoutRef.current);
+      }
+      setIsTextFading(false);
+
+      // 8秒後にフェード開始、10秒後にクリア
+      textFadeTimeoutRef.current = setTimeout(() => {
+        setIsTextFading(true);
+        setTimeout(() => {
+          setDisplayText("");
+          setUserText("");
+          setIsTextFading(false);
+        }, 2000); // フェードアニメーション時間
+      }, 8000);
+    }
+
+    return () => {
+      if (textFadeTimeoutRef.current) {
+        clearTimeout(textFadeTimeoutRef.current);
+      }
+    };
+  }, [displayText, isThinking]);
 
   // 音声振幅をリアルタイムで解析
   const analyzeAudio = useCallback(() => {
@@ -375,7 +404,11 @@ export default function AvatarPage() {
       {/* User Message - Top */}
       <div className="w-full h-[15%] flex items-end justify-center px-8 pb-4">
         {(userText || interimText) && (
-          <p className="text-white/50 text-base text-center font-light tracking-wide max-w-xl">
+          <p
+            className={`text-white/50 text-base text-center font-light tracking-wide max-w-xl transition-opacity duration-2000 ${
+              isTextFading ? "opacity-0" : "opacity-100"
+            }`}
+          >
             {userText || <span className="text-white/30 italic">{interimText}</span>}
           </p>
         )}
@@ -403,11 +436,15 @@ export default function AvatarPage() {
             <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
             <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
           </div>
-        ) : (
-          <p className="text-white/90 text-xl text-center font-light tracking-wide leading-relaxed max-w-2xl">
+        ) : displayText ? (
+          <p
+            className={`text-white/90 text-xl text-center font-light tracking-wide leading-relaxed max-w-2xl transition-opacity duration-2000 ${
+              isTextFading ? "opacity-0" : "opacity-100"
+            }`}
+          >
             {displayText}
           </p>
-        )}
+        ) : null}
       </div>
     </main>
   );
