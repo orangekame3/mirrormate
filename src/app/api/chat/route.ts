@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { getAllContexts } from "@/lib/plugins/registry";
 
 const SYSTEM_PROMPT = `あなたは鏡の中に住む、ちいさな光の精霊です。
 名前は「ミラ」。白くてまるい目と、ちいさな口だけの、シンプルでかわいい姿をしています。
@@ -40,10 +41,15 @@ export async function POST(request: NextRequest) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
+    const pluginContext = await getAllContexts();
+    const systemPromptWithContext = pluginContext
+      ? `${SYSTEM_PROMPT}\n\n【現在の情報】\n${pluginContext}`
+      : SYSTEM_PROMPT;
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPromptWithContext },
         ...messages,
       ],
       max_tokens: 300,

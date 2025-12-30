@@ -1,0 +1,12 @@
+plugins:
+  weather:
+    enabled: true
+    provider: open-meteo
+    locations:
+      - name: "東京"
+        latitude: 35.6762
+        longitude: 139.6503
+      - name: "大阪"
+        latitude: 34.6937
+        longitude: 135.5023
+    defaultLocation: "東京"

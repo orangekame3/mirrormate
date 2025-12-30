@@ -10,7 +10,7 @@ interface Message {
 }
 
 interface BroadcastMessage {
-  type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "audio";
+  type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "audio" | "user_message" | "play_audio";
   payload?: string;
 }
 
