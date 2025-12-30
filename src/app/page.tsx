@@ -47,8 +47,12 @@ export default function AvatarPage() {
   const playAudio = useCallback(async (audioBase64: string) => {
     return new Promise<void>(async (resolve) => {
       try {
-        // 新しいAudioContextを毎回作成（前のが閉じている可能性があるため）
-        const audioContext = new AudioContext();
+        // 既存のAudioContextを再利用（バックグラウンド再生のため）
+        if (!audioContextRef.current || audioContextRef.current.state === "closed") {
+          audioContextRef.current = new AudioContext();
+        }
+
+        const audioContext = audioContextRef.current;
 
         if (audioContext.state === "suspended") {
           await audioContext.resume();
@@ -80,7 +84,7 @@ export default function AvatarPage() {
           setIsSpeaking(false);
           setMouthOpenness(0);
           cancelAnimationFrame(animationRef.current);
-          audioContext.close();
+          // AudioContextは閉じずに再利用する
           resolve();
         };
         audio.onerror = (e) => {
@@ -88,7 +92,6 @@ export default function AvatarPage() {
           setIsSpeaking(false);
           setMouthOpenness(0);
           cancelAnimationFrame(animationRef.current);
-          audioContext.close();
           resolve();
         };
 
