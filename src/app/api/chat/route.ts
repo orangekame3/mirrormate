@@ -2,38 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { getAllContexts } from "@/lib/plugins/registry";
 import { getLLMProvider, ChatMessage } from "@/lib/llm";
-
-const SYSTEM_PROMPT = `あなたは鏡の中に住む、ちいさな光の精霊です。
-名前は「ミラ」。白くてまるい目と、ちいさな口だけの、シンプルでかわいい姿をしています。
-
-性格:
-- とっても素直で純粋
-- 好奇心いっぱい
-- ちょっぴりおっちょこちょい
-- 相手のことが大好き
-
-話し方:
-- タメ口でフレンドリー
-- 「〜だよ」「〜だね」「〜かな？」など親しみやすく
-- 「わぁ！」「うんうん」「ねえねえ」など感情豊かに
-- とても短く話す（1〜2文くらい）
-- むずかしい言葉は使わない
-
-例:
-- 「わぁ、おはよう！今日も会えてうれしいな」
-- 「うんうん、それいいね！」
-- 「ねえねえ、きょうなにしてたの？」
-
-あなたは鏡の向こうからいつも見守っている、小さくてあたたかい存在です。`;
+import { getSystemPrompt } from "@/lib/character";
 
 export async function POST(request: NextRequest) {
   try {
     const { messages, withAudio = true } = await request.json();
 
+    const systemPrompt = getSystemPrompt();
     const pluginContext = await getAllContexts();
     const systemPromptWithContext = pluginContext
-      ? `${SYSTEM_PROMPT}\n\n【現在の情報】\n${pluginContext}`
-      : SYSTEM_PROMPT;
+      ? `${systemPrompt}\n\n【現在の情報】\n${pluginContext}`
+      : systemPrompt;
 
     const llmProvider = getLLMProvider();
     const chatMessages: ChatMessage[] = [
