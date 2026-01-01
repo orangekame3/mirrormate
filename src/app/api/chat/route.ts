@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import { getAllContexts } from "@/lib/plugins/registry";
+import { getAllContexts } from "@/lib/features/registry";
 import { getLLMProvider, ChatMessage } from "@/lib/llm";
 import { getSystemPrompt } from "@/lib/character";
 import { getToolDefinitions, executeTool, getPendingEffect, clearPendingEffect } from "@/lib/tools";

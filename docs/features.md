@@ -1,34 +1,32 @@
-# Plugins
+# Features
 
-MirrorMate uses a YAML-based plugin system to provide contextual information to the AI. Plugins fetch external data and inject it into the system prompt.
+MirrorMate includes built-in features that provide contextual information to the AI. Features fetch external data and inject it into the system prompt.
 
 ## Configuration
 
-All plugins are configured in `config/plugins.yaml`.
+All features are configured in `config/features.yaml`.
 
-## Available Plugins
+## Available Features
 
-| Plugin | Description | API Key Required |
-|--------|-------------|------------------|
-| LLM | Language model provider | Yes (OpenAI) / No (Ollama) |
-| TTS | Text-to-speech | Yes (OpenAI) / No (VOICEVOX) |
+| Feature | Description | API Key Required |
+|---------|-------------|------------------|
 | Weather | Current weather info | No |
 | Calendar | Google Calendar events | Yes (Service Account) |
 | Time | Current date/time | No |
 | Reminder | Event reminders | No (uses Calendar) |
 
-> **Note**: LLM configuration is documented in [LLM Providers](llm.md).
+> **Note**: LLM and TTS providers are configured separately in `config/providers.yaml`. See [Providers](providers.md).
 
 ---
 
-## Weather Plugin
+## Weather Feature
 
 Fetches current weather data from [Open-Meteo](https://open-meteo.com/) (free, no API key required).
 
 ### Configuration
 
 ```yaml
-plugins:
+features:
   weather:
     enabled: true
     provider: open-meteo
@@ -46,7 +44,7 @@ plugins:
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `enabled` | boolean | Enable/disable the plugin |
+| `enabled` | boolean | Enable/disable the feature |
 | `provider` | string | Weather API provider (currently only `open-meteo`) |
 | `locations` | array | List of locations with name, latitude, and longitude |
 | `defaultLocation` | string | Name of the default location to use |
@@ -59,7 +57,7 @@ Current weather in Tokyo: Sunny, 15°C, wind 10km/h
 
 ---
 
-## Calendar Plugin
+## Calendar Feature
 
 Fetches events from Google Calendar using a service account.
 
@@ -115,10 +113,10 @@ GOOGLE_CALENDAR_ID=your-calendar-id@group.calendar.google.com
 
 > **Note:** The private key should have `\n` for newlines (as stored in the JSON key file).
 
-### Step 6: Configure the Plugin
+### Step 6: Configure the Feature
 
 ```yaml
-plugins:
+features:
   calendar:
     enabled: true
     maxResults: 5
@@ -138,7 +136,7 @@ plugins:
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `enabled` | boolean | Enable/disable the plugin |
+| `enabled` | boolean | Enable/disable the feature |
 | `maxResults` | number | Maximum number of events to fetch |
 
 ### Finding Your Calendar ID
@@ -164,7 +162,7 @@ This error means the service account cannot access the calendar.
 
 **Solution:**
 - Verify the calendar is shared with the service account (see Step 4)
-- Check that the `calendarId` in `config/plugins.yaml` matches your calendar
+- Check that the `GOOGLE_CALENDAR_ID` environment variable matches your calendar
 - Wait a few minutes after sharing (changes may take time to propagate)
 
 #### Error: "Missing credentials"
@@ -182,14 +180,14 @@ This error means the service account cannot access the calendar.
 
 ---
 
-## Reminder Plugin
+## Reminder Feature
 
 Automatically reminds you of upcoming calendar events with customizable timing.
 
 ### Configuration
 
 ```yaml
-plugins:
+features:
   reminder:
     enabled: true
     pollingInterval: 30  # seconds
@@ -220,8 +218,8 @@ plugins:
 
 ### Requirements
 
-- Calendar plugin must be enabled and configured
-- Google Calendar credentials must be set up (see Calendar Plugin section)
+- Calendar feature must be enabled and configured
+- Google Calendar credentials must be set up (see Calendar Feature section)
 
 ### Behavior
 
@@ -254,14 +252,14 @@ reminders:
 
 ---
 
-## Time Plugin
+## Time Feature
 
 Provides current date and time information to the AI.
 
 ### Configuration
 
 ```yaml
-plugins:
+features:
   time:
     enabled: true
     timezone: "Asia/Tokyo"
@@ -271,13 +269,13 @@ plugins:
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `enabled` | boolean | Enable/disable the plugin |
+| `enabled` | boolean | Enable/disable the feature |
 | `timezone` | string | IANA timezone identifier (default: `Asia/Tokyo`) |
 
 ### Output Example
 
 ```
-現在時刻: 2024年12月30日（月） 14:30
+Current time: Monday, December 30, 2024 14:30
 ```
 
 ### Supported Timezones
@@ -290,86 +288,18 @@ Common timezone values:
 
 ---
 
-## TTS Plugin
+## Creating Custom Features
 
-Configures the text-to-speech voice for the avatar.
+To create a new feature:
 
-### Providers
-
-| Provider | Description |
-|----------|-------------|
-| `openai` | OpenAI TTS API (requires API key) |
-| `voicevox` | VOICEVOX (free, local, Japanese voices including Zundamon) |
-
-### Configuration
-
-```yaml
-plugins:
-  tts:
-    enabled: true
-    provider: openai  # or voicevox
-    openai:
-      voice: shimmer  # alloy, echo, fable, onyx, nova, shimmer
-      model: tts-1    # tts-1 or tts-1-hd
-      speed: 0.95
-    voicevox:
-      speaker: 3      # Speaker ID
-      baseUrl: "http://localhost:50021"
-```
-
-### OpenAI Voices
-
-| Voice | Description |
-|-------|-------------|
-| `alloy` | Neutral, balanced |
-| `echo` | Warm, conversational |
-| `fable` | Expressive, narrative |
-| `onyx` | Deep, authoritative |
-| `nova` | Friendly, upbeat |
-| `shimmer` | Clear, gentle (default) |
-
-### VOICEVOX Speaker IDs (Common)
-
-| ID | Character |
-|----|-----------|
-| 0 | 四国めたん (あまあま) |
-| 1 | ずんだもん (あまあま) |
-| 2 | 四国めたん (ノーマル) |
-| 3 | ずんだもん (ノーマル) |
-| 8 | 春日部つむぎ |
-| 9 | 波音リツ |
-
-### Using VOICEVOX
-
-1. Download and install VOICEVOX from [voicevox.hiroshiba.jp](https://voicevox.hiroshiba.jp/)
-2. Start VOICEVOX (runs on port 50021 by default)
-3. Update config:
-
-```yaml
-plugins:
-  tts:
-    enabled: true
-    provider: voicevox
-    voicevox:
-      speaker: 3  # ずんだもん
-```
-
-4. Restart the server
-
----
-
-## Creating Custom Plugins
-
-To create a new plugin:
-
-1. Create a new directory under `src/lib/plugins/`
-2. Implement the `Plugin` interface:
+1. Create a new directory under `src/lib/features/`
+2. Implement the `Feature` interface:
 
 ```typescript
-import { Plugin } from "../types";
+import { Feature } from "../types";
 
-export class MyPlugin implements Plugin {
-  name = "my-plugin";
+export class MyFeature implements Feature {
+  name = "my-feature";
 
   async getContext(): Promise<string> {
     // Fetch and format your data
@@ -378,6 +308,6 @@ export class MyPlugin implements Plugin {
 }
 ```
 
-3. Add configuration type in `src/lib/plugins/types.ts`
-4. Register the plugin in `src/lib/plugins/registry.ts`
-5. Add configuration to `config/plugins.yaml`
+3. Add configuration type in `src/lib/features/types.ts`
+4. Register the feature in `src/lib/features/registry.ts`
+5. Add configuration to `config/features.yaml`

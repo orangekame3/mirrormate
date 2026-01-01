@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { loadPluginsConfig } from "@/lib/plugins/config-loader";
+import { loadFeaturesConfig } from "@/lib/features/config-loader";
 
 export async function GET() {
   try {
-    const config = loadPluginsConfig();
-    const reminderConfig = config.plugins.reminder;
+    const config = loadFeaturesConfig();
+    const reminderConfig = config.features.reminder;
 
     if (!reminderConfig?.enabled) {
       return NextResponse.json({

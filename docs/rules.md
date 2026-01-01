@@ -122,22 +122,22 @@ Modules are reusable data sources that can be called by rules.
 
 | Type | Description |
 |------|-------------|
-| `plugin` | Use an existing plugin (weather, calendar, time) |
+| `feature` | Use an existing feature (weather, calendar, time) |
 | `tool` | Use an existing tool (web_search) |
 | `api` | Call an external API |
 | `static` | Return a static message |
 
-### Plugin Module
+### Feature Module
 
-Use an existing plugin:
+Use an existing feature:
 
 ```yaml
 modules:
   weather:
-    type: plugin
+    type: feature
     description: 現在の天気と気温を取得
     config:
-      plugin: weather
+      feature: weather
 ```
 
 ### Tool Module
@@ -183,9 +183,9 @@ modules:
 
 | Module | Type | Description |
 |--------|------|-------------|
-| `time` | plugin | Current date and time |
-| `weather` | plugin | Current weather |
-| `calendar` | plugin | Today's events |
+| `time` | feature | Current date and time |
+| `weather` | feature | Current weather |
+| `calendar` | feature | Today's events |
 | `web_search` | tool | Web search via Tavily |
 | `today_info` | api | "What day is today" info |
 
@@ -238,19 +238,19 @@ rules:
 ```yaml
 modules:
   time:
-    type: plugin
+    type: feature
     config:
-      plugin: time
+      feature: time
 
   weather:
-    type: plugin
+    type: feature
     config:
-      plugin: weather
+      feature: weather
 
   calendar:
-    type: plugin
+    type: feature
     config:
-      plugin: calendar
+      feature: calendar
 
   web_search:
     type: tool
@@ -269,6 +269,6 @@ When a rule matches:
 
 When no rule matches:
 
-1. Normal plugin context is used (weather, calendar, time)
+1. Normal feature context is used (weather, calendar, time)
 2. Tools (web search, effects) are available for the LLM to call
 3. No response hint is applied

@@ -1,19 +1,19 @@
-import { Plugin, WeatherPluginConfig } from "../types";
+import { Feature, WeatherFeatureConfig } from "../types";
 import { fetchWeather, getWeatherDescription } from "./open-meteo";
 
-export class WeatherPlugin implements Plugin {
+export class WeatherFeature implements Feature {
   name = "weather";
-  private config: WeatherPluginConfig;
+  private config: WeatherFeatureConfig;
 
-  constructor(config: WeatherPluginConfig) {
+  constructor(config: WeatherFeatureConfig) {
     this.config = config;
   }
 
   async getContext(): Promise<string> {
-    console.log("[WeatherPlugin] Starting to fetch weather data...");
+    console.log("[Weather] Starting to fetch weather data...");
 
     if (!this.config.enabled) {
-      console.log("[WeatherPlugin] Plugin is disabled");
+      console.log("[Weather] Feature is disabled");
       return "";
     }
 
@@ -22,11 +22,11 @@ export class WeatherPlugin implements Plugin {
     );
 
     if (!location) {
-      console.warn(`[WeatherPlugin] Location not found: ${this.config.defaultLocation}`);
+      console.warn(`[Weather] Location not found: ${this.config.defaultLocation}`);
       return "";
     }
 
-    console.log(`[WeatherPlugin] Fetching weather for ${location.name} (${location.latitude}, ${location.longitude})`);
+    console.log(`[Weather] Fetching weather for ${location.name} (${location.latitude}, ${location.longitude})`);
 
     try {
       const weather = await fetchWeather(location.latitude, location.longitude);
@@ -36,16 +36,16 @@ export class WeatherPlugin implements Plugin {
       const temp = Math.round(weather.current_weather.temperature);
       const windSpeed = Math.round(weather.current_weather.windspeed);
 
-      console.log("[WeatherPlugin] Successfully fetched weather:");
+      console.log("[Weather] Successfully fetched weather:");
       console.log(`  - Weather code: ${weather.current_weather.weathercode} (${description})`);
       console.log(`  - Temperature: ${temp}°C`);
       console.log(`  - Wind speed: ${windSpeed}km/h`);
 
       const result = `現在の${location.name}の天気: ${description}、気温${temp}°C、風速${windSpeed}km/h`;
-      console.log("[WeatherPlugin] Context result:", result);
+      console.log("[Weather] Context result:", result);
       return result;
     } catch (error) {
-      console.error("[WeatherPlugin] Failed to fetch weather:", error);
+      console.error("[Weather] Failed to fetch weather:", error);
       return "";
     }
   }

@@ -38,7 +38,7 @@ MirrorMate is a Next.js application that provides an interactive AI avatar for s
 │  │                    Core Libraries                      │      │
 │  ├───────────────────────────────────────────────────────┤      │
 │  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────────┐  │      │
-│  │  │   LLM   │ │ Plugins │ │  Rules  │ │  Character  │  │      │
+│  │  │   LLM   │ │Features │ │  Rules  │ │  Character  │  │      │
 │  │  └────┬────┘ └────┬────┘ └────┬────┘ └──────┬──────┘  │      │
 │  │       │           │           │             │         │      │
 │  │  ┌────▼────┐ ┌────▼────┐ ┌────▼────┐ ┌──────▼──────┐  │      │
@@ -95,11 +95,14 @@ src/
     │   ├── openai.ts
     │   ├── ollama.ts
     │   └── types.ts
-    ├── plugins/           # Data source plugins
+    ├── features/          # Built-in features
     │   ├── weather/
     │   ├── calendar/
     │   ├── time/
     │   └── registry.ts
+    ├── providers/         # LLM/TTS provider config
+    │   ├── config-loader.ts
+    │   └── types.ts
     ├── rules/             # Rule-based workflows
     │   ├── engine.ts
     │   ├── modules.ts
@@ -111,7 +114,8 @@ src/
         └── index.ts
 
 config/
-├── plugins.yaml           # Plugin & provider settings
+├── features.yaml          # Built-in feature settings
+├── providers.yaml         # LLM & TTS provider settings
 ├── character.yaml         # AI personality
 ├── rules.yaml             # Trigger-based workflows
 └── modules.yaml           # Module definitions
@@ -167,11 +171,11 @@ config/
 
 ## Key Concepts
 
-### Plugins
+### Features
 
-Plugins provide contextual information (weather, calendar, time) that is injected into the system prompt. They run before the LLM call.
+Features provide contextual information (weather, calendar, time) that is injected into the system prompt. They run before the LLM call.
 
-See [Plugins Documentation](plugins.md)
+See [Features Documentation](features.md)
 
 ### Rules
 

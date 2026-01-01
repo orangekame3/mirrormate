@@ -3,7 +3,7 @@ import * as path from "path";
 import * as yaml from "js-yaml";
 import dns from "dns";
 import { ModulesConfig, ModuleConfig, RuleAction, ModuleResult } from "./types";
-import { getPluginContext } from "../plugins/registry";
+import { getFeatureContext } from "../features/registry";
 import { executeTool } from "../tools";
 
 // Force IPv4 first
@@ -82,12 +82,12 @@ export async function executeModule(
 
   try {
     switch (moduleConfig.type) {
-      case "plugin": {
-        const pluginName = moduleConfig.config.plugin;
-        if (!pluginName) {
+      case "feature": {
+        const featureName = moduleConfig.config.feature;
+        if (!featureName) {
           return { module: action.module, content: "" };
         }
-        const content = await getPluginContext(pluginName);
+        const content = await getFeatureContext(featureName);
         return { module: action.module, content };
       }
 

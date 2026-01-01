@@ -1,5 +1,5 @@
-import { LLMPluginConfig } from "../plugins/types";
-import { loadPluginsConfig } from "../plugins/config-loader";
+import { LLMProviderConfig } from "../providers/types";
+import { loadProvidersConfig } from "../providers/config-loader";
 import { LLMProvider } from "./types";
 import { OpenAIProvider } from "./openai";
 import { OllamaProvider } from "./ollama";
@@ -13,8 +13,8 @@ export function getLLMProvider(): LLMProvider {
     return cachedProvider;
   }
 
-  const config = loadPluginsConfig();
-  const llmConfig: LLMPluginConfig = config.plugins.llm || {
+  const config = loadProvidersConfig();
+  const llmConfig: LLMProviderConfig = config.providers.llm || {
     enabled: true,
     provider: "openai",
   };

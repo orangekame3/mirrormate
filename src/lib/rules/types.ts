@@ -1,8 +1,8 @@
 export interface ModuleConfig {
-  type: "plugin" | "tool" | "api" | "static";
+  type: "feature" | "tool" | "api" | "static";
   description: string;
   config: {
-    plugin?: string;
+    feature?: string;
     tool?: string;
     source?: string;
     message?: string;

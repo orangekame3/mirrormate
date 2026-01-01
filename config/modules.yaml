@@ -1,40 +1,40 @@
 modules:
-  # 今日がなんの日か
+  # Today's historical events
   today_info:
     type: api
     description: 今日がなんの日か（記念日・イベント）を調べる
     config:
       source: wikipedia_api
 
-  # 天気情報（既存プラグイン利用）
+  # Weather information (uses feature)
   weather:
-    type: plugin
+    type: feature
     description: 現在の天気と気温を取得
     config:
-      plugin: weather
+      feature: weather
 
-  # カレンダー予定（既存プラグイン利用）
+  # Calendar schedule (uses feature)
   calendar:
-    type: plugin
+    type: feature
     description: 今日と直近の予定を取得
     config:
-      plugin: calendar
+      feature: calendar
 
-  # 現在時刻（既存プラグイン利用）
+  # Current time (uses feature)
   time:
-    type: plugin
+    type: feature
     description: 現在の日時を取得
     config:
-      plugin: time
+      feature: time
 
-  # Web検索（既存ツール利用）
+  # Web search (uses tool)
   web_search:
     type: tool
     description: インターネットで情報を検索
     config:
       tool: web_search
 
-  # カスタムメッセージ
+  # Custom message
   custom_message:
     type: static
     description: 固定メッセージを返す

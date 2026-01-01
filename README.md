@@ -10,7 +10,7 @@ Your friendly AI companion for smart mirror displays. Features voice recognition
 - Customizable AI personality and character settings
 - Multiple LLM providers (OpenAI, Ollama)
 - Multiple TTS providers (OpenAI, VOICEVOX)
-- Plugin system for weather, calendar, reminders
+- Built-in features for weather, calendar, reminders
 - Rule-based workflows for automated responses
 - Visual effects (confetti, hearts, sparkles)
 
@@ -43,7 +43,8 @@ All configuration is done via YAML files in the `config/` directory:
 
 | File | Description |
 |------|-------------|
-| `plugins.yaml` | LLM, TTS, weather, calendar settings |
+| `providers.yaml` | LLM and TTS provider settings |
+| `features.yaml` | Weather, calendar, time, reminder settings |
 | `character.yaml` | AI personality and speech style |
 | `rules.yaml` | Trigger-based automated workflows |
 | `modules.yaml` | Module definitions for rules |
@@ -51,9 +52,9 @@ All configuration is done via YAML files in the `config/` directory:
 ## Documentation
 
 - [Architecture Overview](docs/architecture.md)
-- [LLM Providers](docs/llm.md)
+- [Providers (LLM & TTS)](docs/providers.md)
+- [Features](docs/features.md)
 - [Character Configuration](docs/character.md)
-- [Plugins](docs/plugins.md)
 - [Rules & Modules](docs/rules.md)
 - [Tools](docs/tools.md)
 - [Docker Setup](docs/docker.md)

@@ -1,10 +1,10 @@
-import { Plugin, TimePluginConfig } from "../types";
+import { Feature, TimeFeatureConfig } from "../types";
 
-export class TimePlugin implements Plugin {
+export class TimeFeature implements Feature {
   name = "time";
-  private config: TimePluginConfig;
+  private config: TimeFeatureConfig;
 
-  constructor(config: TimePluginConfig) {
+  constructor(config: TimeFeatureConfig) {
     this.config = config;
   }
 
@@ -46,7 +46,7 @@ export class TimePlugin implements Plugin {
     const timeStr = `${hour}時${minute}分`;
     const dateStr = `${year}年${month}月${day}日（${weekday}）`;
 
-    console.log(`[TimePlugin] Current time: ${dateStr} ${timeStr}`);
+    console.log(`[Time] Current time: ${dateStr} ${timeStr}`);
 
     return `現在時刻: ${dateStr} ${timeStr}`;
   }

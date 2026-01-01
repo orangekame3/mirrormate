@@ -38,13 +38,13 @@ cp .env.example .env
 Copy the Docker-specific configuration:
 
 ```bash
-cp config/plugins.docker.yaml config/plugins.yaml
+cp config/providers.docker.yaml config/providers.yaml
 ```
 
-Or edit `config/plugins.yaml` to use Docker-compatible URLs:
+Or edit `config/providers.yaml` to use Docker-compatible URLs:
 
 ```yaml
-plugins:
+providers:
   llm:
     provider: ollama
     ollama:
@@ -153,10 +153,10 @@ ollama pull qwen2.5:14b
 
 ### 2. Configure Connection
 
-In `config/plugins.yaml`:
+In `config/providers.yaml`:
 
 ```yaml
-plugins:
+providers:
   llm:
     provider: ollama
     ollama:

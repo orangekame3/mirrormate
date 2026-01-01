@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { fetchUpcomingEvents, CalendarEvent } from "@/lib/plugins/calendar/google-calendar";
-import { loadPluginsConfig } from "@/lib/plugins/config-loader";
+import { fetchUpcomingEvents, CalendarEvent } from "@/lib/features/calendar/google-calendar";
+import { loadFeaturesConfig } from "@/lib/features/config-loader";
 
 export interface ReminderEvent extends CalendarEvent {
   minutesUntil: number;
@@ -10,8 +10,8 @@ export interface ReminderEvent extends CalendarEvent {
 
 export async function GET() {
   try {
-    const config = loadPluginsConfig();
-    const reminderConfig = config.plugins.reminder;
+    const config = loadFeaturesConfig();
+    const reminderConfig = config.features.reminder;
 
     // Check if reminder is enabled
     if (!reminderConfig?.enabled) {

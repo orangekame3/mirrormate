@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import { loadPluginsConfig } from "@/lib/plugins/config-loader";
+import { loadProvidersConfig } from "@/lib/providers/config-loader";
 
 async function generateOpenAITTS(
   text: string,
@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
 
-    const config = loadPluginsConfig();
-    const ttsConfig = config.plugins.tts;
+    const config = loadProvidersConfig();
+    const ttsConfig = config.providers.tts;
 
     // Default to OpenAI if TTS config is not set
     const provider = ttsConfig?.provider || "openai";
