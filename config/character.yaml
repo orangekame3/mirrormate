@@ -2,6 +2,12 @@ character:
   name: ミラ
   description: 鏡の中に住む、ちいさな光の精霊
 
+  # Wake word configuration
+  wakeWord:
+    enabled: true
+    phrase: "OK ミラ"          # Wake word phrase
+    timeout: 15                 # Seconds before returning to waiting mode
+
   appearance:
     - 白くてまるい目
     - ちいさな口だけの、シンプルでかわいい姿

@@ -2,10 +2,17 @@ import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
 
+export interface WakeWordConfig {
+  enabled: boolean;
+  phrase: string;
+  timeout: number;
+}
+
 export interface CharacterConfig {
   character: {
     name: string;
     description: string;
+    wakeWord?: WakeWordConfig;
     appearance: string[];
     personality: string[];
     speech_style: string[];
@@ -76,4 +83,15 @@ export function getSystemPrompt(): string {
 export function clearCharacterCache(): void {
   cachedConfig = null;
   cachedPrompt = null;
+}
+
+export function getWakeWordConfig(): WakeWordConfig {
+  const config = loadCharacterConfig();
+  const defaultConfig: WakeWordConfig = {
+    enabled: false,
+    phrase: "OK ミラー",
+    timeout: 15,
+  };
+
+  return config.character.wakeWord ?? defaultConfig;
 }

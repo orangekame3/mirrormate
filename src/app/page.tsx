@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import SimpleAvatar from "@/components/SimpleAvatar";
 import Confetti, { EffectType } from "@/components/Confetti";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useWakeWord } from "@/hooks/useWakeWord";
 import { useReminder, Reminder } from "@/hooks/useReminder";
 import { FloatingInfo, InfoCard, detectInfoFromResponse } from "@/components/FloatingInfo";
 import PluginRenderer from "@/components/PluginRenderer";
@@ -33,6 +34,16 @@ export default function AvatarPage() {
   const animationRef = useRef<number>(0);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const messagesRef = useRef<Array<{ role: string; content: string }>>([]);
+
+  // Wake word hook
+  const {
+    mode: wakeWordMode,
+    config: wakeWordConfig,
+    isEnabled: isWakeWordEnabled,
+    checkForWakeWord,
+    resetTimeout: resetWakeWordTimeout,
+    endConversation,
+  } = useWakeWord();
 
   // Add InfoCard
   const addInfoCard = useCallback((response: string) => {
@@ -204,6 +215,51 @@ export default function AvatarPage() {
     async (transcript: string) => {
       if (isProcessing || isSpeaking) return;
 
+      // Wake word mode handling
+      if (isWakeWordEnabled) {
+        if (wakeWordMode === "waiting") {
+          // Check for wake word
+          const wakeWordDetected = checkForWakeWord(transcript);
+          if (!wakeWordDetected) {
+            // No wake word detected, ignore
+            return;
+          }
+
+          // Extract message after wake word (if any)
+          const phrase = wakeWordConfig?.phrase ?? "";
+          const normalizedPhrase = phrase.toLowerCase().replace(/\s+/g, "");
+          const normalizedTranscript = transcript.toLowerCase().replace(/\s+/g, "");
+          const phraseIndex = normalizedTranscript.indexOf(normalizedPhrase);
+
+          if (phraseIndex !== -1) {
+            // Find the actual position in original transcript
+            let charCount = 0;
+            let actualIndex = 0;
+            for (let i = 0; i < transcript.length; i++) {
+              if (!/\s/.test(transcript[i])) {
+                if (charCount === phraseIndex + normalizedPhrase.length) {
+                  actualIndex = i;
+                  break;
+                }
+                charCount++;
+              }
+              actualIndex = i + 1;
+            }
+
+            const messageAfterWakeWord = transcript.substring(actualIndex).trim();
+            if (!messageAfterWakeWord) {
+              // Just wake word, wait for next message
+              return;
+            }
+            // Use the message after wake word
+            transcript = messageAfterWakeWord;
+          }
+        } else {
+          // In conversation mode, reset timeout
+          resetWakeWordTimeout();
+        }
+      }
+
       setIsProcessing(true);
       setUserText(transcript);
       setInterimText("");
@@ -263,7 +319,7 @@ export default function AvatarPage() {
         setIsProcessing(false);
       }
     },
-    [isProcessing, isSpeaking, playAudio, addInfoCard]
+    [isProcessing, isSpeaking, playAudio, addInfoCard, isWakeWordEnabled, wakeWordMode, wakeWordConfig, checkForWakeWord, resetWakeWordTimeout]
   );
 
   // Speech recognition hook
@@ -409,8 +465,24 @@ export default function AvatarPage() {
           </div>
         ) : isListening ? (
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-white/50 text-xs">Listening</span>
+            {isWakeWordEnabled && wakeWordMode === "waiting" ? (
+              <>
+                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                <span className="text-white/50 text-xs">
+                  「{wakeWordConfig?.phrase}」と呼んでください
+                </span>
+              </>
+            ) : isWakeWordEnabled && wakeWordMode === "conversation" ? (
+              <>
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-white/50 text-xs">会話中</span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-white/50 text-xs">Listening</span>
+              </>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-2">
