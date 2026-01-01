@@ -47,6 +47,7 @@ export function useSpeechRecognition({
   const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const shouldRestartRef = useRef(true);
+  const isListeningRef = useRef(false);
 
   useEffect(() => {
     const SpeechRecognitionAPI =
@@ -66,6 +67,7 @@ export function useSpeechRecognition({
 
     recognition.onstart = () => {
       console.log("[SpeechRecognition] Started listening");
+      isListeningRef.current = true;
       setIsListening(true);
     };
 
@@ -95,26 +97,46 @@ export function useSpeechRecognition({
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error("[SpeechRecognition] Error:", event.error);
-
-      if (event.error === "not-allowed") {
-        console.error("[SpeechRecognition] Microphone permission denied");
-        shouldRestartRef.current = false;
+      // Handle different error types
+      switch (event.error) {
+        case "not-allowed":
+          console.error("[SpeechRecognition] Microphone permission denied");
+          shouldRestartRef.current = false;
+          break;
+        case "network":
+          // Network errors are transient, just log as warning and let it retry
+          console.warn("[SpeechRecognition] Network error - will retry");
+          break;
+        case "no-speech":
+          // No speech detected is not really an error
+          console.log("[SpeechRecognition] No speech detected");
+          break;
+        case "aborted":
+          // Aborted by user/code, not an error
+          console.log("[SpeechRecognition] Aborted");
+          break;
+        default:
+          console.error("[SpeechRecognition] Error:", event.error);
       }
     };
 
     recognition.onend = () => {
       console.log("[SpeechRecognition] Ended");
+      isListeningRef.current = false;
       setIsListening(false);
 
-      // 自動再開（エラーでない場合）
-      if (shouldRestartRef.current) {
+      // 自動再開（エラーでない場合、かつ現在リスニング中でない場合）
+      if (shouldRestartRef.current && !isListeningRef.current) {
         console.log("[SpeechRecognition] Restarting...");
         setTimeout(() => {
-          try {
-            recognition.start();
-          } catch (e) {
-            console.error("[SpeechRecognition] Failed to restart:", e);
+          // 再度チェック（タイムアウト中に状態が変わる可能性があるため）
+          if (shouldRestartRef.current && !isListeningRef.current) {
+            try {
+              recognition.start();
+            } catch (e) {
+              // Already started - silently ignore
+              console.log("[SpeechRecognition] Already running, skip restart");
+            }
           }
         }, 100);
       }
@@ -129,7 +151,7 @@ export function useSpeechRecognition({
   }, [lang, onResult, onInterimResult]);
 
   const start = useCallback(() => {
-    if (!recognitionRef.current || isListening) return;
+    if (!recognitionRef.current || isListeningRef.current) return;
 
     shouldRestartRef.current = true;
     try {
@@ -137,7 +159,7 @@ export function useSpeechRecognition({
     } catch (e) {
       // Already started - ignore
     }
-  }, [isListening]);
+  }, []);
 
   const stop = useCallback(() => {
     if (!recognitionRef.current) return;
@@ -151,7 +173,7 @@ export function useSpeechRecognition({
   }, []);
 
   const pause = useCallback(() => {
-    if (!recognitionRef.current || !isListening) return;
+    if (!recognitionRef.current || !isListeningRef.current) return;
 
     shouldRestartRef.current = false;
     try {
@@ -159,10 +181,10 @@ export function useSpeechRecognition({
     } catch (e) {
       // Already stopped - ignore
     }
-  }, [isListening]);
+  }, []);
 
   const resume = useCallback(() => {
-    if (!recognitionRef.current || isListening) return;
+    if (!recognitionRef.current || isListeningRef.current) return;
 
     shouldRestartRef.current = true;
     try {
@@ -170,7 +192,7 @@ export function useSpeechRecognition({
     } catch (e) {
       // Already started - ignore
     }
-  }, [isListening]);
+  }, []);
 
   return {
     isListening,

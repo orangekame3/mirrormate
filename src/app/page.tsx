@@ -289,7 +289,7 @@ export default function AvatarPage() {
 
   // 画面クリックでAudioContextを初期化（TTS再生に必要）
   const initAudioContext = useCallback(async () => {
-    if (!audioContextRef.current) {
+    if (!audioContextRef.current || audioContextRef.current.state === "closed") {
       audioContextRef.current = new AudioContext();
     }
     if (audioContextRef.current.state === "suspended") {
@@ -369,7 +369,7 @@ export default function AvatarPage() {
 
     return () => {
       cancelAnimationFrame(animationRef.current);
-      if (audioContextRef.current) {
+      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
         audioContextRef.current.close();
       }
       channelRef.current?.close();
