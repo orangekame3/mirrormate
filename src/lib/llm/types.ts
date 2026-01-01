@@ -18,6 +18,7 @@ export interface ChatCompletionOptions {
   tools?: ToolDefinition[];
   maxTokens?: number;
   temperature?: number;
+  stream?: boolean;
 }
 
 export interface ChatCompletionResult {
@@ -26,6 +27,14 @@ export interface ChatCompletionResult {
   finishReason: "stop" | "tool_calls";
 }
 
+export interface StreamChunk {
+  content: string;
+  done: boolean;
+  toolCalls?: ToolCall[];
+  finishReason?: "stop" | "tool_calls";
+}
+
 export interface LLMProvider {
   chat(options: ChatCompletionOptions): Promise<ChatCompletionResult>;
+  chatStream?(options: ChatCompletionOptions): AsyncGenerator<StreamChunk>;
 }

@@ -1,5 +1,5 @@
 import dns from "dns";
-import { LLMProvider, ChatCompletionOptions, ChatCompletionResult, ChatMessage } from "./types";
+import { LLMProvider, ChatCompletionOptions, ChatCompletionResult, ChatMessage, StreamChunk } from "./types";
 import { ToolCall } from "../tools/types";
 
 // Force IPv4 first to avoid ETIMEDOUT on some networks
@@ -123,5 +123,88 @@ export class OllamaProvider implements LLMProvider {
       content: message?.content || "",
       finishReason: "stop",
     };
+  }
+
+  async *chatStream(options: ChatCompletionOptions): AsyncGenerator<StreamChunk> {
+    const requestBody: Record<string, unknown> = {
+      model: this.model,
+      messages: this.convertMessages(options.messages),
+      stream: true,
+      options: {
+        num_predict: options.maxTokens || this.defaultMaxTokens,
+        temperature: options.temperature || this.defaultTemperature,
+      },
+    };
+
+    // Note: Tool calling with streaming is not well supported in Ollama
+    // If tools are provided, fall back to non-streaming
+    if (options.tools && options.tools.length > 0) {
+      const result = await this.chat(options);
+      yield {
+        content: result.content,
+        done: true,
+        toolCalls: result.toolCalls,
+        finishReason: result.finishReason,
+      };
+      return;
+    }
+
+    const response = await fetch(`${this.baseUrl}/api/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ollama API error: ${response.status}`);
+    }
+
+    if (!response.body) {
+      throw new Error("No response body");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+
+          try {
+            const data = JSON.parse(line) as OllamaChatResponse;
+
+            if (data.message?.content) {
+              yield {
+                content: data.message.content,
+                done: data.done,
+                finishReason: data.done ? "stop" : undefined,
+              };
+            }
+
+            if (data.done) {
+              return;
+            }
+          } catch {
+            // Skip invalid JSON lines
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
   }
 }

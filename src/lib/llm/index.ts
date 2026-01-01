@@ -4,7 +4,7 @@ import { LLMProvider } from "./types";
 import { OpenAIProvider } from "./openai";
 import { OllamaProvider } from "./ollama";
 
-export type { LLMProvider, ChatMessage, ChatCompletionOptions, ChatCompletionResult } from "./types";
+export type { LLMProvider, ChatMessage, ChatCompletionOptions, ChatCompletionResult, StreamChunk } from "./types";
 
 let cachedProvider: LLMProvider | null = null;
 
