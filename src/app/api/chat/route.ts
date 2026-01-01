@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import { getAllContexts } from "@/lib/plugins/registry";
 import { getLLMProvider, ChatMessage } from "@/lib/llm";
 import { getSystemPrompt } from "@/lib/character";
-import { getToolDefinitions, executeTool } from "@/lib/tools";
+import { getToolDefinitions, executeTool, getPendingEffect, clearPendingEffect } from "@/lib/tools";
 import { executeRule, formatRuleContext } from "@/lib/rules";
 
 const MAX_TOOL_ITERATIONS = 3;
@@ -54,6 +54,9 @@ export async function POST(request: NextRequest) {
     let assistantMessage = "";
     let iterations = 0;
 
+    // Clear any pending effects from previous requests
+    clearPendingEffect();
+
     // Tool calling loop
     while (iterations < MAX_TOOL_ITERATIONS) {
       iterations++;
@@ -97,6 +100,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Determine effect: tool-triggered effect takes priority, then rule effect
+    const toolEffect = getPendingEffect();
+    const effect = toolEffect || ruleResult.effect;
+
     // Generate audio if requested
     if (withAudio && assistantMessage && process.env.OPENAI_API_KEY) {
       const openai = new OpenAI({
@@ -117,11 +124,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         message: assistantMessage,
         audio: audioBase64,
+        effect,
       });
     }
 
     return NextResponse.json({
       message: assistantMessage,
+      effect,
     });
   } catch (error) {
     console.error("Chat API error:", error);

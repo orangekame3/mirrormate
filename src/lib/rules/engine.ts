@@ -48,6 +48,7 @@ export interface RuleExecutionResult {
   ruleName?: string;
   moduleResults: ModuleResult[];
   responseHint?: string;
+  effect?: string;
 }
 
 export async function executeRule(userMessage: string): Promise<RuleExecutionResult> {
@@ -69,6 +70,7 @@ export async function executeRule(userMessage: string): Promise<RuleExecutionRes
     ruleName: match.ruleName,
     moduleResults,
     responseHint: match.rule.response_hint,
+    effect: match.rule.effect,
   };
 }
 

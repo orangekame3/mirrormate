@@ -2,12 +2,13 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import SimpleAvatar from "@/components/SimpleAvatar";
+import Confetti, { EffectType } from "@/components/Confetti";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useReminder, Reminder } from "@/hooks/useReminder";
 import { FloatingInfo, InfoCard, detectInfoFromResponse } from "@/components/FloatingInfo";
 
 interface BroadcastMessage {
-  type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "play_audio" | "user_message" | "mic_start" | "mic_stop" | "mic_status" | "mic_request_status";
+  type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "play_audio" | "user_message" | "mic_start" | "mic_stop" | "mic_status" | "mic_request_status" | "effect";
   payload?: string;
 }
 
@@ -22,6 +23,8 @@ export default function AvatarPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [speechEnabled, setSpeechEnabled] = useState(false);
   const [infoCards, setInfoCards] = useState<InfoCard[]>([]);
+  const [showEffect, setShowEffect] = useState(false);
+  const [effectType, setEffectType] = useState<EffectType>("confetti");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const textFadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -230,6 +233,12 @@ export default function AvatarPage() {
           // 天気・予定情報を検出してカード表示
           addInfoCard(data.message);
 
+          // エフェクト表示
+          if (data.effect === "confetti" || data.effect === "hearts" || data.effect === "sparkles") {
+            setEffectType(data.effect as EffectType);
+            setShowEffect(true);
+          }
+
           // TTS再生
           if (data.message) {
             const ttsRes = await fetch("/api/tts", {
@@ -364,6 +373,12 @@ export default function AvatarPage() {
           // コントロールパネルからの状態要求に応答
           broadcastMicStatus(speechEnabled, isListening);
           break;
+        case "effect":
+          if (payload === "confetti" || payload === "hearts" || payload === "sparkles") {
+            setEffectType(payload as EffectType);
+            setShowEffect(true);
+          }
+          break;
       }
     };
 
@@ -381,6 +396,9 @@ export default function AvatarPage() {
       className="h-screen w-screen bg-black flex flex-col items-center overflow-hidden relative cursor-pointer"
       onClick={initAudioContext}
     >
+      {/* Effects */}
+      <Confetti isActive={showEffect} effectType={effectType} onComplete={() => setShowEffect(false)} />
+
       {/* Mic Status Indicator */}
       <div className="absolute top-4 right-4 flex items-center gap-2">
         {!speechEnabled ? (

@@ -1,9 +1,11 @@
 import { Tool, ToolDefinition, ToolCall, ToolResult } from "./types";
 import { webSearchTool } from "./web-search";
+import { effectTool, getPendingEffect, clearPendingEffect } from "./effects";
 
 export type { Tool, ToolDefinition, ToolCall, ToolResult };
+export { getPendingEffect, clearPendingEffect };
 
-const tools: Tool[] = [webSearchTool];
+const tools: Tool[] = [webSearchTool, effectTool];
 
 export function getToolDefinitions(): ToolDefinition[] {
   return tools.map((t) => t.definition);

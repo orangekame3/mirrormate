@@ -18,6 +18,8 @@ export interface RuleAction {
   params?: Record<string, unknown>;
 }
 
+export type EffectType = "confetti" | "none";
+
 export interface Rule {
   description: string;
   triggers: {
@@ -25,6 +27,7 @@ export interface Rule {
   };
   actions: RuleAction[];
   response_hint: string;
+  effect?: EffectType;
 }
 
 export interface RulesConfig {

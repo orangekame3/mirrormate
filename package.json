@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@types/three": "^0.182.0",
+    "canvas-confetti": "^1.9.4",
     "googleapis": "^169.0.0",
     "js-yaml": "^4.1.1",
     "next": "^15.1.0",
@@ -20,6 +21,7 @@
     "three-stdlib": "^2.36.1"
   },
   "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
