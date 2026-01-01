@@ -48,3 +48,11 @@ export function getPlugin(name: string): Plugin | undefined {
   initializePlugins();
   return plugins.get(name);
 }
+
+export async function getPluginContext(name: string): Promise<string> {
+  const plugin = getPlugin(name);
+  if (!plugin) {
+    return "";
+  }
+  return plugin.getContext();
+}

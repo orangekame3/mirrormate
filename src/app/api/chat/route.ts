@@ -3,27 +3,101 @@ import OpenAI from "openai";
 import { getAllContexts } from "@/lib/plugins/registry";
 import { getLLMProvider, ChatMessage } from "@/lib/llm";
 import { getSystemPrompt } from "@/lib/character";
+import { getToolDefinitions, executeTool } from "@/lib/tools";
+import { executeRule, formatRuleContext } from "@/lib/rules";
+
+const MAX_TOOL_ITERATIONS = 3;
 
 export async function POST(request: NextRequest) {
   try {
     const { messages, withAudio = true } = await request.json();
 
+    // Get the last user message for rule matching
+    const lastUserMessage = messages
+      .filter((m: { role: string }) => m.role === "user")
+      .pop()?.content || "";
+
+    // Check if any rule matches
+    const ruleResult = await executeRule(lastUserMessage);
+    const ruleContext = formatRuleContext(ruleResult);
+
+    // Build system prompt with contexts
     const systemPrompt = getSystemPrompt();
-    const pluginContext = await getAllContexts();
-    const systemPromptWithContext = pluginContext
-      ? `${systemPrompt}\n\n【現在の情報】\n${pluginContext}`
+    const contexts: string[] = [];
+
+    // Add rule context if matched (takes priority)
+    if (ruleContext) {
+      contexts.push(ruleContext);
+    } else {
+      // Use regular plugin context if no rule matched
+      const pluginContext = await getAllContexts();
+      if (pluginContext) {
+        contexts.push("【現在の情報】");
+        contexts.push(pluginContext);
+      }
+    }
+
+    const systemPromptWithContext = contexts.length > 0
+      ? `${systemPrompt}\n\n${contexts.join("\n")}`
       : systemPrompt;
 
     const llmProvider = getLLMProvider();
-    const chatMessages: ChatMessage[] = [
+
+    // Only provide tools if no rule matched (rule already handled the data gathering)
+    const tools = ruleResult.matched ? [] : getToolDefinitions();
+
+    let chatMessages: ChatMessage[] = [
       { role: "system", content: systemPromptWithContext },
       ...messages,
     ];
 
-    const result = await llmProvider.chat({ messages: chatMessages });
-    const assistantMessage = result.content;
+    let assistantMessage = "";
+    let iterations = 0;
 
-    // 音声生成 (TTSはOpenAI固定)
+    // Tool calling loop
+    while (iterations < MAX_TOOL_ITERATIONS) {
+      iterations++;
+
+      const result = await llmProvider.chat({
+        messages: chatMessages,
+        tools: tools.length > 0 ? tools : undefined,
+      });
+
+      if (result.finishReason === "stop" || !result.toolCalls || result.toolCalls.length === 0) {
+        assistantMessage = result.content;
+        break;
+      }
+
+      // Process tool calls
+      console.log(`[Chat] Processing ${result.toolCalls.length} tool call(s)`);
+
+      // Add assistant message with tool calls
+      chatMessages.push({
+        role: "assistant",
+        content: result.content || "",
+        tool_calls: result.toolCalls.map((tc) => ({
+          id: tc.id || `call_${Date.now()}`,
+          function: {
+            name: tc.name,
+            arguments: JSON.stringify(tc.arguments),
+          },
+        })),
+      });
+
+      // Execute tools and add results
+      for (const toolCall of result.toolCalls) {
+        console.log(`[Chat] Executing tool: ${toolCall.name}`);
+        const toolResult = await executeTool(toolCall);
+
+        chatMessages.push({
+          role: "tool",
+          content: toolResult.result,
+          tool_call_id: toolCall.id || `call_${Date.now()}`,
+        });
+      }
+    }
+
+    // Generate audio if requested
     if (withAudio && assistantMessage && process.env.OPENAI_API_KEY) {
       const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,

@@ -1,5 +1,6 @@
 import OpenAI from "openai";
-import { LLMProvider, ChatCompletionOptions, ChatCompletionResult } from "./types";
+import { LLMProvider, ChatCompletionOptions, ChatCompletionResult, ChatMessage } from "./types";
+import { ToolCall } from "../tools/types";
 
 export interface OpenAIConfig {
   model?: string;
@@ -27,16 +28,73 @@ export class OpenAIProvider implements LLMProvider {
     this.defaultTemperature = config.temperature || 0.7;
   }
 
+  private convertMessages(messages: ChatMessage[]): OpenAI.ChatCompletionMessageParam[] {
+    return messages.map((msg) => {
+      if (msg.role === "tool") {
+        return {
+          role: "tool" as const,
+          content: msg.content,
+          tool_call_id: msg.tool_call_id || "",
+        };
+      }
+      if (msg.role === "assistant" && msg.tool_calls) {
+        return {
+          role: "assistant" as const,
+          content: msg.content || null,
+          tool_calls: msg.tool_calls.map((tc) => ({
+            id: tc.id,
+            type: "function" as const,
+            function: tc.function,
+          })),
+        };
+      }
+      return {
+        role: msg.role as "system" | "user" | "assistant",
+        content: msg.content,
+      };
+    });
+  }
+
   async chat(options: ChatCompletionOptions): Promise<ChatCompletionResult> {
-    const completion = await this.client.chat.completions.create({
+    const requestParams: OpenAI.ChatCompletionCreateParams = {
       model: this.model,
-      messages: options.messages,
+      messages: this.convertMessages(options.messages),
       max_tokens: options.maxTokens || this.defaultMaxTokens,
       temperature: options.temperature || this.defaultTemperature,
-    });
+    };
 
-    const content = completion.choices[0]?.message?.content || "";
+    if (options.tools && options.tools.length > 0) {
+      requestParams.tools = options.tools.map((tool) => ({
+        type: "function" as const,
+        function: {
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.parameters,
+        },
+      }));
+    }
 
-    return { content };
+    const completion = await this.client.chat.completions.create(requestParams);
+    const choice = completion.choices[0];
+    const message = choice?.message;
+
+    if (choice?.finish_reason === "tool_calls" && message?.tool_calls) {
+      const toolCalls: ToolCall[] = message.tool_calls.map((tc) => ({
+        id: tc.id,
+        name: tc.function.name,
+        arguments: JSON.parse(tc.function.arguments),
+      }));
+
+      return {
+        content: message.content || "",
+        toolCalls,
+        finishReason: "tool_calls",
+      };
+    }
+
+    return {
+      content: message?.content || "",
+      finishReason: "stop",
+    };
   }
 }

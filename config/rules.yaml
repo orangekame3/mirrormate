@@ -1,0 +1,74 @@
+rules:
+  # 朝の挨拶
+  morning_greeting:
+    description: 朝の挨拶で一日の情報をまとめて伝える
+    triggers:
+      keywords:
+        - おはよう
+        - おはようございます
+        - グッドモーニング
+        - good morning
+    actions:
+      - module: time
+      - module: today_info
+      - module: weather
+      - module: calendar
+      - module: web_search
+        params:
+          query: "今日のニュース 主要"
+    response_hint: |
+      朝の挨拶として、以下の情報をフレンドリーにまとめて伝えてね:
+      - 今日の日付と曜日
+      - 今日がなんの日か（記念日など）
+      - 今日の天気
+      - 今日の予定
+      - 今日の主要ニュース（1-2個だけ簡潔に）
+
+  # 帰宅時の挨拶
+  coming_home:
+    description: 帰宅時の挨拶
+    triggers:
+      keywords:
+        - ただいま
+        - 帰ったよ
+        - 帰宅
+    actions:
+      - module: time
+      - module: calendar
+    response_hint: |
+      おかえりの挨拶として:
+      - 残りの予定があれば伝える
+      - なければ「今日もお疲れ様」的な温かい言葉
+
+  # 寝る前の挨拶
+  good_night:
+    description: 寝る前の挨拶で明日の予定を伝える
+    triggers:
+      keywords:
+        - おやすみ
+        - 寝るね
+        - good night
+    actions:
+      - module: calendar
+      - module: weather
+    response_hint: |
+      おやすみの挨拶として:
+      - 明日の予定を軽く伝える
+      - 明日の天気を伝える
+      - ゆっくり休んでね的な温かい言葉
+
+  # 今日のニュース
+  news_request:
+    description: 今日のニュースを検索して伝える
+    triggers:
+      keywords:
+        - 今日のニュース
+        - ニュース教えて
+        - 最近のニュース
+    actions:
+      - module: web_search
+        params:
+          query: "今日のニュース 日本"
+    response_hint: |
+      検索結果から主要なニュースを2-3個ピックアップして
+      簡潔に伝えてね
