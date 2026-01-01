@@ -1,4 +1,17 @@
 plugins:
+  llm:
+    enabled: true
+    provider: ollama #openai  # openai or ollama
+    openai:
+      model: gpt-4o-mini
+      maxTokens: 300
+      temperature: 0.7
+    ollama:
+      model: gpt-oss:120b
+      baseUrl: "http://localhost:11434"
+      maxTokens: 300
+      temperature: 0.7
+
   weather:
     enabled: true
     provider: open-meteo

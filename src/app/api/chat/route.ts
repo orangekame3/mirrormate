@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { getAllContexts } from "@/lib/plugins/registry";
+import { getLLMProvider, ChatMessage } from "@/lib/llm";
 
 const SYSTEM_PROMPT = `あなたは鏡の中に住む、ちいさな光の精霊です。
 名前は「ミラ」。白くてまるい目と、ちいさな口だけの、シンプルでかわいい姿をしています。
@@ -29,42 +30,32 @@ export async function POST(request: NextRequest) {
   try {
     const { messages, withAudio = true } = await request.json();
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: "OpenAI API key not configured" },
-        { status: 500 }
-      );
-    }
-
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
     const pluginContext = await getAllContexts();
     const systemPromptWithContext = pluginContext
       ? `${SYSTEM_PROMPT}\n\n【現在の情報】\n${pluginContext}`
       : SYSTEM_PROMPT;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPromptWithContext },
-        ...messages,
-      ],
-      max_tokens: 300,
-      temperature: 0.7,
-    });
+    const llmProvider = getLLMProvider();
+    const chatMessages: ChatMessage[] = [
+      { role: "system", content: systemPromptWithContext },
+      ...messages,
+    ];
 
-    const assistantMessage = completion.choices[0]?.message?.content || "";
+    const result = await llmProvider.chat({ messages: chatMessages });
+    const assistantMessage = result.content;
 
-    // 音声生成
-    if (withAudio && assistantMessage) {
+    // 音声生成 (TTSはOpenAI固定)
+    if (withAudio && assistantMessage && process.env.OPENAI_API_KEY) {
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
       const audioResponse = await openai.audio.speech.create({
         model: "tts-1",
-        voice: "shimmer", // やわらかく温かみのある声
+        voice: "shimmer",
         input: assistantMessage,
         response_format: "mp3",
-        speed: 0.95, // 少しゆっくり、聞き取りやすく
+        speed: 0.95,
       });
 
       const audioBuffer = await audioResponse.arrayBuffer();
@@ -80,7 +71,7 @@ export async function POST(request: NextRequest) {
       message: assistantMessage,
     });
   } catch (error) {
-    console.error("OpenAI API error:", error);
+    console.error("Chat API error:", error);
     return NextResponse.json(
       { error: "Failed to generate response" },
       { status: 500 }

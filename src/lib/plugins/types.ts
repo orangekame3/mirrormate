@@ -53,6 +53,21 @@ export interface TTSPluginConfig extends PluginConfig {
   };
 }
 
+export interface LLMPluginConfig extends PluginConfig {
+  provider: "openai" | "ollama";
+  openai?: {
+    model?: string;
+    maxTokens?: number;
+    temperature?: number;
+  };
+  ollama?: {
+    model?: string;
+    baseUrl?: string;
+    maxTokens?: number;
+    temperature?: number;
+  };
+}
+
 export interface PluginsConfig {
   plugins: {
     weather?: WeatherPluginConfig;
@@ -60,6 +75,7 @@ export interface PluginsConfig {
     time?: TimePluginConfig;
     reminder?: ReminderPluginConfig;
     tts?: TTSPluginConfig;
+    llm?: LLMPluginConfig;
     [key: string]: PluginConfig | undefined;
   };
 }
