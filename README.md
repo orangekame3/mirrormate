@@ -98,6 +98,10 @@ All configuration is done via YAML files in the `config/` directory:
 - Web Speech API
 - Tailwind CSS
 
+## Inspired By
+
+This project is inspired by [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror), the open-source modular smart mirror platform. MirrorMate takes a different approach by focusing on voice-first AI interaction with real-time lip-sync avatar display.
+
 ## License
 
 [MIT](LICENSE)
