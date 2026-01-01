@@ -38,12 +38,28 @@ export interface ReminderPluginConfig extends PluginConfig {
   reminders: ReminderConfig[];
 }
 
+export interface TTSPluginConfig extends PluginConfig {
+  provider: "openai" | "voicevox";
+  // OpenAI settings
+  openai?: {
+    voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+    model?: "tts-1" | "tts-1-hd";
+    speed?: number;
+  };
+  // VOICEVOX settings
+  voicevox?: {
+    speaker: number; // Speaker ID (3 = ずんだもん)
+    baseUrl?: string; // VOICEVOX API URL (default: http://localhost:50021)
+  };
+}
+
 export interface PluginsConfig {
   plugins: {
     weather?: WeatherPluginConfig;
     calendar?: CalendarPluginConfig;
     time?: TimePluginConfig;
     reminder?: ReminderPluginConfig;
+    tts?: TTSPluginConfig;
     [key: string]: PluginConfig | undefined;
   };
 }

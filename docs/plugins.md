@@ -277,6 +277,74 @@ Common timezone values:
 
 ---
 
+## TTS Plugin
+
+Configures the text-to-speech voice for the avatar.
+
+### Providers
+
+| Provider | Description |
+|----------|-------------|
+| `openai` | OpenAI TTS API (requires API key) |
+| `voicevox` | VOICEVOX (free, local, Japanese voices including Zundamon) |
+
+### Configuration
+
+```yaml
+plugins:
+  tts:
+    enabled: true
+    provider: openai  # or voicevox
+    openai:
+      voice: shimmer  # alloy, echo, fable, onyx, nova, shimmer
+      model: tts-1    # tts-1 or tts-1-hd
+      speed: 0.95
+    voicevox:
+      speaker: 3      # Speaker ID
+      baseUrl: "http://localhost:50021"
+```
+
+### OpenAI Voices
+
+| Voice | Description |
+|-------|-------------|
+| `alloy` | Neutral, balanced |
+| `echo` | Warm, conversational |
+| `fable` | Expressive, narrative |
+| `onyx` | Deep, authoritative |
+| `nova` | Friendly, upbeat |
+| `shimmer` | Clear, gentle (default) |
+
+### VOICEVOX Speaker IDs (Common)
+
+| ID | Character |
+|----|-----------|
+| 0 | 四国めたん (あまあま) |
+| 1 | ずんだもん (あまあま) |
+| 2 | 四国めたん (ノーマル) |
+| 3 | ずんだもん (ノーマル) |
+| 8 | 春日部つむぎ |
+| 9 | 波音リツ |
+
+### Using VOICEVOX
+
+1. Download and install VOICEVOX from [voicevox.hiroshiba.jp](https://voicevox.hiroshiba.jp/)
+2. Start VOICEVOX (runs on port 50021 by default)
+3. Update config:
+
+```yaml
+plugins:
+  tts:
+    enabled: true
+    provider: voicevox
+    voicevox:
+      speaker: 3  # ずんだもん
+```
+
+4. Restart the server
+
+---
+
 ## Creating Custom Plugins
 
 To create a new plugin:

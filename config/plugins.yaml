@@ -27,3 +27,14 @@ plugins:
         urgent: false
       - minutes: 5
         urgent: true
+
+  tts:
+    enabled: true
+    provider: voicevox #openai  # openai or voicevox
+    openai:
+      voice: shimmer  # alloy, echo, fable, onyx, nova, shimmer
+      model: tts-1    # tts-1 or tts-1-hd
+      speed: 0.95
+    voicevox:
+      speaker: 2 #23 #3      # 3 = ずんだもん (ノーマル)
+      baseUrl: "http://localhost:50021"

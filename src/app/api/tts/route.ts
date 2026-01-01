@@ -1,5 +1,67 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { loadPluginsConfig } from "@/lib/plugins/config-loader";
+
+async function generateOpenAITTS(
+  text: string,
+  voice: string,
+  model: string,
+  speed: number
+): Promise<string> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OpenAI API key not configured");
+  }
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  const audioResponse = await openai.audio.speech.create({
+    model: model as "tts-1" | "tts-1-hd",
+    voice: voice as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer",
+    input: text,
+    response_format: "mp3",
+    speed,
+  });
+
+  const audioBuffer = await audioResponse.arrayBuffer();
+  return Buffer.from(audioBuffer).toString("base64");
+}
+
+async function generateVoicevoxTTS(
+  text: string,
+  speaker: number,
+  baseUrl: string
+): Promise<string> {
+  // Step 1: Create audio query
+  const queryResponse = await fetch(
+    `${baseUrl}/audio_query?text=${encodeURIComponent(text)}&speaker=${speaker}`,
+    { method: "POST" }
+  );
+
+  if (!queryResponse.ok) {
+    throw new Error(`VOICEVOX audio_query failed: ${queryResponse.status}`);
+  }
+
+  const query = await queryResponse.json();
+
+  // Step 2: Synthesize audio
+  const synthesisResponse = await fetch(
+    `${baseUrl}/synthesis?speaker=${speaker}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(query),
+    }
+  );
+
+  if (!synthesisResponse.ok) {
+    throw new Error(`VOICEVOX synthesis failed: ${synthesisResponse.status}`);
+  }
+
+  const audioBuffer = await synthesisResponse.arrayBuffer();
+  return Buffer.from(audioBuffer).toString("base64");
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,27 +71,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: "OpenAI API key not configured" },
-        { status: 500 }
-      );
+    const config = loadPluginsConfig();
+    const ttsConfig = config.plugins.tts;
+
+    // Default to OpenAI if TTS config is not set
+    const provider = ttsConfig?.provider || "openai";
+
+    let audioBase64: string;
+
+    if (provider === "voicevox") {
+      const speaker = ttsConfig?.voicevox?.speaker ?? 3;
+      const baseUrl = ttsConfig?.voicevox?.baseUrl || "http://localhost:50021";
+
+      console.log(`[TTS] Using VOICEVOX (speaker: ${speaker})`);
+      audioBase64 = await generateVoicevoxTTS(text, speaker, baseUrl);
+    } else {
+      const voice = ttsConfig?.openai?.voice || "shimmer";
+      const model = ttsConfig?.openai?.model || "tts-1";
+      const speed = ttsConfig?.openai?.speed ?? 0.95;
+
+      console.log(`[TTS] Using OpenAI (voice: ${voice})`);
+      audioBase64 = await generateOpenAITTS(text, voice, model, speed);
     }
-
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    const audioResponse = await openai.audio.speech.create({
-      model: "tts-1",
-      voice: "shimmer",
-      input: text,
-      response_format: "mp3",
-      speed: 0.95,
-    });
-
-    const audioBuffer = await audioResponse.arrayBuffer();
-    const audioBase64 = Buffer.from(audioBuffer).toString("base64");
 
     return NextResponse.json({ audio: audioBase64 });
   } catch (error) {

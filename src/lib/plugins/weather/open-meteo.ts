@@ -1,3 +1,5 @@
+import https from "https";
+
 export interface OpenMeteoResponse {
   current_weather: {
     temperature: number;
@@ -46,7 +48,8 @@ export function getWeatherDescription(code: number): string {
 
 export async function fetchWeather(
   latitude: number,
-  longitude: number
+  longitude: number,
+  timeoutMs: number = 5000
 ): Promise<OpenMeteoResponse> {
   const url = new URL("https://api.open-meteo.com/v1/forecast");
   url.searchParams.set("latitude", latitude.toString());
@@ -54,11 +57,27 @@ export async function fetchWeather(
   url.searchParams.set("current_weather", "true");
   url.searchParams.set("timezone", "Asia/Tokyo");
 
-  const response = await fetch(url.toString());
+  return new Promise((resolve, reject) => {
+    const req = https.get(url.toString(), { timeout: timeoutMs }, (res) => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => {
+        if (res.statusCode !== 200) {
+          reject(new Error(`Weather API error: ${res.statusCode}`));
+          return;
+        }
+        try {
+          resolve(JSON.parse(data));
+        } catch {
+          reject(new Error("Failed to parse weather response"));
+        }
+      });
+    });
 
-  if (!response.ok) {
-    throw new Error(`Weather API error: ${response.status}`);
-  }
-
-  return response.json();
+    req.on("error", reject);
+    req.on("timeout", () => {
+      req.destroy();
+      reject(new Error("Weather API timeout"));
+    });
+  });
 }
