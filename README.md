@@ -68,4 +68,4 @@ All configuration is done via YAML files in the `config/` directory:
 
 ## License
 
-MIT
+[MIT](LICENSE)
