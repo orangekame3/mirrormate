@@ -16,6 +16,7 @@
     "js-yaml": "^4.1.1",
     "mirrormate-clock-plugin": "github:orangekame3/mirrormate-clock-plugin",
     "next": "^15.1.0",
+    "next-intl": "^4.7.0",
     "openai": "^4.73.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

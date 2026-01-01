@@ -1,0 +1,25 @@
+{
+  "mic": {
+    "off": "マイクオフ",
+    "listening": "聞いています",
+    "paused": "一時停止",
+    "wakeWordPrompt": "「{phrase}」と呼んでください",
+    "inConversation": "会話中"
+  },
+  "control": {
+    "title": "コントロールパネル",
+    "placeholder": "メッセージを入力...",
+    "send": "送信",
+    "micOn": "マイクオン",
+    "micOff": "マイクオフ",
+    "effects": "エフェクト",
+    "confetti": "紙吹雪",
+    "hearts": "ハート",
+    "sparkles": "キラキラ"
+  },
+  "status": {
+    "thinking": "考え中...",
+    "speaking": "話し中...",
+    "ready": "準備完了"
+  }
+}

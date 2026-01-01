@@ -7,12 +7,14 @@ Your friendly AI companion for smart mirror displays. Features voice recognition
 ## Features
 
 - Voice-activated AI assistant with real-time speech recognition
+- Wake word activation ("OK Mirror" style)
 - Customizable AI personality and character settings
 - Multiple LLM providers (OpenAI, Ollama)
 - Multiple TTS providers (OpenAI, VOICEVOX)
 - Built-in features for weather, calendar, reminders
 - Plugin system for visual widgets (clock, etc.)
 - Rule-based workflows for automated responses
+- Multi-language support (Japanese, English)
 - Visual effects (confetti, hearts, sparkles)
 
 ## Quick Start (Docker)
@@ -75,10 +77,11 @@ All configuration is done via YAML files in the `config/` directory:
 
 | File | Description |
 |------|-------------|
+| `app.yaml` | Application settings (language, etc.) |
 | `providers.yaml` | LLM and TTS provider settings |
 | `features.yaml` | Weather, calendar, time, reminder settings |
 | `plugins.yaml` | Visual widget plugins (clock, etc.) |
-| `character.yaml` | AI personality and speech style |
+| `character.yaml` | AI personality, speech style, wake word |
 | `rules.yaml` | Trigger-based automated workflows |
 | `modules.yaml` | Module definitions for rules |
 

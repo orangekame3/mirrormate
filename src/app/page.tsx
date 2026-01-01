@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import SimpleAvatar from "@/components/SimpleAvatar";
 import Confetti, { EffectType } from "@/components/Confetti";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
@@ -15,6 +16,7 @@ interface BroadcastMessage {
 }
 
 export default function AvatarPage() {
+  const t = useTranslations("mic");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [mouthOpenness, setMouthOpenness] = useState(0);
@@ -461,7 +463,7 @@ export default function AvatarPage() {
         {!speechEnabled ? (
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 bg-zinc-600 rounded-full" />
-            <span className="text-white/30 text-xs">Mic Off</span>
+            <span className="text-white/30 text-xs">{t("off")}</span>
           </div>
         ) : isListening ? (
           <div className="flex items-center gap-2">
@@ -469,25 +471,25 @@ export default function AvatarPage() {
               <>
                 <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
                 <span className="text-white/50 text-xs">
-                  「{wakeWordConfig?.phrase}」と呼んでください
+                  {t("wakeWordPrompt", { phrase: wakeWordConfig?.phrase ?? "" })}
                 </span>
               </>
             ) : isWakeWordEnabled && wakeWordMode === "conversation" ? (
               <>
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-white/50 text-xs">会話中</span>
+                <span className="text-white/50 text-xs">{t("inConversation")}</span>
               </>
             ) : (
               <>
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-white/50 text-xs">Listening</span>
+                <span className="text-white/50 text-xs">{t("listening")}</span>
               </>
             )}
           </div>
         ) : (
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 bg-yellow-500 rounded-full" />
-            <span className="text-white/50 text-xs">Paused</span>
+            <span className="text-white/50 text-xs">{t("paused")}</span>
           </div>
         )}
       </div>

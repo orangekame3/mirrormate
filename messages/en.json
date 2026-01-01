@@ -1,0 +1,25 @@
+{
+  "mic": {
+    "off": "Mic Off",
+    "listening": "Listening",
+    "paused": "Paused",
+    "wakeWordPrompt": "Say \"{phrase}\"",
+    "inConversation": "In Conversation"
+  },
+  "control": {
+    "title": "Control Panel",
+    "placeholder": "Enter message...",
+    "send": "Send",
+    "micOn": "Mic On",
+    "micOff": "Mic Off",
+    "effects": "Effects",
+    "confetti": "Confetti",
+    "hearts": "Hearts",
+    "sparkles": "Sparkles"
+  },
+  "status": {
+    "thinking": "Thinking...",
+    "speaking": "Speaking...",
+    "ready": "Ready"
+  }
+}

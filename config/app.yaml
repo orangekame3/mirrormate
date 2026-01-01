@@ -1,0 +1,6 @@
+# Application Settings
+
+app:
+  # Language setting
+  # Supported: "ja" (Japanese), "en" (English)
+  locale: "ja"

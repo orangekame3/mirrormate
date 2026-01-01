@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 interface Message {
   id: string;
@@ -15,6 +16,8 @@ interface BroadcastMessage {
 }
 
 export default function ControlPage() {
+  const t = useTranslations("control");
+  const tMic = useTranslations("mic");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -134,7 +137,7 @@ export default function ControlPage() {
       {/* Header */}
       <div className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-white/80 text-sm tracking-widest uppercase">Control Panel</h1>
+          <h1 className="text-white/80 text-sm tracking-widest uppercase">{t("title")}</h1>
           <p className="text-white/40 text-xs mt-1">Avatar: <span className="text-white/60">localhost:3000</span></p>
         </div>
 
@@ -145,17 +148,17 @@ export default function ControlPage() {
             {micStatus === "listening" ? (
               <>
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-green-400 text-sm">Listening</span>
+                <span className="text-green-400 text-sm">{tMic("listening")}</span>
               </>
             ) : micStatus === "paused" ? (
               <>
                 <span className="w-2 h-2 bg-yellow-500 rounded-full" />
-                <span className="text-yellow-400 text-sm">Paused</span>
+                <span className="text-yellow-400 text-sm">{tMic("paused")}</span>
               </>
             ) : (
               <>
                 <span className="w-2 h-2 bg-zinc-600 rounded-full" />
-                <span className="text-white/40 text-sm">Off</span>
+                <span className="text-white/40 text-sm">{tMic("off")}</span>
               </>
             )}
           </div>
@@ -172,7 +175,7 @@ export default function ControlPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
             </svg>
-            <span className="text-sm">Start</span>
+            <span className="text-sm">{t("micOn")}</span>
           </button>
 
           {/* Stop Button */}
@@ -188,7 +191,7 @@ export default function ControlPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
             </svg>
-            <span className="text-sm">Stop</span>
+            <span className="text-sm">{t("micOff")}</span>
           </button>
         </div>
       </div>
@@ -197,7 +200,7 @@ export default function ControlPage() {
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 && (
           <div className="text-white/30 text-center py-12">
-            Enter a message
+            {t("placeholder")}
           </div>
         )}
         {messages.map((message) => (
@@ -240,7 +243,7 @@ export default function ControlPage() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message..."
+            placeholder={t("placeholder")}
             disabled={isLoading}
             className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white/90 placeholder:text-white/30 focus:outline-none focus:border-zinc-500 transition-colors disabled:opacity-50"
           />
@@ -249,7 +252,7 @@ export default function ControlPage() {
             disabled={isLoading || !input.trim()}
             className="px-6 py-3 bg-white/10 hover:bg-white/20 disabled:bg-white/5 disabled:text-white/30 text-white/80 rounded-xl transition-colors"
           >
-            Send
+            {t("send")}
           </button>
         </div>
       </form>
