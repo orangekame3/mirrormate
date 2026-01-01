@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Magic Mirror is a Next.js application that provides an interactive AI avatar for smart mirror displays.
+MirrorMate is a Next.js application that provides an interactive AI avatar for smart mirror displays.
 
 > **Browser Requirement**: Google Chrome is required for voice recognition (Web Speech API).
 

@@ -1,6 +1,6 @@
-# Magic Mirror
+# MirrorMate
 
-An interactive AI avatar for smart mirror displays. Features voice recognition, customizable AI personality, and real-time lip-sync.
+Your friendly AI companion for smart mirror displays. Features voice recognition, customizable AI personality, and real-time lip-sync.
 
 > **Important**: This application requires **Google Chrome** for voice recognition (Web Speech API).
 

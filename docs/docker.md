@@ -1,6 +1,6 @@
 # Docker Setup
 
-Magic Mirror can be run using Docker with optional VOICEVOX integration.
+MirrorMate can be run using Docker with optional VOICEVOX integration.
 
 ## Architecture
 
@@ -18,7 +18,7 @@ Magic Mirror can be run using Docker with optional VOICEVOX integration.
 ┌─────────────────────────────────────────────────────────────┐
 │                      Docker Network                          │
 │  ┌─────────────────┐         ┌─────────────────┐            │
-│  │       mm2       │────────►│    voicevox     │            │
+│  │   mirrormate    │────────►│    voicevox     │            │
 │  │   (port 3000)   │         │  (port 50021)   │            │
 │  └─────────────────┘         └─────────────────┘            │
 └─────────────────────────────────────────────────────────────┘
@@ -70,7 +70,7 @@ Open http://localhost:3000
 
 ```yaml
 services:
-  mm2:
+  mirrormate:
     build:
       context: .
       dockerfile: Dockerfile
@@ -99,7 +99,7 @@ services:
 
 ## Service Configuration
 
-### mm2 (Magic Mirror)
+### mirrormate
 
 | Setting | Description |
 |---------|-------------|
@@ -196,7 +196,7 @@ docker compose build
 ### Production Build
 
 ```bash
-docker build -t magic-mirror .
+docker build -t mirrormate .
 ```
 
 ## Troubleshooting

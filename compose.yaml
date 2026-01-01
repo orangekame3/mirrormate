@@ -1,5 +1,5 @@
 services:
-  mm2:
+  mirrormate:
     build:
       context: .
       dockerfile: Dockerfile

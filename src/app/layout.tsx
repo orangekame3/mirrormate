@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Magic Mirror AI",
-  description: "SF-style Magic Mirror with AI Assistant",
+  title: "MirrorMate",
+  description: "Your friendly AI companion for smart mirror displays",
 };
 
 export default function RootLayout({

@@ -1,6 +1,6 @@
 # LLM Providers
 
-Magic Mirror supports multiple LLM (Large Language Model) providers for generating responses.
+MirrorMate supports multiple LLM (Large Language Model) providers for generating responses.
 
 ## Supported Providers
 

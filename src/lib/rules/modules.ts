@@ -38,7 +38,7 @@ async function fetchTodayInfo(): Promise<string> {
     const url = `https://ja.wikipedia.org/api/rest_v1/feed/onthisday/events/${month}/${day}`;
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "mm2-bot/1.0",
+        "User-Agent": "mirrormate-bot/1.0",
       },
     });
 

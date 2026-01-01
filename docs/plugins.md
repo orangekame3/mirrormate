@@ -1,6 +1,6 @@
 # Plugins
 
-Magic Mirror uses a YAML-based plugin system to provide contextual information to the AI. Plugins fetch external data and inject it into the system prompt.
+MirrorMate uses a YAML-based plugin system to provide contextual information to the AI. Plugins fetch external data and inject it into the system prompt.
 
 ## Configuration
 
@@ -67,7 +67,7 @@ Fetches events from Google Calendar using a service account.
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Click **Select a project** → **New Project**
-3. Enter a project name (e.g., "magic-mirror") and click **Create**
+3. Enter a project name (e.g., "mirrormate") and click **Create**
 4. Wait for the project to be created and select it
 
 ### Step 2: Enable Google Calendar API
