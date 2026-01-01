@@ -1,4 +1,8 @@
+import dns from "dns";
 import { LLMProvider, ChatCompletionOptions, ChatCompletionResult } from "./types";
+
+// Force IPv4 first to avoid ETIMEDOUT on some networks
+dns.setDefaultResultOrder("ipv4first");
 
 export interface OllamaConfig {
   model?: string;

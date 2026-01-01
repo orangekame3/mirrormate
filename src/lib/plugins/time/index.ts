@@ -43,8 +43,8 @@ export class TimePlugin implements Plugin {
     const hour = getPart("hour");
     const minute = getPart("minute");
 
-    const timeStr = `${hour}:${minute}`;
-    const dateStr = `${year}${month}${day}（${weekday}）`;
+    const timeStr = `${hour}時${minute}分`;
+    const dateStr = `${year}年${month}月${day}日（${weekday}）`;
 
     console.log(`[TimePlugin] Current time: ${dateStr} ${timeStr}`);
 

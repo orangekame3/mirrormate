@@ -1,4 +1,8 @@
 import https from "https";
+import dns from "dns";
+
+// Force IPv4 first to avoid ETIMEDOUT on some networks
+dns.setDefaultResultOrder("ipv4first");
 
 export interface OpenMeteoResponse {
   current_weather: {
@@ -46,19 +50,12 @@ export function getWeatherDescription(code: number): string {
   return WEATHER_CODES[code] || "不明";
 }
 
-export async function fetchWeather(
-  latitude: number,
-  longitude: number,
-  timeoutMs: number = 5000
+async function fetchWeatherOnce(
+  url: string,
+  timeoutMs: number
 ): Promise<OpenMeteoResponse> {
-  const url = new URL("https://api.open-meteo.com/v1/forecast");
-  url.searchParams.set("latitude", latitude.toString());
-  url.searchParams.set("longitude", longitude.toString());
-  url.searchParams.set("current_weather", "true");
-  url.searchParams.set("timezone", "Asia/Tokyo");
-
   return new Promise((resolve, reject) => {
-    const req = https.get(url.toString(), { timeout: timeoutMs }, (res) => {
+    const req = https.get(url, { timeout: timeoutMs }, (res) => {
       let data = "";
       res.on("data", (chunk) => (data += chunk));
       res.on("end", () => {
@@ -80,4 +77,34 @@ export async function fetchWeather(
       reject(new Error("Weather API timeout"));
     });
   });
+}
+
+export async function fetchWeather(
+  latitude: number,
+  longitude: number,
+  timeoutMs: number = 10000,
+  retries: number = 2
+): Promise<OpenMeteoResponse> {
+  const url = new URL("https://api.open-meteo.com/v1/forecast");
+  url.searchParams.set("latitude", latitude.toString());
+  url.searchParams.set("longitude", longitude.toString());
+  url.searchParams.set("current_weather", "true");
+  url.searchParams.set("timezone", "Asia/Tokyo");
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fetchWeatherOnce(url.toString(), timeoutMs);
+    } catch (error) {
+      lastError = error as Error;
+      console.log(`[Weather] Attempt ${attempt + 1} failed: ${lastError.message}`);
+      if (attempt < retries) {
+        // Wait before retry (1s, 2s, ...)
+        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      }
+    }
+  }
+
+  throw lastError;
 }
