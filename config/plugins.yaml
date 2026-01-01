@@ -1,0 +1,14 @@
+plugins:
+  # Clock widget - MagicMirror style
+  clock:
+    source: github:orangekame3/mirrormate-clock-plugin
+    enabled: true
+    position: top-left
+    config:
+      timezone: "Asia/Tokyo"
+      format24h: true
+      showSeconds: false
+      showDate: true
+      dateFormat: "long"
+      showWeekday: true
+      locale: "ja-JP"

@@ -6,6 +6,7 @@ import Confetti, { EffectType } from "@/components/Confetti";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useReminder, Reminder } from "@/hooks/useReminder";
 import { FloatingInfo, InfoCard, detectInfoFromResponse } from "@/components/FloatingInfo";
+import PluginRenderer from "@/components/PluginRenderer";
 
 interface BroadcastMessage {
   type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "play_audio" | "user_message" | "mic_start" | "mic_stop" | "mic_status" | "mic_request_status" | "effect";
@@ -464,6 +465,9 @@ export default function AvatarPage() {
           </p>
         ) : null}
       </div>
+
+      {/* Plugin Widgets */}
+      <PluginRenderer />
     </main>
   );
 }

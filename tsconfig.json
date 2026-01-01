@@ -24,6 +24,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@plugins/*": [
+        "./plugins/*"
       ]
     },
     "target": "ES2017"
