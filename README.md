@@ -14,21 +14,52 @@ Your friendly AI companion for smart mirror displays. Features voice recognition
 - Rule-based workflows for automated responses
 - Visual effects (confetti, hearts, sparkles)
 
-## Quick Start
+## Quick Start (Docker)
+
+The recommended way to run MirrorMate is with Docker, which includes VOICEVOX for text-to-speech.
+
+### Prerequisites
+
+- Docker and Docker Compose
+- [Ollama](https://ollama.com/) running on host (for local LLM)
+
+### 1. Setup
 
 ```bash
-# Install dependencies
-npm install
+# Clone and enter directory
+git clone https://github.com/orangekame3/mirrormate.git
+cd mirrormate
 
 # Copy environment file
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your API keys (optional)
 
-# Start development server
-npm run dev
+# Pull an Ollama model
+ollama pull qwen2.5:14b
+```
+
+### 2. Start
+
+```bash
+# Start Ollama (if not running)
+ollama serve
+
+# Start MirrorMate + VOICEVOX
+docker compose up -d
 ```
 
 Open http://localhost:3000 for the avatar display.
+
+### Development Mode
+
+For local development without Docker:
+
+```bash
+npm install
+npm run dev
+```
+
+> **Note**: You'll need to run VOICEVOX separately or use OpenAI TTS instead.
 
 ## Pages
 
