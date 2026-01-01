@@ -37,17 +37,17 @@ export default function SimpleAvatar({ isSpeaking, isThinking, mouthOpenness = 0
     const mainGroup = new THREE.Group();
     scene.add(mainGroup);
 
-    // 左目
+    // Left eye
     const leftEye = createEye();
     leftEye.group.position.set(-0.35, 0.15, 0);
     mainGroup.add(leftEye.group);
 
-    // 右目
+    // Right eye
     const rightEye = createEye();
     rightEye.group.position.set(0.35, 0.15, 0);
     mainGroup.add(rightEye.group);
 
-    // 口
+    // Mouth
     const mouth = createMouth();
     mouth.group.position.set(0, -0.35, 0);
     mainGroup.add(mouth.group);
@@ -115,7 +115,7 @@ export default function SimpleAvatar({ isSpeaking, isThinking, mouthOpenness = 0
   );
 }
 
-// 目を作成（シンプルな白い丸）
+// Create eye (simple white circle)
 function createEye() {
   const group = new THREE.Group();
 
@@ -129,11 +129,11 @@ function createEye() {
   return { group, eyeMesh };
 }
 
-// 口を作成（楕円形 - 開閉アニメーション用）
+// Create mouth (ellipse - for open/close animation)
 function createMouth() {
   const group = new THREE.Group();
 
-  // 口の形状（楕円）
+  // Mouth shape (ellipse)
   const mouthShape = new THREE.Shape();
   mouthShape.ellipse(0, 0, 0.15, 0.03, 0, Math.PI * 2, false, 0);
 
@@ -165,7 +165,7 @@ function updateScene(
   const { camera, mainGroup, leftEye, rightEye, mouth } = data;
   const { isSpeaking, isThinking, smoothMouth } = state;
 
-  // アイドル視線
+  // Idle gaze
   idle.lookTimer += 0.016;
   if (idle.lookTimer > 3 + Math.random() * 2) {
     idle.lookTimer = 0;
@@ -175,21 +175,21 @@ function updateScene(
   idle.lookX += (idle.targetLookX - idle.lookX) * 0.02;
   idle.lookY += (idle.targetLookY - idle.lookY) * 0.02;
 
-  // 呼吸アニメーション
+  // Breathing animation
   const breathe = Math.sin(time * 1.2) * 0.02;
   mainGroup.scale.set(1 + breathe, 1 + breathe * 0.6, 1);
 
-  // ゆらゆら浮遊
+  // Floating animation
   mainGroup.position.y = Math.sin(time * 0.7) * 0.03;
   mainGroup.position.x = Math.sin(time * 0.5) * 0.02;
 
-  // 顔の向き（マウス追従）
+  // Face direction (mouse tracking)
   const headTiltX = mouse.x * 0.15 + idle.lookX * 0.2;
   const headTiltY = -mouse.y * 0.1 + idle.lookY * 0.12;
   mainGroup.rotation.y += (headTiltX - mainGroup.rotation.y) * 0.04;
   mainGroup.rotation.x += (headTiltY - mainGroup.rotation.x) * 0.04;
 
-  // 瞬き
+  // Blinking
   const blinkCycle = time % 4;
   let eyeScaleY = 1;
 
@@ -198,7 +198,7 @@ function updateScene(
     eyeScaleY = 1 - Math.sin(progress * Math.PI) * 0.9;
   }
 
-  // 話している時は目を少し細める
+  // Squint eyes slightly when speaking
   if (isSpeaking) {
     eyeScaleY = Math.min(eyeScaleY, 0.8 + Math.sin(time * 6) * 0.08);
   }
@@ -206,23 +206,23 @@ function updateScene(
   leftEye.group.scale.y = eyeScaleY;
   rightEye.group.scale.y = eyeScaleY;
 
-  // 口のアニメーション
+  // Mouth animation
   updateMouthAnimation(mouth, smoothMouth, isSpeaking, time);
 
-  // 考え中
+  // Thinking
   if (isThinking) {
     mainGroup.rotation.z = Math.sin(time * 0.9) * 0.04;
   } else {
     mainGroup.rotation.z *= 0.95;
   }
 
-  // カメラの微細な動き
+  // Subtle camera movement
   camera.position.x += (mouse.x * 0.12 - camera.position.x) * 0.02;
   camera.position.y += (mouse.y * 0.08 - camera.position.y) * 0.02;
   camera.lookAt(0, 0, 0);
 }
 
-// 口のアニメーション
+// Mouth animation
 function updateMouthAnimation(
   mouth: { group: THREE.Group; mesh: THREE.Mesh; geometry: THREE.ShapeGeometry },
   openness: number,
@@ -230,32 +230,32 @@ function updateMouthAnimation(
   time: number
 ) {
   if (isSpeaking) {
-    // 話している時: 音声振幅に連動した開閉 + 複数の動き
-    const baseOpen = 0.5 + openness * 2.5; // 音声振幅で大きく開く
-    const fastWobble = Math.sin(time * 15) * 0.3; // 高速な振動
-    const mediumWobble = Math.sin(time * 8) * 0.2; // 中速の振動
-    const slowPulse = Math.sin(time * 3) * 0.15; // ゆっくりした脈動
+    // When speaking: open/close synced with audio amplitude + multiple movements
+    const baseOpen = 0.5 + openness * 2.5; // Open wide based on audio amplitude
+    const fastWobble = Math.sin(time * 15) * 0.3; // Fast vibration
+    const mediumWobble = Math.sin(time * 8) * 0.2; // Medium vibration
+    const slowPulse = Math.sin(time * 3) * 0.15; // Slow pulse
 
     const scaleY = baseOpen + fastWobble + mediumWobble + slowPulse;
-    const scaleX = 1 + openness * 0.3 + Math.sin(time * 6) * 0.1; // 横にも少し伸縮
+    const scaleX = 1 + openness * 0.3 + Math.sin(time * 6) * 0.1; // Also stretch horizontally
 
     mouth.mesh.scale.set(scaleX, Math.max(0.3, scaleY), 1);
 
-    // 口の位置も微妙に動かす
+    // Also subtly move mouth position
     mouth.group.position.y = -0.35 + Math.sin(time * 10) * 0.015;
     mouth.group.position.x = Math.sin(time * 7) * 0.008;
 
-    // 少し回転も加える
+    // Also add slight rotation
     mouth.group.rotation.z = Math.sin(time * 5) * 0.05;
   } else {
-    // 話していない時: 穏やかな状態に戻る
+    // When not speaking: return to calm state
     const targetScaleY = 1;
     const targetScaleX = 1;
 
     mouth.mesh.scale.x += (targetScaleX - mouth.mesh.scale.x) * 0.1;
     mouth.mesh.scale.y += (targetScaleY - mouth.mesh.scale.y) * 0.1;
 
-    // 位置をリセット
+    // Reset position
     mouth.group.position.y += (-0.35 - mouth.group.position.y) * 0.1;
     mouth.group.position.x *= 0.9;
     mouth.group.rotation.z *= 0.9;

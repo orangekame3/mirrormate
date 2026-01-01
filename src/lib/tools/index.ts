@@ -21,7 +21,7 @@ export async function executeTool(call: ToolCall): Promise<ToolResult> {
   if (!tool) {
     return {
       name: call.name,
-      result: `ツール "${call.name}" は見つかりません。`,
+      result: `Tool "${call.name}" not found.`,
     };
   }
 

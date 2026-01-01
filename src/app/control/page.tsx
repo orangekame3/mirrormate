@@ -25,14 +25,14 @@ export default function ControlPage() {
   useEffect(() => {
     channelRef.current = new BroadcastChannel("mirror-channel");
 
-    // アバター画面からのマイク状態を受信
+    // Receive mic status from avatar page
     channelRef.current.onmessage = (event: MessageEvent<BroadcastMessage>) => {
       if (event.data.type === "mic_status") {
         setMicStatus(event.data.payload as "off" | "listening" | "paused");
       }
     };
 
-    // 接続時にアバター画面に状態を要求
+    // Request status from avatar page on connect
     channelRef.current.postMessage({ type: "mic_request_status" });
 
     return () => {
@@ -63,7 +63,7 @@ export default function ControlPage() {
       setInput("");
       setIsLoading(true);
 
-      // アバター画面にユーザーメッセージと「考え中」を通知
+      // Notify avatar page of user message and thinking state
       broadcast({ type: "user_message", payload: content });
       broadcast({ type: "thinking_start" });
 
@@ -97,11 +97,11 @@ export default function ControlPage() {
 
         setMessages((prev) => [...prev, assistantMessage]);
 
-        // アバター画面に「考え中終了」と「回答」を通知
+        // Notify avatar page of response
         broadcast({ type: "thinking_end" });
         broadcast({ type: "response", payload: data.message });
 
-        // 音声を再生するよう通知（メッセージ内容を送り、アバター側でTTS取得）
+        // Request audio playback (avatar will fetch TTS)
         if (data.message) {
           broadcast({ type: "play_audio", payload: data.message });
         }
@@ -112,11 +112,11 @@ export default function ControlPage() {
         const errorMessage: Message = {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: "接続が中断されました。",
+          content: "Connection interrupted.",
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
-        broadcast({ type: "response", payload: "接続が中断されました。" });
+        broadcast({ type: "response", payload: "Connection interrupted." });
       } finally {
         setIsLoading(false);
       }
@@ -135,7 +135,7 @@ export default function ControlPage() {
       <div className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-white/80 text-sm tracking-widest uppercase">Control Panel</h1>
-          <p className="text-white/40 text-xs mt-1">アバター画面: <span className="text-white/60">localhost:3000</span></p>
+          <p className="text-white/40 text-xs mt-1">Avatar: <span className="text-white/60">localhost:3000</span></p>
         </div>
 
         {/* Mic Control */}
@@ -197,7 +197,7 @@ export default function ControlPage() {
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 && (
           <div className="text-white/30 text-center py-12">
-            メッセージを入力してください
+            Enter a message
           </div>
         )}
         {messages.map((message) => (
@@ -240,7 +240,7 @@ export default function ControlPage() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="メッセージを入力..."
+            placeholder="Type a message..."
             disabled={isLoading}
             className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white/90 placeholder:text-white/30 focus:outline-none focus:border-zinc-500 transition-colors disabled:opacity-50"
           />
@@ -249,7 +249,7 @@ export default function ControlPage() {
             disabled={isLoading || !input.trim()}
             className="px-6 py-3 bg-white/10 hover:bg-white/20 disabled:bg-white/5 disabled:text-white/30 text-white/80 rounded-xl transition-colors"
           >
-            送信
+            Send
           </button>
         </div>
       </form>

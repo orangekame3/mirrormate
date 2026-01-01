@@ -34,7 +34,7 @@ async function fetchTodayInfo(): Promise<string> {
   const day = now.getDate();
 
   try {
-    // Wikipedia APIで今日の出来事を取得
+    // Fetch today's events from Wikipedia API
     const url = `https://ja.wikipedia.org/api/rest_v1/feed/onthisday/events/${month}/${day}`;
     const response = await fetch(url, {
       headers: {
@@ -53,7 +53,7 @@ async function fetchTodayInfo(): Promise<string> {
       return `${month}月${day}日`;
     }
 
-    // 最近の出来事を1つ選ぶ
+    // Pick one recent event
     const recentEvent = events[0];
     const year = recentEvent.year || "";
     const text = recentEvent.text || "";
@@ -74,7 +74,7 @@ export async function executeModule(
   if (!moduleConfig) {
     return {
       module: action.module,
-      content: `モジュール "${action.module}" が見つかりません`,
+      content: `Module "${action.module}" not found`,
     };
   }
 
@@ -125,7 +125,7 @@ export async function executeModule(
     console.error(`[Module] Error executing ${action.module}:`, error);
     return {
       module: action.module,
-      content: `エラー: ${(error as Error).message}`,
+      content: `Error: ${(error as Error).message}`,
     };
   }
 }

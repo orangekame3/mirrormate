@@ -1,55 +1,71 @@
 # Magic Mirror
 
-An interactive AI avatar for magic mirror displays. Features a minimalist white avatar with real-time lip-sync and voice responses.
+An interactive AI avatar for smart mirror displays. Features voice recognition, customizable AI personality, and real-time lip-sync.
+
+> **Important**: This application requires **Google Chrome** for voice recognition (Web Speech API).
 
 ## Features
 
-- Minimalist avatar with eyes and animated mouth
-- Real-time lip-sync using Web Audio API
-- OpenAI GPT-4o-mini for conversations
-- OpenAI TTS for voice synthesis
-- Separate display and control pages for demos
+- Voice-activated AI assistant with real-time speech recognition
+- Customizable AI personality and character settings
+- Multiple LLM providers (OpenAI, Ollama)
+- Multiple TTS providers (OpenAI, VOICEVOX)
+- Plugin system for weather, calendar, reminders
+- Rule-based workflows for automated responses
+- Visual effects (confetti, hearts, sparkles)
 
-## Pages
-
-- `/` - Avatar display (for magic mirror projection)
-- `/control` - Control panel (for sending messages)
-
-Uses BroadcastChannel API for real-time communication between pages.
-
-## Setup
-
-1. Install dependencies:
+## Quick Start
 
 ```bash
+# Install dependencies
 npm install
-```
 
-2. Create `.env` file:
+# Copy environment file
+cp .env.example .env
+# Edit .env with your API keys
 
-```
-OPENAI_API_KEY=your_api_key_here
-```
-
-3. Run development server:
-
-```bash
+# Start development server
 npm run dev
 ```
 
-4. Open `http://localhost:3000` for avatar display
-5. Open `http://localhost:3000/control` in another tab to send messages
+Open http://localhost:3000 for the avatar display.
 
-## Usage
+## Pages
 
-1. Click the avatar page once to enable audio
-2. Send messages from the control page
-3. Avatar will respond with voice and text
+| Path | Description |
+|------|-------------|
+| `/` | Avatar display (for mirror projection) |
+| `/control` | Control panel (for sending messages) |
+
+## Configuration
+
+All configuration is done via YAML files in the `config/` directory:
+
+| File | Description |
+|------|-------------|
+| `plugins.yaml` | LLM, TTS, weather, calendar settings |
+| `character.yaml` | AI personality and speech style |
+| `rules.yaml` | Trigger-based automated workflows |
+| `modules.yaml` | Module definitions for rules |
+
+## Documentation
+
+- [Architecture Overview](docs/architecture.md)
+- [LLM Providers](docs/llm.md)
+- [Character Configuration](docs/character.md)
+- [Plugins](docs/plugins.md)
+- [Rules & Modules](docs/rules.md)
+- [Tools](docs/tools.md)
+- [Docker Setup](docs/docker.md)
 
 ## Tech Stack
 
-- Next.js 15
-- React 19
-- Three.js
-- OpenAI API (GPT-4o-mini, TTS)
+- Next.js 15 / React 19
+- Ollama / OpenAI API
+- VOICEVOX / OpenAI TTS
+- Web Speech API
 - Tailwind CSS
+
+## License
+
+MIT

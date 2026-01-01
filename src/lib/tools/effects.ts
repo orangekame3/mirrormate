@@ -2,12 +2,12 @@ import { Tool } from "./types";
 
 export type EffectType = "confetti" | "hearts" | "sparkles";
 
-// 現在のリクエストで発動するエフェクトを保持
+// Holds the effect to trigger for the current request
 let pendingEffect: EffectType | null = null;
 
 export function getPendingEffect(): EffectType | null {
   const effect = pendingEffect;
-  pendingEffect = null; // 取得したらクリア
+  pendingEffect = null; // Clear after retrieval
   return effect;
 }
 
@@ -47,6 +47,6 @@ export const effectTool: Tool = {
 
     pendingEffect = effect;
 
-    return `${effect}エフェクトを表示します`;
+    return `Displaying ${effect} effect`;
   },
 };

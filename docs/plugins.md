@@ -6,6 +6,19 @@ Magic Mirror uses a YAML-based plugin system to provide contextual information t
 
 All plugins are configured in `config/plugins.yaml`.
 
+## Available Plugins
+
+| Plugin | Description | API Key Required |
+|--------|-------------|------------------|
+| LLM | Language model provider | Yes (OpenAI) / No (Ollama) |
+| TTS | Text-to-speech | Yes (OpenAI) / No (VOICEVOX) |
+| Weather | Current weather info | No |
+| Calendar | Google Calendar events | Yes (Service Account) |
+| Time | Current date/time | No |
+| Reminder | Event reminders | No (uses Calendar) |
+
+> **Note**: LLM configuration is documented in [LLM Providers](llm.md).
+
 ---
 
 ## Weather Plugin

@@ -212,7 +212,7 @@ export function detectInfoFromResponse(response: string): InfoCard | null {
       return {
         id,
         type: "weather",
-        title: "天気情報",
+        title: "Weather",
         items: lines.slice(0, 3).map((line) => line.trim()),
       };
     }
@@ -250,7 +250,7 @@ export function detectInfoFromResponse(response: string): InfoCard | null {
       return {
         id,
         type: "calendar",
-        title: "今日の予定",
+        title: "Today's Schedule",
         items: items.slice(0, 5),
       };
     }
@@ -297,7 +297,7 @@ export function detectInfoFromResponse(response: string): InfoCard | null {
       return {
         id,
         type: "time",
-        title: "現在時刻",
+        title: "Current Time",
         items,
       };
     }

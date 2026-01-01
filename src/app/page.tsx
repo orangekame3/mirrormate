@@ -33,7 +33,7 @@ export default function AvatarPage() {
   const channelRef = useRef<BroadcastChannel | null>(null);
   const messagesRef = useRef<Array<{ role: string; content: string }>>([]);
 
-  // InfoCardを追加
+  // Add InfoCard
   const addInfoCard = useCallback((response: string) => {
     const card = detectInfoFromResponse(response);
     if (card) {
@@ -41,28 +41,28 @@ export default function AvatarPage() {
     }
   }, []);
 
-  // InfoCardを削除
+  // Dismiss InfoCard
   const dismissInfoCard = useCallback((id: string) => {
     setInfoCards((prev) => prev.filter((card) => card.id !== id));
   }, []);
 
-  // テキスト自動フェードアウト
+  // Auto fade-out text
   useEffect(() => {
     if (displayText && !isThinking) {
-      // 既存のタイマーをクリア
+      // Clear existing timer
       if (textFadeTimeoutRef.current) {
         clearTimeout(textFadeTimeoutRef.current);
       }
       setIsTextFading(false);
 
-      // 8秒後にフェード開始、10秒後にクリア
+      // Start fade after 8s, clear after 10s
       textFadeTimeoutRef.current = setTimeout(() => {
         setIsTextFading(true);
         setTimeout(() => {
           setDisplayText("");
           setUserText("");
           setIsTextFading(false);
-        }, 2000); // フェードアニメーション時間
+        }, 2000); // Fade animation duration
       }, 8000);
     }
 
@@ -73,7 +73,7 @@ export default function AvatarPage() {
     };
   }, [displayText, isThinking]);
 
-  // 音声振幅をリアルタイムで解析
+  // Analyze audio amplitude in real-time
   const analyzeAudio = useCallback(() => {
     if (!analyserRef.current) return;
 
@@ -95,7 +95,7 @@ export default function AvatarPage() {
   const playAudio = useCallback(async (audioBase64: string) => {
     return new Promise<void>(async (resolve) => {
       try {
-        // 既存のAudioContextを再利用（バックグラウンド再生のため）
+        // Reuse existing AudioContext for background playback
         if (!audioContextRef.current || audioContextRef.current.state === "closed") {
           audioContextRef.current = new AudioContext();
         }
@@ -109,7 +109,7 @@ export default function AvatarPage() {
         const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
         audioRef.current = audio;
 
-        // 音声がロードされるのを待つ
+        // Wait for audio to load
         await new Promise<void>((res) => {
           audio.oncanplaythrough = () => res();
           audio.onerror = () => res();
@@ -132,7 +132,7 @@ export default function AvatarPage() {
           setIsSpeaking(false);
           setMouthOpenness(0);
           cancelAnimationFrame(animationRef.current);
-          // AudioContextは閉じずに再利用する
+          // Keep AudioContext open for reuse
           resolve();
         };
         audio.onerror = (e) => {
@@ -153,12 +153,12 @@ export default function AvatarPage() {
     });
   }, [analyzeAudio]);
 
-  // リマインダー通知時の処理
+  // Handle reminder notifications
   const handleReminder = useCallback(
     async (reminder: Reminder) => {
       const timeText = `${reminder.configuredMinutes}分後`;
 
-      // リマインダーカードを追加
+      // Add reminder card
       const card: InfoCard = {
         id: reminder.id,
         type: "reminder",
@@ -168,7 +168,7 @@ export default function AvatarPage() {
       };
       setInfoCards((prev) => [...prev, card]);
 
-      // 話し中でなければTTSで通知
+      // Notify via TTS if not currently speaking
       if (!isSpeaking && !isProcessing) {
         const message = `${timeText}に「${reminder.summary}」の予定があります。`;
         setDisplayText(message);
@@ -193,12 +193,12 @@ export default function AvatarPage() {
     [isSpeaking, isProcessing, playAudio]
   );
 
-  // リマインダーフック（設定はYAMLから自動取得）
+  // Reminder hook (config loaded from YAML)
   useReminder({
     onReminder: handleReminder,
   });
 
-  // 音声認識の結果を処理
+  // Process speech recognition results
   const handleSpeechResult = useCallback(
     async (transcript: string) => {
       if (isProcessing || isSpeaking) return;
@@ -209,7 +209,7 @@ export default function AvatarPage() {
       setDisplayText("");
       setIsThinking(true);
 
-      // メッセージ履歴に追加
+      // Add to message history
       messagesRef.current.push({ role: "user", content: transcript });
 
       try {
@@ -227,19 +227,19 @@ export default function AvatarPage() {
           setIsThinking(false);
           setDisplayText(data.message);
 
-          // メッセージ履歴に追加
+          // Add to message history
           messagesRef.current.push({ role: "assistant", content: data.message });
 
-          // 天気・予定情報を検出してカード表示
+          // Detect weather/calendar info and show card
           addInfoCard(data.message);
 
-          // エフェクト表示
+          // Show effect
           if (data.effect === "confetti" || data.effect === "hearts" || data.effect === "sparkles") {
             setEffectType(data.effect as EffectType);
             setShowEffect(true);
           }
 
-          // TTS再生
+          // Play TTS
           if (data.message) {
             const ttsRes = await fetch("/api/tts", {
               method: "POST",
@@ -265,14 +265,14 @@ export default function AvatarPage() {
     [isProcessing, isSpeaking, playAudio, addInfoCard]
   );
 
-  // 音声認識フック
+  // Speech recognition hook
   const { isListening, isSupported, start, stop, pause, resume } = useSpeechRecognition({
     onResult: handleSpeechResult,
     onInterimResult: setInterimText,
     lang: "ja-JP",
   });
 
-  // 話している間は音声認識を一時停止
+  // Pause speech recognition while speaking
   useEffect(() => {
     if (isSpeaking || isProcessing) {
       pause();
@@ -281,7 +281,7 @@ export default function AvatarPage() {
     }
   }, [isSpeaking, isProcessing, speechEnabled, pause, resume]);
 
-  // マイク状態を送信する関数
+  // Broadcast mic status
   const broadcastMicStatus = useCallback((enabled: boolean, listening: boolean) => {
     const status = !enabled ? "off" : listening ? "listening" : "paused";
     try {
@@ -291,12 +291,12 @@ export default function AvatarPage() {
     }
   }, []);
 
-  // マイク状態をコントロールパネルに通知
+  // Notify control panel of mic status
   useEffect(() => {
     broadcastMicStatus(speechEnabled, isListening);
   }, [speechEnabled, isListening, broadcastMicStatus]);
 
-  // 画面クリックでAudioContextを初期化（TTS再生に必要）
+  // Initialize AudioContext on click (required for TTS playback)
   const initAudioContext = useCallback(async () => {
     if (!audioContextRef.current || audioContextRef.current.state === "closed") {
       audioContextRef.current = new AudioContext();
@@ -306,7 +306,7 @@ export default function AvatarPage() {
     }
   }, []);
 
-  // BroadcastChannel でメッセージを受信
+  // Receive messages via BroadcastChannel
   useEffect(() => {
     channelRef.current = new BroadcastChannel("mirror-channel");
 
@@ -326,7 +326,7 @@ export default function AvatarPage() {
           break;
         case "response":
           setDisplayText(payload || "");
-          // 天気・予定情報を検出してカード表示
+          // Detect weather/calendar info and show card
           if (payload) {
             const card = detectInfoFromResponse(payload);
             if (card) {
@@ -336,7 +336,7 @@ export default function AvatarPage() {
           break;
         case "play_audio":
           if (payload) {
-            // TTS APIを呼んで音声を取得して再生
+            // Call TTS API and play audio
             try {
               const res = await fetch("/api/tts", {
                 method: "POST",
@@ -370,7 +370,7 @@ export default function AvatarPage() {
           stop();
           break;
         case "mic_request_status":
-          // コントロールパネルからの状態要求に応答
+          // Respond to control panel status request
           broadcastMicStatus(speechEnabled, isListening);
           break;
         case "effect":

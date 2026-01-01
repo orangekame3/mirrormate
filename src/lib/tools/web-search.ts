@@ -65,7 +65,7 @@ export const webSearchTool: Tool = {
     const query = args.query as string;
 
     if (!query) {
-      return "検索クエリが指定されていません。";
+      return "No search query provided.";
     }
 
     console.log(`[WebSearch] Searching for: ${query}`);
@@ -74,7 +74,7 @@ export const webSearchTool: Tool = {
       const results = await searchTavily(query, 5);
 
       if (results.length === 0) {
-        return `「${query}」の検索結果は見つかりませんでした。`;
+        return `No results found for "${query}".`;
       }
 
       const formatted = results
@@ -82,10 +82,10 @@ export const webSearchTool: Tool = {
         .join("\n\n");
 
       console.log(`[WebSearch] Found ${results.length} results`);
-      return `検索結果:\n\n${formatted}`;
+      return `Search results:\n\n${formatted}`;
     } catch (error) {
       console.error("[WebSearch] Error:", error);
-      return `検索中にエラーが発生しました: ${(error as Error).message}`;
+      return `Error during search: ${(error as Error).message}`;
     }
   },
 };

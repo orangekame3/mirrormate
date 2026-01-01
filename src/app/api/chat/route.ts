@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       // Use regular plugin context if no rule matched
       const pluginContext = await getAllContexts();
       if (pluginContext) {
-        contexts.push("【現在の情報】");
+        contexts.push("[Current Information]");
         contexts.push(pluginContext);
       }
     }

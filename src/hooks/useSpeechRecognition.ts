@@ -125,11 +125,11 @@ export function useSpeechRecognition({
       isListeningRef.current = false;
       setIsListening(false);
 
-      // 自動再開（エラーでない場合、かつ現在リスニング中でない場合）
+      // Auto restart (if no error and not currently listening)
       if (shouldRestartRef.current && !isListeningRef.current) {
         console.log("[SpeechRecognition] Restarting...");
         setTimeout(() => {
-          // 再度チェック（タイムアウト中に状態が変わる可能性があるため）
+          // Check again (state may change during timeout)
           if (shouldRestartRef.current && !isListeningRef.current) {
             try {
               recognition.start();
