@@ -62,6 +62,12 @@ export function loadProvidersConfig(): ProvidersConfig {
   const fileContents = fs.readFileSync(configPath, "utf8");
   cachedConfig = yaml.load(fileContents) as ProvidersConfig;
 
+  // Allow environment variable override for LLM provider
+  if (process.env.LLM_PROVIDER && cachedConfig.providers?.llm) {
+    cachedConfig.providers.llm.provider = process.env.LLM_PROVIDER as "openai" | "ollama";
+    console.log(`[Providers] LLM provider overridden by env: ${process.env.LLM_PROVIDER}`);
+  }
+
   return cachedConfig;
 }
 

@@ -123,6 +123,9 @@ Create a `.env` file:
 # Required for OpenAI LLM/TTS
 OPENAI_API_KEY=sk-...
 
+# Optional: Override LLM provider (openai or ollama)
+LLM_PROVIDER=openai
+
 # Optional: Google Calendar
 GOOGLE_SERVICE_ACCOUNT_EMAIL=...
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
@@ -130,6 +133,17 @@ GOOGLE_CALENDAR_ID=...
 
 # Optional: Web Search
 TAVILY_API_KEY=tvly-...
+```
+
+### Quick Start with OpenAI
+
+To use OpenAI without any config files:
+
+```bash
+docker run -p 3000:3000 \
+  -e OPENAI_API_KEY=sk-xxx \
+  -e LLM_PROVIDER=openai \
+  ghcr.io/orangekame3/mirrormate:latest
 ```
 
 ## Using Ollama on Host
