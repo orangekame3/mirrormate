@@ -1,34 +1,20 @@
-name: Git PR Release
-
+name: git-pr-release
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
       - develop
-
 jobs:
-  create-release-pr:
+  git-pr-release:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
-    permissions:
-      contents: write
-      pull-requests: write
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+          fetch-depth: 0 # git-pr-release needs the git histories
+      - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
-
-      - name: Install git-pr-release
-        run: gem install git-pr-release
-
-      - name: Create Release PR
+          ruby-version: 3.3
+      - run: gem install --no-document git-pr-release
+      - run: git-pr-release --squashed
         env:
           GIT_PR_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_PR_RELEASE_BRANCH_PRODUCTION: main
@@ -36,4 +22,3 @@ jobs:
           GIT_PR_RELEASE_LABELS: release
           GIT_PR_RELEASE_TEMPLATE: .github/git-pr-release.erb
           TZ: Asia/Tokyo
-        run: git-pr-release --squashed
