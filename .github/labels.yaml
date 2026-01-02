@@ -1,0 +1,74 @@
+# GitHub Labels Configuration
+# To apply: gh label create -f .github/labels.yaml
+
+# Type labels (from conventional commits)
+- name: feature
+  description: New feature or enhancement
+  color: "0E8A16"
+
+- name: bugfix
+  description: Bug fix
+  color: "D73A4A"
+
+- name: documentation
+  description: Documentation changes
+  color: "0075CA"
+
+- name: refactor
+  description: Code refactoring
+  color: "FEF2C0"
+
+- name: style
+  description: Code style changes
+  color: "BFDADC"
+
+- name: test
+  description: Test related changes
+  color: "BFD4F2"
+
+- name: ci
+  description: CI/CD changes
+  color: "CFD3D7"
+
+- name: chore
+  description: Maintenance tasks
+  color: "EDEDED"
+
+# Priority labels
+- name: priority/high
+  description: High priority
+  color: "B60205"
+
+- name: priority/medium
+  description: Medium priority
+  color: "FBCA04"
+
+- name: priority/low
+  description: Low priority
+  color: "0E8A16"
+
+# Release labels
+- name: release
+  description: Release PR
+  color: "5319E7"
+
+# Status labels
+- name: help wanted
+  description: Extra attention is needed
+  color: "008672"
+
+- name: good first issue
+  description: Good for newcomers
+  color: "7057FF"
+
+- name: wontfix
+  description: This will not be worked on
+  color: "FFFFFF"
+
+- name: duplicate
+  description: This issue or PR already exists
+  color: "CFD3D7"
+
+- name: invalid
+  description: This doesn't seem right
+  color: "E4E669"

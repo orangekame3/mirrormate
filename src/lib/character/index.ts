@@ -34,6 +34,31 @@ function getConfigPath(): string {
   return path.join(configDir, "character.yaml");
 }
 
+const defaultConfig: CharacterConfig = {
+  character: {
+    name: "Mira",
+    description: "a friendly mirror assistant",
+    appearance: ["simple and friendly face", "warm glowing presence"],
+    personality: [
+      "helpful and kind",
+      "curious and attentive",
+      "always ready to assist",
+    ],
+    speech_style: [
+      "speaks in a friendly, casual tone",
+      "keeps responses brief and clear",
+      "uses simple, easy-to-understand language",
+    ],
+    examples: [
+      "Good morning! How can I help you today?",
+      "Sure, let me check that for you!",
+      "Is there anything else you'd like to know?",
+    ],
+    background:
+      "You are a helpful assistant living in the mirror, always watching over and ready to help.",
+  },
+};
+
 export function loadCharacterConfig(): CharacterConfig {
   if (cachedConfig) {
     return cachedConfig;
@@ -43,7 +68,9 @@ export function loadCharacterConfig(): CharacterConfig {
   console.log(`[Character] Loading config from: ${configPath}`);
 
   if (!fs.existsSync(configPath)) {
-    throw new Error(`Character config not found: ${configPath}`);
+    console.log("[Character] Config file not found, using defaults");
+    cachedConfig = defaultConfig;
+    return cachedConfig;
   }
 
   const fileContents = fs.readFileSync(configPath, "utf8");

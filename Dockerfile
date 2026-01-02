@@ -20,6 +20,9 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Ensure public directory exists (may not exist in some projects)
+RUN mkdir -p public
+
 RUN npm run build
 
 # Production image, copy all the files and run next
@@ -34,6 +37,10 @@ RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/config ./config
+
+# Copy plugin package.json files for runtime manifest loading
+# Each plugin needs its package.json for manifest loading
+COPY --from=builder /app/node_modules/mirrormate-clock-plugin/package.json ./node_modules/mirrormate-clock-plugin/package.json
 
 # Set the correct permission for prerender cache
 RUN mkdir .next

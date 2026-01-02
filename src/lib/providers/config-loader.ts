@@ -22,6 +22,29 @@ function getConfigPath(): string {
   return path.join(configDir, "providers.yaml");
 }
 
+const defaultConfig: ProvidersConfig = {
+  providers: {
+    llm: {
+      enabled: true,
+      provider: "openai",
+      openai: {
+        model: "gpt-4o-mini",
+        maxTokens: 300,
+        temperature: 0.7,
+      },
+    },
+    tts: {
+      enabled: true,
+      provider: "openai",
+      openai: {
+        voice: "shimmer",
+        model: "tts-1",
+        speed: 0.95,
+      },
+    },
+  },
+};
+
 export function loadProvidersConfig(): ProvidersConfig {
   if (cachedConfig) {
     return cachedConfig;
@@ -31,7 +54,9 @@ export function loadProvidersConfig(): ProvidersConfig {
   console.log(`[Providers] Loading config from: ${configPath}`);
 
   if (!fs.existsSync(configPath)) {
-    return { providers: {} };
+    console.log("[Providers] Config file not found, using defaults (OpenAI)");
+    cachedConfig = defaultConfig;
+    return cachedConfig;
   }
 
   const fileContents = fs.readFileSync(configPath, "utf8");

@@ -1,0 +1,44 @@
+name: Question
+description: Ask a question about MirrorMate
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question? We're happy to help!
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What would you like to know?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      options:
+        - Setup / Installation
+        - Configuration
+        - Plugin Development
+        - LLM Provider
+        - TTS Provider
+        - Voice Recognition
+        - Docker
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What I've Tried
+      description: What have you already attempted?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any relevant configuration or environment details

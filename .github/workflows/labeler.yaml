@@ -1,0 +1,85 @@
+name: PR Labeler
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+jobs:
+  labeler:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get commits and determine labels
+        id: get-labels
+        run: |
+          # Get commit messages from PR
+          COMMITS=$(git log --format=%B origin/main..HEAD 2>/dev/null || echo "")
+
+          # Initialize labels array
+          LABELS=""
+
+          # Check for conventional commit prefixes
+          if echo "$COMMITS" | grep -qE "^feat(\(.+\))?:"; then
+            LABELS="$LABELS feature"
+          fi
+          if echo "$COMMITS" | grep -qE "^fix(\(.+\))?:"; then
+            LABELS="$LABELS bugfix"
+          fi
+          if echo "$COMMITS" | grep -qE "^docs(\(.+\))?:"; then
+            LABELS="$LABELS documentation"
+          fi
+          if echo "$COMMITS" | grep -qE "^style(\(.+\))?:"; then
+            LABELS="$LABELS style"
+          fi
+          if echo "$COMMITS" | grep -qE "^refactor(\(.+\))?:"; then
+            LABELS="$LABELS refactor"
+          fi
+          if echo "$COMMITS" | grep -qE "^test(\(.+\))?:"; then
+            LABELS="$LABELS test"
+          fi
+          if echo "$COMMITS" | grep -qE "^ci(\(.+\))?:"; then
+            LABELS="$LABELS ci"
+          fi
+          if echo "$COMMITS" | grep -qE "^chore(\(.+\))?:"; then
+            LABELS="$LABELS chore"
+          fi
+
+          # Remove duplicates and format
+          LABELS=$(echo "$LABELS" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
+          echo "labels=$LABELS" >> $GITHUB_OUTPUT
+          echo "Found labels: $LABELS"
+
+      - name: Add labels to PR
+        if: steps.get-labels.outputs.labels != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = '${{ steps.get-labels.outputs.labels }}'.split(' ').filter(l => l);
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: labels
+              });
+            }
+
+      - name: Assign PR creator
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              assignees: [context.payload.pull_request.user.login]
+            });
