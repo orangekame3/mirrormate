@@ -2,7 +2,8 @@
 
 Your friendly AI companion for smart mirror displays. Features voice recognition, customizable AI personality, and real-time lip-sync.
 
-> **Important**: This application requires **Google Chrome** for voice recognition (Web Speech API).
+> [!IMPORTANT]
+> This application requires **Google Chrome** for voice recognition (Web Speech API).
 
 https://github.com/user-attachments/assets/48ccabad-951e-48bb-b73d-32ae20ae6897
 
