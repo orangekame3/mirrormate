@@ -5,7 +5,7 @@ Your friendly AI companion for smart mirror displays. Features voice recognition
 > [!IMPORTANT]
 > This application requires **Google Chrome** for voice recognition (Web Speech API).
 
-https://github.com/user-attachments/assets/48ccabad-951e-48bb-b73d-32ae20ae6897
+https://github.com/user-attachments/assets/c9005df4-9bdb-4190-861e-c8f5f9290468
 
 ## Features
 
