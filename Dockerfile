@@ -20,6 +20,9 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Ensure public directory exists (may not exist in some projects)
+RUN mkdir -p public
+
 RUN npm run build
 
 # Production image, copy all the files and run next
