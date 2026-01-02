@@ -25,7 +25,7 @@ Your friendly AI companion for smart mirror displays. Features voice recognition
 ### Option 1: OpenAI (Simplest)
 
 ```bash
-docker run -p 3000:3000 -e OPENAI_API_KEY=sk-your-key ghcr.io/orangekame3/mm2:latest
+docker run -p 3000:3000 -e OPENAI_API_KEY=sk-your-key ghcr.io/orangekame3/mirrormate:latest
 ```
 
 ### Option 2: Ollama + VOICEVOX (No API key required)
