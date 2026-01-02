@@ -120,6 +120,8 @@ defaultConfig:
 
 MagicMirror-inspired digital clock widget.
 
+**Repository:** [orangekame3/mirrormate-clock-plugin](https://github.com/orangekame3/mirrormate-clock-plugin)
+
 **Source:** `github:orangekame3/mirrormate-clock-plugin`
 
 **Configuration:**
