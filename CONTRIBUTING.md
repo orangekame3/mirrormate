@@ -83,16 +83,29 @@ test: add or update tests
 chore: maintenance tasks
 ```
 
+### Testing
+
+Run tests before submitting changes:
+
+```bash
+# Run tests once
+npm run test
+
+# Run tests in watch mode during development
+npm run test:watch
+```
+
 ### Pull Requests
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feat/amazing-feature`)
 3. Make your changes
 4. Run lint check (`npm run lint`)
-5. Run build (`npm run build`)
-6. Commit your changes
-7. Push to your fork
-8. Open a Pull Request
+5. Run tests (`npm run test`)
+6. Run build (`npm run build`)
+7. Commit your changes
+8. Push to your fork
+9. Open a Pull Request
 
 ## Project Structure
 

@@ -51,6 +51,12 @@ npm install
 npm run dev
 ```
 
+Run tests:
+
+```bash
+npm run test
+```
+
 > **Note**: You'll need to run VOICEVOX separately or use OpenAI TTS instead.
 
 ## Pages
