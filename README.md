@@ -25,7 +25,7 @@ https://github.com/user-attachments/assets/c9005df4-9bdb-4190-861e-c8f5f9290468
 ### Option 1: OpenAI (Simplest)
 
 ```bash
-docker run -p 3000:3000 -e OPENAI_API_KEY=sk-your-key -e LLM_PROVIDER=openai ghcr.io/orangekame3/mirrormate:latest
+docker run -p 3000:3000 -e OPENAI_API_KEY=sk-your-key -e LLM_PROVIDER=openai -e TTS_PROVIDER=openai ghcr.io/orangekame3/mirrormate:latest
 ```
 
 ### Option 2: Ollama + VOICEVOX (No API key required)
