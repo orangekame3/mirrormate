@@ -1,0 +1,37 @@
+name: Git PR Release
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  create-release-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Install git-pr-release
+        run: gem install git-pr-release
+
+      - name: Create Release PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_PR_RELEASE_BRANCH_PRODUCTION: main
+          GIT_PR_RELEASE_BRANCH_STAGING: develop
+          GIT_PR_RELEASE_LABELS: release
+          GIT_PR_RELEASE_TEMPLATE: .github/git-pr-release.erb
+          TZ: Asia/Tokyo
+        run: git-pr-release --squashed

@@ -4,6 +4,9 @@ Your friendly AI companion for smart mirror displays. Features voice recognition
 
 > **Important**: This application requires **Google Chrome** for voice recognition (Web Speech API).
 
+<!-- TODO: Add screenshot -->
+<!-- ![MirrorMate Screenshot](docs/images/screenshot.png) -->
+
 ## Features
 
 - Voice-activated AI assistant with real-time speech recognition
@@ -17,43 +20,29 @@ Your friendly AI companion for smart mirror displays. Features voice recognition
 - Multi-language support (Japanese, English)
 - Visual effects (confetti, hearts, sparkles)
 
-## Quick Start (Docker)
+## Quick Start
 
-The recommended way to run MirrorMate is with Docker, which includes VOICEVOX for text-to-speech.
-
-### Prerequisites
-
-- Docker and Docker Compose
-- [Ollama](https://ollama.com/) running on host (for local LLM)
-
-### 1. Setup
+### Option 1: OpenAI (Simplest)
 
 ```bash
-# Clone and enter directory
-git clone https://github.com/orangekame3/mirrormate.git
-cd mirrormate
-
-# Copy environment file
-cp .env.example .env
-# Edit .env with your API keys (optional)
-
-# Pull an Ollama model
-ollama pull qwen2.5:14b
+docker run -p 3000:3000 -e OPENAI_API_KEY=sk-your-key ghcr.io/orangekame3/mm2:latest
 ```
 
-### 2. Start
+### Option 2: Ollama + VOICEVOX (No API key required)
 
 ```bash
-# Start Ollama (if not running)
-ollama serve
+# Pull Ollama model
+ollama pull qwen2.5:14b
 
-# Start MirrorMate + VOICEVOX
+# Clone and start
+git clone https://github.com/orangekame3/mirrormate.git
+cd mirrormate
 docker compose up -d
 ```
 
-Open http://localhost:3000 for the avatar display.
+Open http://localhost:3000 in Chrome - that's it!
 
-### Development Mode
+## Development
 
 For local development without Docker:
 
@@ -107,6 +96,10 @@ All configuration is done via YAML files in the `config/` directory:
 ## Inspired By
 
 This project is inspired by [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror), the open-source modular smart mirror platform. MirrorMate takes a different approach by focusing on voice-first AI interaction with real-time lip-sync avatar display.
+
+## Contributing
+
+Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md) for details.
 
 ## License
 

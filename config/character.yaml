@@ -6,7 +6,7 @@ character:
   wakeWord:
     enabled: true
     phrase: "OK ミラ"          # Wake word phrase
-    timeout: 15                 # Seconds before returning to waiting mode
+    timeout: 60               # Seconds before returning to waiting mode
 
   appearance:
     - 白くてまるい目

@@ -35,6 +35,10 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/config ./config
 
+# Copy plugin package.json files for runtime manifest loading
+# Each plugin needs its package.json for manifest loading
+COPY --from=builder /app/node_modules/mirrormate-clock-plugin/package.json ./node_modules/mirrormate-clock-plugin/package.json
+
 # Set the correct permission for prerender cache
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
