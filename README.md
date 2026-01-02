@@ -2,10 +2,10 @@
 
 Your friendly AI companion for smart mirror displays. Features voice recognition, customizable AI personality, and real-time lip-sync.
 
-> **Important**: This application requires **Google Chrome** for voice recognition (Web Speech API).
+> [!IMPORTANT]
+> This application requires **Google Chrome** for voice recognition (Web Speech API).
 
-<!-- TODO: Add screenshot -->
-<!-- ![MirrorMate Screenshot](docs/images/screenshot.png) -->
+<video controls src="docs/demo.mp4" title="MirrorMate Demo"></video>
 
 ## Features
 
@@ -61,24 +61,24 @@ npm run test
 
 ## Pages
 
-| Path | Description |
-|------|-------------|
-| `/` | Avatar display (for mirror projection) |
-| `/control` | Control panel (for sending messages) |
+| Path       | Description                            |
+| ---------- | -------------------------------------- |
+| `/`        | Avatar display (for mirror projection) |
+| `/control` | Control panel (for sending messages)   |
 
 ## Configuration
 
 All configuration is done via YAML files in the `config/` directory:
 
-| File | Description |
-|------|-------------|
-| `app.yaml` | Application settings (language, etc.) |
-| `providers.yaml` | LLM and TTS provider settings |
-| `features.yaml` | Weather, calendar, time, reminder settings |
-| `plugins.yaml` | Visual widget plugins (clock, etc.) |
-| `character.yaml` | AI personality, speech style, wake word |
-| `rules.yaml` | Trigger-based automated workflows |
-| `modules.yaml` | Module definitions for rules |
+| File             | Description                                |
+| ---------------- | ------------------------------------------ |
+| `app.yaml`       | Application settings (language, etc.)      |
+| `providers.yaml` | LLM and TTS provider settings              |
+| `features.yaml`  | Weather, calendar, time, reminder settings |
+| `plugins.yaml`   | Visual widget plugins (clock, etc.)        |
+| `character.yaml` | AI personality, speech style, wake word    |
+| `rules.yaml`     | Trigger-based automated workflows          |
+| `modules.yaml`   | Module definitions for rules               |
 
 ## Documentation
 
