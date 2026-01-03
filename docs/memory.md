@@ -29,7 +29,10 @@ MirrorMate includes a memory system that enables persistent user context through
 
 ## Configuration
 
-Memory settings are configured in `config/providers.yaml`:
+Memory settings are configured in two files:
+
+- `config/providers.yaml` - Provider and RAG settings
+- `config/memory.yaml` - Extraction prompts and labels
 
 ```yaml
 providers:
@@ -140,6 +143,33 @@ The system automatically extracts memories from conversations using the LLM.
 |--------|------|-------------|---------|
 | `autoExtract` | boolean | Enable automatic extraction | `true` |
 | `minConfidence` | number | Minimum confidence for saving (0.0-1.0) | `0.5` |
+
+### Prompt Configuration
+
+Extraction prompts are configured in `config/memory.yaml`:
+
+```yaml
+memory:
+  extraction:
+    # System prompt for LLM
+    systemPrompt: |
+      あなたは会話から重要な情報を抽出する専門家です。
+      ...
+
+    # Labels for user prompt
+    labels:
+      user: ユーザー
+      assistant: アシスタント
+      conversationHistory: "## 会話履歴"
+      existingProfiles: "## 既存の Profile"
+      relatedMemories: "## 関連する既存の記憶"
+      task: |
+        ## タスク
+        上記の会話から、記憶として保存すべき情報を抽出してください。
+        ...
+```
+
+This allows customizing the extraction behavior without modifying code.
 
 ### Extraction Process
 

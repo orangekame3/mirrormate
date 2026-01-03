@@ -1,6 +1,6 @@
 import { LLMProvider } from "../llm/types";
 import { ConversationContext, ExtractionResult } from "./types";
-import { EXTRACTION_SYSTEM_PROMPT, buildExtractionPrompt } from "./prompts";
+import { getExtractionSystemPrompt, buildExtractionPrompt } from "./prompts";
 
 /**
  * Service for extracting memories from conversations
@@ -26,7 +26,7 @@ export class MemoryExtractor {
 
     const result = await this.llmProvider.chat({
       messages: [
-        { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
+        { role: "system", content: getExtractionSystemPrompt() },
         { role: "user", content: userPrompt },
       ],
       maxTokens: 1000,

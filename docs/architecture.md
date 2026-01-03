@@ -162,6 +162,7 @@ src/
 config/
 ├── features.yaml          # Built-in feature settings
 ├── providers.yaml         # LLM, TTS, Embedding & Memory settings
+├── memory.yaml            # Memory extraction prompts
 ├── character.yaml         # AI personality
 ├── rules.yaml             # Trigger-based workflows
 └── modules.yaml           # Module definitions
