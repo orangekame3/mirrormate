@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 
 interface Message {
   id: string;
@@ -136,9 +137,20 @@ export default function ControlPage() {
     <main className="h-screen w-screen bg-zinc-950 flex flex-col">
       {/* Header */}
       <div className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-white/80 text-sm tracking-widest uppercase">{t("title")}</h1>
-          <p className="text-white/40 text-xs mt-1">Avatar: <span className="text-white/60">localhost:3000</span></p>
+        <div className="flex items-center gap-6">
+          <div>
+            <h1 className="text-white/80 text-sm tracking-widest uppercase">{t("title")}</h1>
+            <p className="text-white/40 text-xs mt-1">Avatar: <span className="text-white/60">localhost:3000</span></p>
+          </div>
+          <Link
+            href="/control/memory"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors text-white/60 hover:text-white/80"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="text-sm">Memory</span>
+          </Link>
         </div>
 
         {/* Mic Control */}

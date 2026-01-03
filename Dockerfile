@@ -4,6 +4,13 @@ FROM node:22-slim AS base
 FROM base AS deps
 WORKDIR /app
 
+# Install build dependencies for native modules (better-sqlite3)
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 # Configure npm for better network reliability
 RUN npm config set fetch-retries 5 && \
     npm config set fetch-retry-mintimeout 20000 && \
@@ -41,6 +48,14 @@ COPY --from=builder /app/config ./config
 # Copy plugin package.json files for runtime manifest loading
 # Each plugin needs its package.json for manifest loading
 COPY --from=builder /app/node_modules/mirrormate-clock-plugin/package.json ./node_modules/mirrormate-clock-plugin/package.json
+
+# Copy better-sqlite3 native module
+COPY --from=deps /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
+COPY --from=deps /app/node_modules/bindings ./node_modules/bindings
+COPY --from=deps /app/node_modules/file-uri-to-path ./node_modules/file-uri-to-path
+
+# Create data directory for SQLite database
+RUN mkdir -p data && chown nextjs:nodejs data
 
 # Set the correct permission for prerender cache
 RUN mkdir .next

@@ -5,12 +5,58 @@ import { getLLMProvider, ChatMessage } from "@/lib/llm";
 import { getSystemPrompt } from "@/lib/character";
 import { getToolDefinitions, executeTool, getPendingEffect, clearPendingEffect } from "@/lib/tools";
 import { executeRule, formatRuleContext } from "@/lib/rules";
+import { loadProvidersConfig, getEmbeddingProvider } from "@/lib/providers";
+import { RAGService, getSimpleContext, MemoryService } from "@/lib/memory";
+import { getUserRepository } from "@/lib/repositories";
 
 const MAX_TOOL_ITERATIONS = 3;
+const DEFAULT_USER_ID = "default-user";
+
+// RAG service cache
+let ragService: RAGService | null = null;
+let memoryService: MemoryService | null = null;
+
+function getRAGService(): RAGService | null {
+  if (ragService) return ragService;
+
+  const embeddingProvider = getEmbeddingProvider();
+  if (!embeddingProvider) return null;
+
+  ragService = new RAGService(embeddingProvider);
+  return ragService;
+}
+
+function getMemoryService(): MemoryService | null {
+  if (memoryService) return memoryService;
+
+  const config = loadProvidersConfig();
+  const memoryConfig = config.providers?.memory;
+
+  if (!memoryConfig?.enabled) return null;
+
+  const embeddingProvider = getEmbeddingProvider();
+  const llmProvider = getLLMProvider();
+
+  memoryService = new MemoryService({
+    llmProvider,
+    embeddingProvider: embeddingProvider || undefined,
+    minConfidence: memoryConfig.extraction?.minConfidence ?? 0.5,
+    autoExtract: memoryConfig.extraction?.autoExtract ?? true,
+  });
+
+  return memoryService;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, withAudio = true } = await request.json();
+    const { messages, withAudio = true, userId } = await request.json();
+
+    // Determine user ID (use default if not specified)
+    const currentUserId = userId || DEFAULT_USER_ID;
+
+    // Create user if not exists
+    const userRepo = getUserRepository();
+    await userRepo.findOrCreate(currentUserId);
 
     // Get the last user message for rule matching
     const lastUserMessage = messages
@@ -24,6 +70,33 @@ export async function POST(request: NextRequest) {
     // Build system prompt with contexts
     const systemPrompt = getSystemPrompt();
     const contexts: string[] = [];
+
+    // Get RAG context
+    let usedMemoryIds: string[] = [];
+    const rag = getRAGService();
+    const config = loadProvidersConfig();
+    const memoryConfig = config.providers?.memory;
+
+    if (rag && memoryConfig?.enabled) {
+      try {
+        const ragContext = await rag.retrieve(currentUserId, lastUserMessage, {
+          topK: memoryConfig.rag?.topK ?? 8,
+          threshold: memoryConfig.rag?.threshold ?? 0.3,
+        });
+        const formattedContext = rag.formatContext(ragContext);
+        if (formattedContext) {
+          contexts.push(formattedContext);
+        }
+        usedMemoryIds = ragContext.usedMemoryIds;
+      } catch (error) {
+        console.error("[Chat] RAG retrieval failed:", error);
+        // Fall back to simple context if RAG fails
+        const simpleContext = await getSimpleContext(currentUserId);
+        if (simpleContext) {
+          contexts.push(simpleContext);
+        }
+      }
+    }
 
     // Add rule context if matched (takes priority)
     if (ruleContext) {
@@ -103,6 +176,36 @@ export async function POST(request: NextRequest) {
     // Determine effect: tool-triggered effect takes priority, then rule effect
     const toolEffect = getPendingEffect();
     const effect = toolEffect || ruleResult.effect;
+
+    // Record memory usage & async memory extraction
+    const memService = getMemoryService();
+    if (memService && usedMemoryIds.length > 0) {
+      // Update lastUsedAt for used memories (async)
+      memService.touchMemories(usedMemoryIds).catch((err) => {
+        console.error("[Chat] Failed to touch memories:", err);
+      });
+    }
+
+    // Extract memories from conversation (async, non-blocking)
+    if (memService && assistantMessage) {
+      const conversationMessages = messages
+        .filter((m: { role: string }) => m.role === "user" || m.role === "assistant")
+        .slice(-10) // Use last 10 messages for extraction
+        .map((m: { role: string; content: string }) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }));
+
+      // Add assistant response
+      conversationMessages.push({
+        role: "assistant" as const,
+        content: assistantMessage,
+      });
+
+      memService.processConversation(currentUserId, conversationMessages, usedMemoryIds).catch((err) => {
+        console.error("[Chat] Memory extraction failed:", err);
+      });
+    }
 
     // Generate audio if requested
     if (withAudio && assistantMessage && process.env.OPENAI_API_KEY) {
