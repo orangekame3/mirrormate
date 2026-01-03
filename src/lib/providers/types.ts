@@ -32,10 +32,32 @@ export interface LLMProviderConfig extends ProviderConfig {
   };
 }
 
+export interface EmbeddingProviderConfig extends ProviderConfig {
+  provider: "ollama";
+  ollama?: {
+    model?: string;
+    baseUrl?: string;
+  };
+}
+
+export interface MemoryConfig {
+  enabled: boolean;
+  rag?: {
+    topK?: number;
+    threshold?: number;
+  };
+  extraction?: {
+    autoExtract?: boolean;
+    minConfidence?: number;
+  };
+}
+
 export interface ProvidersConfig {
   providers: {
     llm?: LLMProviderConfig;
     tts?: TTSProviderConfig;
-    [key: string]: ProviderConfig | undefined;
+    embedding?: EmbeddingProviderConfig;
+    memory?: MemoryConfig;
+    [key: string]: ProviderConfig | MemoryConfig | undefined;
   };
 }

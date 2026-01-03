@@ -59,11 +59,36 @@ MirrorMate is a Next.js application that provides an interactive AI avatar for s
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
+│                         Data Layer                               │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌───────────────────────────────────────────────────────┐      │
+│  │                    SQLite (Drizzle ORM)                │      │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────────┐  │      │
+│  │  │  Users  │ │Sessions │ │Messages │ │  Memories   │  │      │
+│  │  └─────────┘ └─────────┘ └─────────┘ └──────┬──────┘  │      │
+│  │                                             │         │      │
+│  │  ┌───────────────────────────────────────────────────┐│      │
+│  │  │              Memory Embeddings                     ││      │
+│  │  │  (Vector storage for semantic search)              ││      │
+│  │  └───────────────────────────────────────────────────┘│      │
+│  └───────────────────────────────────────────────────────┘      │
+│                              │                                   │
+│  ┌───────────────────────────▼───────────────────────────┐      │
+│  │                    Memory System                       │      │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────────┐  │      │
+│  │  │   RAG   │ │Extractor│ │ Handler │ │  Embedding  │  │      │
+│  │  │ Service │ │  (LLM)  │ │ (CRUD)  │ │  Provider   │  │      │
+│  │  └─────────┘ └─────────┘ └─────────┘ └─────────────┘  │      │
+│  └───────────────────────────────────────────────────────┘      │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
 │                      External Services                           │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐            │
 │  │  Ollama  │ │  OpenAI  │ │ VOICEVOX │ │Open-Meteo│            │
-│  │  (LLM)   │ │(LLM/TTS) │ │  (TTS)   │ │(Weather) │            │
+│  │(LLM/Emb) │ │(LLM/TTS) │ │  (TTS)   │ │(Weather) │            │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────┘            │
 │  ┌──────────┐ ┌──────────┐                                      │
 │  │  Google  │ │  Tavily  │                                      │
@@ -80,8 +105,11 @@ src/
 │   ├── api/
 │   │   ├── chat/          # Chat API endpoint
 │   │   ├── tts/           # Text-to-speech API
-│   │   └── reminder/      # Reminder API
-│   ├── control/           # Control panel page
+│   │   ├── reminder/      # Reminder API
+│   │   └── memories/      # Memory CRUD API
+│   ├── control/
+│   │   ├── page.tsx       # Control panel page
+│   │   └── memory/        # Memory management page
 │   └── page.tsx           # Avatar display page
 ├── components/
 │   ├── SimpleAvatar.tsx   # Avatar with lip-sync
@@ -91,17 +119,35 @@ src/
 │   ├── useSpeechRecognition.ts
 │   └── useReminder.ts
 └── lib/
+    ├── db/                # Database (SQLite + Drizzle ORM)
+    │   ├── index.ts       # DB client singleton
+    │   └── schema.ts      # Table definitions
     ├── llm/               # LLM provider abstraction
     │   ├── openai.ts
     │   ├── ollama.ts
     │   └── types.ts
+    ├── embedding/         # Embedding provider
+    │   ├── ollama.ts      # Ollama embedding
+    │   ├── similarity.ts  # Vector similarity utils
+    │   └── types.ts
+    ├── memory/            # Memory system
+    │   ├── extractor.ts   # LLM-based memory extraction
+    │   ├── handler.ts     # Memory CRUD handler
+    │   ├── rag.ts         # RAG service
+    │   ├── service.ts     # Memory service
+    │   └── types.ts
+    ├── repositories/      # Data access layer
+    │   ├── memory.ts      # Memory repository
+    │   ├── user.ts        # User repository
+    │   └── session.ts     # Session repository
     ├── features/          # Built-in features
     │   ├── weather/
     │   ├── calendar/
     │   ├── time/
     │   └── registry.ts
-    ├── providers/         # LLM/TTS provider config
+    ├── providers/         # LLM/TTS/Embedding provider config
     │   ├── config-loader.ts
+    │   ├── embedding.ts
     │   └── types.ts
     ├── rules/             # Rule-based workflows
     │   ├── engine.ts
@@ -115,10 +161,14 @@ src/
 
 config/
 ├── features.yaml          # Built-in feature settings
-├── providers.yaml         # LLM & TTS provider settings
+├── providers.yaml         # LLM, TTS, Embedding & Memory settings
+├── memory.yaml            # Memory extraction prompts
 ├── character.yaml         # AI personality
 ├── rules.yaml             # Trigger-based workflows
 └── modules.yaml           # Module definitions
+
+data/
+└── mirrormate.db          # SQLite database file
 ```
 
 ## Request Flow
@@ -134,13 +184,23 @@ config/
       ▼
 3. POST /api/chat
       │
+      ├─► User lookup/create (SQLite)
+      │
+      ├─► RAG context retrieval
+      │   ├─► Get user profile memories
+      │   ├─► Embed user message (Ollama)
+      │   └─► Semantic search for relevant memories
+      │
       ├─► Rule matching (rules.yaml)
       │   └─► Execute modules if matched
       │
-      ├─► Build system prompt (character + context)
+      ├─► Build system prompt (character + context + memories)
       │
       ├─► LLM call (OpenAI/Ollama)
       │   └─► Tool calls (web search, effects)
+      │
+      ├─► Memory extraction (async, non-blocking)
+      │   └─► Extract & save new memories from conversation
       │
       └─► Return response + effect
       │
@@ -194,3 +254,15 @@ See [Tools Documentation](tools.md)
 Character configuration defines the AI's personality, speech style, and system prompt.
 
 See [Character Documentation](character.md)
+
+### Memory
+
+Memory system enables persistent user context through:
+
+- **Profile memories**: User preferences, traits, and persistent information
+- **Episode memories**: Recent interactions and events
+- **Knowledge memories**: Facts and learned information
+
+The RAG (Retrieval-Augmented Generation) system retrieves relevant memories using semantic search to provide context-aware responses.
+
+See [Memory Documentation](memory.md)
