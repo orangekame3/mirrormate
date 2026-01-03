@@ -107,6 +107,9 @@ describe("MemoryExtractor", () => {
     });
 
     it("handles invalid JSON gracefully", async () => {
+      // Suppress console.error output during this test
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
       const mockLLM = createMockLLM("This is not valid JSON");
       const extractor = new MemoryExtractor(mockLLM);
 
@@ -123,6 +126,9 @@ describe("MemoryExtractor", () => {
       expect(result.profileUpdates).toHaveLength(0);
       expect(result.memoriesToUpsert).toHaveLength(0);
       expect(result.archiveCandidates).toHaveLength(0);
+      expect(consoleErrorSpy).toHaveBeenCalled();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it("clamps confidence and importance values", async () => {
