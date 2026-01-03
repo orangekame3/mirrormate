@@ -15,6 +15,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./config:/app/config:ro
+      - mirrormate-data:/app/data
     depends_on:
       - voicevox
     restart: unless-stopped
@@ -24,3 +25,6 @@ services:
     ports:
       - "50021:50021"
     restart: unless-stopped
+
+volumes:
+  mirrormate-data:

@@ -1,6 +1,6 @@
 # Providers
 
-MirrorMate uses external providers for LLM (language model) and TTS (text-to-speech). Providers are configured in `config/providers.yaml`.
+MirrorMate uses external providers for LLM (language model), TTS (text-to-speech), and Embedding (vector generation). Providers are configured in `config/providers.yaml`.
 
 ## Configuration
 
@@ -14,6 +14,15 @@ providers:
   tts:
     enabled: true
     provider: voicevox  # openai or voicevox
+    # ...
+
+  embedding:
+    enabled: true
+    provider: ollama
+    # ...
+
+  memory:
+    enabled: true
     # ...
 ```
 
@@ -176,6 +185,92 @@ providers:
 
 ---
 
+---
+
+## Embedding Providers
+
+Embedding providers generate vector representations of text for semantic search.
+
+| Provider | Description | API Key Required |
+|----------|-------------|------------------|
+| Ollama | Local embedding models | No |
+
+### Ollama Embedding
+
+```yaml
+providers:
+  embedding:
+    enabled: true
+    provider: ollama
+    ollama:
+      model: bge-m3  # Embedding model
+      baseUrl: "http://localhost:11434"
+```
+
+#### Recommended Embedding Models
+
+| Model | Dimensions | Description |
+|-------|------------|-------------|
+| `bge-m3` | 1024 | Multi-lingual, high quality (recommended) |
+| `nomic-embed-text` | 768 | Fast, English-focused |
+| `mxbai-embed-large` | 1024 | High quality, English |
+
+### Setup
+
+1. Ensure Ollama is running:
+
+```bash
+ollama serve
+```
+
+2. Pull an embedding model:
+
+```bash
+ollama pull bge-m3
+```
+
+---
+
+## Memory Configuration
+
+Memory system enables persistent user context through RAG (Retrieval-Augmented Generation).
+
+```yaml
+providers:
+  memory:
+    enabled: true
+    # RAG settings
+    rag:
+      topK: 8           # Max memories to retrieve
+      threshold: 0.3    # Minimum similarity score (0.0-1.0)
+    # Memory extraction settings
+    extraction:
+      autoExtract: true      # Auto-extract from conversations
+      minConfidence: 0.5     # Minimum confidence for extraction
+```
+
+### Options
+
+| Option | Type | Description | Default |
+|--------|------|-------------|---------|
+| `enabled` | boolean | Enable memory system | `true` |
+| `rag.topK` | number | Max memories to retrieve per query | `8` |
+| `rag.threshold` | number | Similarity threshold (0.0-1.0) | `0.3` |
+| `extraction.autoExtract` | boolean | Auto-extract memories from conversations | `true` |
+| `extraction.minConfidence` | number | Minimum confidence for extraction | `0.5` |
+
+### Memory Types
+
+| Type | Description |
+|------|-------------|
+| `profile` | User preferences, traits, persistent info |
+| `episode` | Recent interactions and events |
+| `knowledge` | Facts and learned information |
+
+See [Memory Documentation](memory.md) for details.
+
+---
+
 ## Docker Configuration
 
 When running in Docker with Ollama on the host:
@@ -194,6 +289,22 @@ providers:
     voicevox:
       speaker: 3
       baseUrl: "http://voicevox:50021"
+
+  embedding:
+    enabled: true
+    provider: ollama
+    ollama:
+      model: bge-m3
+      baseUrl: "http://host.docker.internal:11434"
+
+  memory:
+    enabled: true
+    rag:
+      topK: 8
+      threshold: 0.3
+    extraction:
+      autoExtract: true
+      minConfidence: 0.5
 ```
 
 See [Docker Documentation](docker.md) for details.

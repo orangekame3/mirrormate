@@ -22,3 +22,21 @@ providers:
     voicevox:
       speaker: 2
       baseUrl: "http://localhost:50021"
+
+  embedding:
+    enabled: true
+    provider: ollama
+    ollama:
+      model: bge-m3
+      baseUrl: "http://localhost:11434"
+
+  memory:
+    enabled: true
+    # RAG settings
+    rag:
+      topK: 8
+      threshold: 0.3
+    # Memory extraction settings
+    extraction:
+      autoExtract: true
+      minConfidence: 0.5

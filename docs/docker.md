@@ -9,6 +9,7 @@ MirrorMate can be run using Docker with optional VOICEVOX integration.
 │                         Host Machine                         │
 │  ┌─────────────────┐                                        │
 │  │     Ollama      │◄─── http://host.docker.internal:11434  │
+│  │ (LLM/Embedding) │                                        │
 │  │   (port 11434)  │                                        │
 │  └─────────────────┘                                        │
 └─────────────────────────────────────────────────────────────┘
@@ -20,6 +21,11 @@ MirrorMate can be run using Docker with optional VOICEVOX integration.
 │  ┌─────────────────┐         ┌─────────────────┐            │
 │  │   mirrormate    │────────►│    voicevox     │            │
 │  │   (port 3000)   │         │  (port 50021)   │            │
+│  │                 │                                        │
+│  │  ┌───────────┐  │                                        │
+│  │  │  SQLite   │  │◄─── mirrormate-data volume             │
+│  │  │ (memory)  │  │                                        │
+│  │  └───────────┘  │                                        │
 │  └─────────────────┘         └─────────────────┘            │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -86,6 +92,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./config:/app/config:ro
+      - mirrormate-data:/app/data  # SQLite database persistence
     depends_on:
       - voicevox
     restart: unless-stopped
@@ -95,6 +102,9 @@ services:
     ports:
       - "50021:50021"
     restart: unless-stopped
+
+volumes:
+  mirrormate-data:  # Persistent volume for SQLite database
 ```
 
 ## Service Configuration
@@ -105,7 +115,25 @@ services:
 |---------|-------------|
 | Port | 3000 |
 | Config | Mounted from `./config` (read-only) |
+| Data | Persisted in `mirrormate-data` volume |
 | Host Access | `host.docker.internal` for Ollama |
+
+### Data Persistence
+
+The SQLite database (memories, users, sessions) is stored in the `mirrormate-data` Docker volume:
+
+```bash
+# View volume location
+docker volume inspect mirrormate-data
+
+# Backup the database
+docker run --rm -v mirrormate-data:/data -v $(pwd):/backup alpine \
+  cp /data/mirrormate.db /backup/mirrormate-backup.db
+
+# Restore from backup
+docker run --rm -v mirrormate-data:/data -v $(pwd):/backup alpine \
+  cp /backup/mirrormate-backup.db /data/mirrormate.db
+```
 
 ### voicevox
 

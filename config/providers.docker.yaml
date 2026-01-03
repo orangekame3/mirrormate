@@ -22,3 +22,19 @@ providers:
     voicevox:
       speaker: 2
       baseUrl: "http://voicevox:50021"
+
+  embedding:
+    enabled: true
+    provider: ollama
+    ollama:
+      model: bge-m3
+      baseUrl: "http://host.docker.internal:11434"
+
+  memory:
+    enabled: true
+    rag:
+      topK: 8
+      threshold: 0.3
+    extraction:
+      autoExtract: true
+      minConfidence: 0.5
