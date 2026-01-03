@@ -111,6 +111,9 @@ export class MemoryHandler {
       // Update existing profile
       await this.memoryRepo.update(existing.id, {
         content: update.value,
+        // Keep importance non-decreasing by taking the maximum of the existing importance
+        // and the new confidence. This avoids lowering importance on lower-confidence updates
+        // and reflects that importance represents the best (highest) confidence seen so far.
         importance: Math.max(existing.importance, update.confidence),
       });
     } else {

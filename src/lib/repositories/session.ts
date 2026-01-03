@@ -155,17 +155,20 @@ export class SessionRepository {
   async getMessages(sessionId: string, limit?: number): Promise<Message[]> {
     const db = getDb();
 
-    let query = db
-      .select()
-      .from(messages)
-      .where(eq(messages.sessionId, sessionId))
-      .orderBy(messages.createdAt);
+    const query = limit
+      ? db
+          .select()
+          .from(messages)
+          .where(eq(messages.sessionId, sessionId))
+          .orderBy(messages.createdAt)
+          .limit(limit)
+      : db
+          .select()
+          .from(messages)
+          .where(eq(messages.sessionId, sessionId))
+          .orderBy(messages.createdAt);
 
-    if (limit) {
-      query = query.limit(limit) as typeof query;
-    }
-
-    return query;
+    return await query;
   }
 
   /**

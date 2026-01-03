@@ -27,7 +27,7 @@ describe("MemoryExtractor", () => {
         relatedMemories: [],
       });
 
-      expect(result.skipReason).toBe("会話が短すぎます");
+      expect(result.skipReason).toBe("Conversation too short");
       expect(mockLLM.chat).not.toHaveBeenCalled();
     });
 

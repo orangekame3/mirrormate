@@ -30,7 +30,9 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
 
   getDimensions(): number {
     if (this.dims === null) {
-      throw new Error("Dimensions not yet known. Call embed() first.");
+      throw new Error(
+        "Embedding dimensions are not initialized. Dimensions are determined after the first successful embed() or embedBatch() call. Please call embed() (or embedBatch()) before accessing getDimensions()."
+      );
     }
     return this.dims;
   }
