@@ -1,19 +1,18 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import SimpleAvatar from "@/components/SimpleAvatar";
 import Confetti, { EffectType } from "@/components/Confetti";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useWakeWord } from "@/hooks/useWakeWord";
 import { useReminder, Reminder } from "@/hooks/useReminder";
+import { useAvatarState } from "@/hooks/useAvatarState";
+import { useAnimationController } from "@/hooks/useAnimationController";
+import { useLongThinkingPulse } from "@/hooks/useLongThinkingPulse";
 import { FloatingInfo, InfoCard, detectInfoFromResponse } from "@/components/FloatingInfo";
 import PluginRenderer from "@/components/PluginRenderer";
-
-interface BroadcastMessage {
-  type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "play_audio" | "user_message" | "mic_start" | "mic_stop" | "mic_status" | "mic_request_status" | "effect";
-  payload?: string;
-}
+import { mapBroadcastToEvent, type BroadcastMessage } from "@/lib/animation/broadcast-adapter";
 
 export default function AvatarPage() {
   const t = useTranslations("mic");
@@ -29,6 +28,7 @@ export default function AvatarPage() {
   const [infoCards, setInfoCards] = useState<InfoCard[]>([]);
   const [showEffect, setShowEffect] = useState(false);
   const [effectType, setEffectType] = useState<EffectType>("confetti");
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const textFadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -36,6 +36,9 @@ export default function AvatarPage() {
   const animationRef = useRef<number>(0);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const messagesRef = useRef<Array<{ role: string; content: string }>>([]);
+
+  // Animation state machine
+  const { state: avatarState, context: stateContext, dispatch: dispatchState } = useAvatarState();
 
   // Wake word hook
   const {
@@ -46,6 +49,54 @@ export default function AvatarPage() {
     resetTimeout: resetWakeWordTimeout,
     endConversation,
   } = useWakeWord();
+
+  // Override avatar state to SLEEP when waiting for wake word
+  const effectiveAvatarState = useMemo(() => {
+    if (isWakeWordEnabled && wakeWordMode === "waiting" && !isSpeaking && !isThinking) {
+      return "SLEEP" as const;
+    }
+    return avatarState;
+  }, [isWakeWordEnabled, wakeWordMode, isSpeaking, isThinking, avatarState]);
+
+  const animationParams = useAnimationController(effectiveAvatarState, stateContext, { mousePosition });
+  const { showPulse: showLongThinkingPulse } = useLongThinkingPulse(effectiveAvatarState, stateContext);
+
+  // Track mouse position for gaze
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth) * 2 - 1,
+        y: -(e.clientY / window.innerHeight) * 2 + 1,
+      });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  // Sync state machine with boolean states
+  useEffect(() => {
+    if (speechEnabled) {
+      dispatchState({ type: "MIC_ACTIVATED" });
+    } else {
+      dispatchState({ type: "MIC_DEACTIVATED" });
+    }
+  }, [speechEnabled, dispatchState]);
+
+  useEffect(() => {
+    if (isThinking) {
+      dispatchState({ type: "PROCESSING_START" });
+    } else {
+      dispatchState({ type: "PROCESSING_END" });
+    }
+  }, [isThinking, dispatchState]);
+
+  useEffect(() => {
+    if (isSpeaking) {
+      dispatchState({ type: "TTS_START" });
+    } else {
+      dispatchState({ type: "TTS_END" });
+    }
+  }, [isSpeaking, dispatchState]);
 
   // Add InfoCard
   const addInfoCard = useCallback((response: string) => {
@@ -515,7 +566,13 @@ export default function AvatarPage() {
             infoCards.length > 0 ? "-translate-x-[15%]" : "translate-x-0"
           }`}
         >
-          <SimpleAvatar isSpeaking={isSpeaking} isThinking={isThinking} mouthOpenness={mouthOpenness} />
+          <SimpleAvatar
+            isSpeaking={isSpeaking}
+            isThinking={isThinking}
+            mouthOpenness={mouthOpenness}
+            avatarState={effectiveAvatarState}
+            animationParams={animationParams}
+          />
         </div>
         {/* Floating Info Cards */}
         <FloatingInfo cards={infoCards} onDismiss={dismissInfoCard} autoHideDuration={10000} />

@@ -2,20 +2,75 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import type { AvatarState, AnimationValues } from "@/lib/animation";
 
 interface SimpleAvatarProps {
   isSpeaking: boolean;
   isThinking: boolean;
   mouthOpenness?: number;
+  avatarState?: AvatarState;
+  animationParams?: AnimationValues;
 }
 
-export default function SimpleAvatar({ isSpeaking, isThinking, mouthOpenness = 0 }: SimpleAvatarProps) {
+// Eye shape types
+type EyeShape = "circle" | "closed" | "x" | "large";
+
+// Get eye shape based on avatar state
+function getEyeShapeForState(state: AvatarState): EyeShape {
+  switch (state) {
+    case "ERROR":
+      return "x";
+    case "SLEEP":
+    case "THINKING":
+      return "closed";
+    case "LISTENING":
+      return "large";
+    default:
+      return "circle";
+  }
+}
+
+// Get mouth curve for state (-1 = sad, 0 = neutral, 1 = happy)
+function getMouthCurveForState(state: AvatarState): number {
+  switch (state) {
+    case "ERROR":
+      return -0.5; // Slightly troubled
+    case "CONFIRMING":
+      return 0.2; // Slight upturn
+    default:
+      return 0;
+  }
+}
+
+export default function SimpleAvatar({
+  isSpeaking,
+  isThinking,
+  mouthOpenness = 0,
+  avatarState,
+  animationParams,
+}: SimpleAvatarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<number>(0);
   const timeRef = useRef(0);
-  const stateRef = useRef({ isSpeaking: false, isThinking: false, mouthOpenness: 0, smoothMouth: 0 });
+  const stateRef = useRef({
+    isSpeaking: false,
+    isThinking: false,
+    mouthOpenness: 0,
+    smoothMouth: 0,
+    avatarState: "IDLE" as AvatarState,
+  });
+  const animParamsRef = useRef<AnimationValues | undefined>(undefined);
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
   const idleRef = useRef({ lookTimer: 0, lookX: 0, lookY: 0, targetLookX: 0, targetLookY: 0 });
+
+  // Transition state for smooth shape changes
+  const transitionRef = useRef({
+    currentEyeShape: "circle" as EyeShape,
+    targetEyeShape: "circle" as EyeShape,
+    eyeTransition: 1, // 0 = transitioning, 1 = complete
+    currentMouthCurve: 0,
+    targetMouthCurve: 0,
+  });
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -37,18 +92,17 @@ export default function SimpleAvatar({ isSpeaking, isThinking, mouthOpenness = 0
     const mainGroup = new THREE.Group();
     scene.add(mainGroup);
 
-    // Left eye
-    const leftEye = createEye();
+    // Create eyes with multiple shapes
+    const leftEye = createEyeWithShapes();
     leftEye.group.position.set(-0.35, 0.15, 0);
     mainGroup.add(leftEye.group);
 
-    // Right eye
-    const rightEye = createEye();
+    const rightEye = createEyeWithShapes();
     rightEye.group.position.set(0.35, 0.15, 0);
     mainGroup.add(rightEye.group);
 
-    // Mouth
-    const mouth = createMouth();
+    // Create mouth with curve support
+    const mouth = createMouthWithCurve();
     mouth.group.position.set(0, -0.35, 0);
     mainGroup.add(mouth.group);
 
@@ -86,7 +140,15 @@ export default function SimpleAvatar({ isSpeaking, isThinking, mouthOpenness = 0
 
       stateRef.current.smoothMouth += (stateRef.current.mouthOpenness - stateRef.current.smoothMouth) * 0.25;
 
-      updateScene(sceneData, timeRef.current, stateRef.current, mouseRef.current, idleRef.current);
+      updateScene(
+        sceneData,
+        timeRef.current,
+        stateRef.current,
+        mouseRef.current,
+        idleRef.current,
+        animParamsRef.current,
+        transitionRef.current
+      );
       renderer.render(scene, camera);
     };
     animate();
@@ -106,7 +168,19 @@ export default function SimpleAvatar({ isSpeaking, isThinking, mouthOpenness = 0
     stateRef.current.isSpeaking = isSpeaking;
     stateRef.current.isThinking = isThinking;
     stateRef.current.mouthOpenness = mouthOpenness;
-  }, [isSpeaking, isThinking, mouthOpenness]);
+    stateRef.current.avatarState = avatarState || "IDLE";
+    animParamsRef.current = animationParams;
+
+    // Update target shapes
+    const newEyeShape = getEyeShapeForState(avatarState || "IDLE");
+    const newMouthCurve = getMouthCurveForState(avatarState || "IDLE");
+
+    if (newEyeShape !== transitionRef.current.targetEyeShape) {
+      transitionRef.current.targetEyeShape = newEyeShape;
+      transitionRef.current.eyeTransition = 0;
+    }
+    transitionRef.current.targetMouthCurve = newMouthCurve;
+  }, [isSpeaking, isThinking, mouthOpenness, avatarState, animationParams]);
 
   return (
     <div className="relative w-full h-full">
@@ -115,33 +189,92 @@ export default function SimpleAvatar({ isSpeaking, isThinking, mouthOpenness = 0
   );
 }
 
-// Create eye (simple white circle)
-function createEye() {
+// Create eye with multiple shape options
+function createEyeWithShapes() {
   const group = new THREE.Group();
 
-  const eyeGeometry = new THREE.CircleGeometry(0.12, 32);
-  const eyeMaterial = new THREE.MeshBasicMaterial({
+  const material = new THREE.MeshBasicMaterial({
     color: 0xffffff,
+    transparent: true,
+    opacity: 1,
   });
-  const eyeMesh = new THREE.Mesh(eyeGeometry, eyeMaterial);
-  group.add(eyeMesh);
 
-  return { group, eyeMesh };
+  // Circle eye (default)
+  const circleGeometry = new THREE.CircleGeometry(0.12, 32);
+  const circleMesh = new THREE.Mesh(circleGeometry, material.clone());
+  circleMesh.name = "circle";
+  group.add(circleMesh);
+
+  // Large circle eye (LISTENING)
+  const largeCircleGeometry = new THREE.CircleGeometry(0.14, 32);
+  const largeCircleMesh = new THREE.Mesh(largeCircleGeometry, material.clone());
+  largeCircleMesh.name = "large";
+  largeCircleMesh.visible = false;
+  group.add(largeCircleMesh);
+
+  // Closed eye (horizontal line) - SLEEP, THINKING
+  const closedShape = new THREE.Shape();
+  closedShape.moveTo(-0.12, 0);
+  closedShape.lineTo(0.12, 0);
+  closedShape.lineTo(0.12, 0.02);
+  closedShape.lineTo(-0.12, 0.02);
+  closedShape.lineTo(-0.12, 0);
+  const closedGeometry = new THREE.ShapeGeometry(closedShape);
+  const closedMesh = new THREE.Mesh(closedGeometry, material.clone());
+  closedMesh.name = "closed";
+  closedMesh.visible = false;
+  closedMesh.position.y = 0;
+  group.add(closedMesh);
+
+  // X eye (ERROR) - two crossed lines
+  const xGroup = new THREE.Group();
+  xGroup.name = "x";
+  xGroup.visible = false;
+
+  const lineWidth = 0.025;
+  const lineLength = 0.15;
+
+  // Line 1 (top-left to bottom-right)
+  const line1Shape = new THREE.Shape();
+  line1Shape.moveTo(-lineWidth / 2, -lineLength / 2);
+  line1Shape.lineTo(lineWidth / 2, -lineLength / 2);
+  line1Shape.lineTo(lineWidth / 2, lineLength / 2);
+  line1Shape.lineTo(-lineWidth / 2, lineLength / 2);
+  const line1Geometry = new THREE.ShapeGeometry(line1Shape);
+  const line1Mesh = new THREE.Mesh(line1Geometry, material.clone());
+  line1Mesh.rotation.z = Math.PI / 4;
+  xGroup.add(line1Mesh);
+
+  // Line 2 (top-right to bottom-left)
+  const line2Mesh = new THREE.Mesh(line1Geometry.clone(), material.clone());
+  line2Mesh.rotation.z = -Math.PI / 4;
+  xGroup.add(line2Mesh);
+
+  group.add(xGroup);
+
+  return {
+    group,
+    shapes: {
+      circle: circleMesh,
+      large: largeCircleMesh,
+      closed: closedMesh,
+      x: xGroup,
+    },
+  };
 }
 
-// Create mouth (ellipse - for open/close animation)
-function createMouth() {
+// Create mouth with curve support
+function createMouthWithCurve() {
   const group = new THREE.Group();
 
-  // Mouth shape (ellipse)
-  const mouthShape = new THREE.Shape();
-  mouthShape.ellipse(0, 0, 0.15, 0.03, 0, Math.PI * 2, false, 0);
-
-  const geometry = new THREE.ShapeGeometry(mouthShape, 32);
   const material = new THREE.MeshBasicMaterial({
     color: 0xffffff,
   });
 
+  // We'll update the geometry dynamically based on curve
+  const mouthShape = new THREE.Shape();
+  mouthShape.ellipse(0, 0, 0.15, 0.03, 0, Math.PI * 2, false, 0);
+  const geometry = new THREE.ShapeGeometry(mouthShape, 32);
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = "mouthMesh";
   group.add(mesh);
@@ -149,67 +282,219 @@ function createMouth() {
   return { group, mesh, geometry };
 }
 
+// Update mouth geometry based on curve
+function updateMouthGeometry(
+  mouth: { group: THREE.Group; mesh: THREE.Mesh; geometry: THREE.ShapeGeometry },
+  curve: number, // -1 to 1: negative = sad, positive = happy
+  openness: number
+) {
+  const mouthWidth = 0.15;
+  const mouthHeight = 0.03 + openness * 0.08;
+  const curveAmount = curve * 0.05;
+
+  const mouthShape = new THREE.Shape();
+
+  if (Math.abs(curve) < 0.1 && openness < 0.1) {
+    // Simple ellipse for neutral
+    mouthShape.ellipse(0, 0, mouthWidth, mouthHeight, 0, Math.PI * 2, false, 0);
+  } else {
+    // Curved mouth using bezier
+    const segments = 32;
+    const startX = -mouthWidth;
+    const endX = mouthWidth;
+    const midY = curveAmount;
+
+    // Top curve
+    mouthShape.moveTo(startX, 0);
+    mouthShape.quadraticCurveTo(0, midY + mouthHeight, endX, 0);
+    // Bottom curve
+    mouthShape.quadraticCurveTo(0, midY - mouthHeight, startX, 0);
+  }
+
+  const newGeometry = new THREE.ShapeGeometry(mouthShape, 32);
+  mouth.mesh.geometry.dispose();
+  mouth.mesh.geometry = newGeometry;
+}
+
+type EyeShapes = {
+  circle: THREE.Mesh;
+  large: THREE.Mesh;
+  closed: THREE.Mesh;
+  x: THREE.Group;
+};
+
 function updateScene(
   data: {
     camera: THREE.PerspectiveCamera;
     mainGroup: THREE.Group;
-    leftEye: { group: THREE.Group; eyeMesh: THREE.Mesh };
-    rightEye: { group: THREE.Group; eyeMesh: THREE.Mesh };
+    leftEye: { group: THREE.Group; shapes: EyeShapes };
+    rightEye: { group: THREE.Group; shapes: EyeShapes };
     mouth: { group: THREE.Group; mesh: THREE.Mesh; geometry: THREE.ShapeGeometry };
   },
   time: number,
-  state: { isSpeaking: boolean; isThinking: boolean; smoothMouth: number },
+  state: { isSpeaking: boolean; isThinking: boolean; smoothMouth: number; avatarState: AvatarState },
   mouse: { x: number; y: number },
-  idle: { lookTimer: number; lookX: number; lookY: number; targetLookX: number; targetLookY: number }
+  idle: { lookTimer: number; lookX: number; lookY: number; targetLookX: number; targetLookY: number },
+  animParams: AnimationValues | undefined,
+  transition: {
+    currentEyeShape: EyeShape;
+    targetEyeShape: EyeShape;
+    eyeTransition: number;
+    currentMouthCurve: number;
+    targetMouthCurve: number;
+  }
 ) {
   const { camera, mainGroup, leftEye, rightEye, mouth } = data;
-  const { isSpeaking, isThinking, smoothMouth } = state;
+  const { isSpeaking, isThinking, smoothMouth, avatarState } = state;
 
-  // Idle gaze
-  idle.lookTimer += 0.016;
-  if (idle.lookTimer > 3 + Math.random() * 2) {
-    idle.lookTimer = 0;
-    idle.targetLookX = (Math.random() - 0.5) * 0.3;
-    idle.targetLookY = (Math.random() - 0.5) * 0.2;
+  // ========== EYE SHAPE TRANSITION ==========
+  if (transition.eyeTransition < 1) {
+    transition.eyeTransition += 0.08; // Smooth transition speed
+    if (transition.eyeTransition >= 1) {
+      transition.eyeTransition = 1;
+      transition.currentEyeShape = transition.targetEyeShape;
+    }
   }
-  idle.lookX += (idle.targetLookX - idle.lookX) * 0.02;
-  idle.lookY += (idle.targetLookY - idle.lookY) * 0.02;
 
-  // Breathing animation
-  const breathe = Math.sin(time * 1.2) * 0.02;
-  mainGroup.scale.set(1 + breathe, 1 + breathe * 0.6, 1);
+  // Update eye shape visibility with fade
+  const updateEyeShapes = (eye: { group: THREE.Group; shapes: EyeShapes }) => {
+    const shapes = eye.shapes;
+    const currentShape = transition.currentEyeShape;
+    const targetShape = transition.targetEyeShape;
+    const t = transition.eyeTransition;
+
+    // Hide all first
+    shapes.circle.visible = false;
+    shapes.large.visible = false;
+    shapes.closed.visible = false;
+    shapes.x.visible = false;
+
+    if (t >= 1) {
+      // Transition complete, show target
+      const target = shapes[targetShape];
+      if (target instanceof THREE.Group) {
+        target.visible = true;
+      } else {
+        target.visible = true;
+        (target.material as THREE.MeshBasicMaterial).opacity = 1;
+      }
+    } else {
+      // Cross-fade between shapes
+      const current = shapes[currentShape];
+      const target = shapes[targetShape];
+
+      if (current instanceof THREE.Group) {
+        current.visible = true;
+        current.children.forEach((child) => {
+          (child as THREE.Mesh).material = ((child as THREE.Mesh).material as THREE.MeshBasicMaterial).clone();
+          ((child as THREE.Mesh).material as THREE.MeshBasicMaterial).opacity = 1 - t;
+        });
+      } else {
+        current.visible = true;
+        (current.material as THREE.MeshBasicMaterial).opacity = 1 - t;
+      }
+
+      if (target instanceof THREE.Group) {
+        target.visible = true;
+        target.children.forEach((child) => {
+          (child as THREE.Mesh).material = ((child as THREE.Mesh).material as THREE.MeshBasicMaterial).clone();
+          ((child as THREE.Mesh).material as THREE.MeshBasicMaterial).opacity = t;
+        });
+      } else {
+        target.visible = true;
+        (target.material as THREE.MeshBasicMaterial).opacity = t;
+      }
+    }
+  };
+
+  updateEyeShapes(leftEye);
+  updateEyeShapes(rightEye);
+
+  // ========== MOUTH CURVE TRANSITION ==========
+  transition.currentMouthCurve += (transition.targetMouthCurve - transition.currentMouthCurve) * 0.1;
+
+  // ========== GAZE ==========
+  let gazeX = 0;
+  let gazeY = 0;
+
+  if (animParams?.gazeOffset) {
+    gazeX = animParams.gazeOffset.x;
+    gazeY = animParams.gazeOffset.y;
+  } else {
+    idle.lookTimer += 0.016;
+    if (idle.lookTimer > 3 + Math.random() * 2) {
+      idle.lookTimer = 0;
+      idle.targetLookX = (Math.random() - 0.5) * 0.3;
+      idle.targetLookY = (Math.random() - 0.5) * 0.2;
+    }
+    idle.lookX += (idle.targetLookX - idle.lookX) * 0.02;
+    idle.lookY += (idle.targetLookY - idle.lookY) * 0.02;
+    gazeX = idle.lookX;
+    gazeY = idle.lookY;
+  }
+
+  // ========== BREATHING ==========
+  let breathScale = Math.sin(time * 1.2) * 0.02;
+  if (animParams?.breathScale !== undefined) {
+    breathScale += animParams.breathScale;
+  }
+  mainGroup.scale.set(1 + breathScale, 1 + breathScale * 0.6, 1);
 
   // Floating animation
   mainGroup.position.y = Math.sin(time * 0.7) * 0.03;
   mainGroup.position.x = Math.sin(time * 0.5) * 0.02;
 
-  // Face direction (mouse tracking)
-  const headTiltX = mouse.x * 0.15 + idle.lookX * 0.2;
-  const headTiltY = -mouse.y * 0.1 + idle.lookY * 0.12;
+  // Face direction
+  const headTiltX = mouse.x * 0.15 + gazeX * 0.2;
+  const headTiltY = -mouse.y * 0.1 + gazeY * 0.12;
   mainGroup.rotation.y += (headTiltX - mainGroup.rotation.y) * 0.04;
   mainGroup.rotation.x += (headTiltY - mainGroup.rotation.x) * 0.04;
 
-  // Blinking
-  const blinkCycle = time % 4;
-  let eyeScaleY = 1;
+  // ========== EYE SCALE (BLINK) ==========
+  // Only apply blink scale if not in closed/X eye state
+  if (transition.currentEyeShape === "circle" || transition.currentEyeShape === "large") {
+    let eyeScaleY = 1;
 
-  if (blinkCycle > 3.7 && blinkCycle < 4.0) {
-    const progress = (blinkCycle - 3.7) / 0.3;
-    eyeScaleY = 1 - Math.sin(progress * Math.PI) * 0.9;
+    if (animParams?.blinkScale !== undefined) {
+      eyeScaleY = animParams.blinkScale;
+    } else {
+      const blinkCycle = time % 4;
+      if (blinkCycle > 3.7 && blinkCycle < 4.0) {
+        const progress = (blinkCycle - 3.7) / 0.3;
+        eyeScaleY = 1 - Math.sin(progress * Math.PI) * 0.9;
+      }
+    }
+
+    if (isSpeaking) {
+      eyeScaleY = Math.min(eyeScaleY, 0.8 + Math.sin(time * 6) * 0.08);
+    }
+
+    leftEye.group.scale.y = eyeScaleY;
+    rightEye.group.scale.y = eyeScaleY;
+  } else {
+    leftEye.group.scale.y = 1;
+    rightEye.group.scale.y = 1;
   }
 
-  // Squint eyes slightly when speaking
+  // ========== CONFIRMING: Tilt one eye ==========
+  if (avatarState === "CONFIRMING") {
+    rightEye.group.rotation.z = Math.sin(time * 2) * 0.1 + 0.15;
+  } else {
+    rightEye.group.rotation.z *= 0.9;
+  }
+
+  // ========== MOUTH ==========
   if (isSpeaking) {
-    eyeScaleY = Math.min(eyeScaleY, 0.8 + Math.sin(time * 6) * 0.08);
+    updateMouthAnimation(mouth, smoothMouth, time, transition.currentMouthCurve);
+  } else {
+    updateMouthGeometry(mouth, transition.currentMouthCurve, 0);
+    // Reset position
+    mouth.group.position.y += (-0.35 - mouth.group.position.y) * 0.1;
+    mouth.group.position.x *= 0.9;
+    mouth.group.rotation.z *= 0.9;
   }
 
-  leftEye.group.scale.y = eyeScaleY;
-  rightEye.group.scale.y = eyeScaleY;
-
-  // Mouth animation
-  updateMouthAnimation(mouth, smoothMouth, isSpeaking, time);
-
-  // Thinking
+  // ========== THINKING TILT ==========
   if (isThinking) {
     mainGroup.rotation.z = Math.sin(time * 0.9) * 0.04;
   } else {
@@ -222,42 +507,23 @@ function updateScene(
   camera.lookAt(0, 0, 0);
 }
 
-// Mouth animation
 function updateMouthAnimation(
   mouth: { group: THREE.Group; mesh: THREE.Mesh; geometry: THREE.ShapeGeometry },
   openness: number,
-  isSpeaking: boolean,
-  time: number
+  time: number,
+  curve: number
 ) {
-  if (isSpeaking) {
-    // When speaking: open/close synced with audio amplitude + multiple movements
-    const baseOpen = 0.5 + openness * 2.5; // Open wide based on audio amplitude
-    const fastWobble = Math.sin(time * 15) * 0.3; // Fast vibration
-    const mediumWobble = Math.sin(time * 8) * 0.2; // Medium vibration
-    const slowPulse = Math.sin(time * 3) * 0.15; // Slow pulse
+  const baseOpen = 0.5 + openness * 2.5;
+  const fastWobble = Math.sin(time * 15) * 0.3;
+  const mediumWobble = Math.sin(time * 8) * 0.2;
+  const slowPulse = Math.sin(time * 3) * 0.15;
 
-    const scaleY = baseOpen + fastWobble + mediumWobble + slowPulse;
-    const scaleX = 1 + openness * 0.3 + Math.sin(time * 6) * 0.1; // Also stretch horizontally
+  const scaleY = baseOpen + fastWobble + mediumWobble + slowPulse;
 
-    mouth.mesh.scale.set(scaleX, Math.max(0.3, scaleY), 1);
+  updateMouthGeometry(mouth, curve, openness);
+  mouth.mesh.scale.set(1 + openness * 0.3 + Math.sin(time * 6) * 0.1, Math.max(0.3, scaleY), 1);
 
-    // Also subtly move mouth position
-    mouth.group.position.y = -0.35 + Math.sin(time * 10) * 0.015;
-    mouth.group.position.x = Math.sin(time * 7) * 0.008;
-
-    // Also add slight rotation
-    mouth.group.rotation.z = Math.sin(time * 5) * 0.05;
-  } else {
-    // When not speaking: return to calm state
-    const targetScaleY = 1;
-    const targetScaleX = 1;
-
-    mouth.mesh.scale.x += (targetScaleX - mouth.mesh.scale.x) * 0.1;
-    mouth.mesh.scale.y += (targetScaleY - mouth.mesh.scale.y) * 0.1;
-
-    // Reset position
-    mouth.group.position.y += (-0.35 - mouth.group.position.y) * 0.1;
-    mouth.group.position.x *= 0.9;
-    mouth.group.rotation.z *= 0.9;
-  }
+  mouth.group.position.y = -0.35 + Math.sin(time * 10) * 0.015;
+  mouth.group.position.x = Math.sin(time * 7) * 0.008;
+  mouth.group.rotation.z = Math.sin(time * 5) * 0.05;
 }
