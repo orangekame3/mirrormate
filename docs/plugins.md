@@ -1,6 +1,6 @@
 # Plugins
 
-MirrorMate supports visual widget plugins that display information on the mirror screen. Unlike [Features](features.md) which provide context to the AI, Plugins render UI components in the four corners of the screen.
+Mirror Mate supports visual widget plugins that display information on the mirror screen. Unlike [Features](features.md) which provide context to the AI, Plugins render UI components in the four corners of the screen.
 
 ## Features vs Plugins
 

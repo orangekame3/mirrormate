@@ -1,5 +1,5 @@
 name: Question
-description: Ask a question about MirrorMate
+description: Ask a question about Mirror Mate
 labels: ["question"]
 body:
   - type: markdown

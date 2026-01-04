@@ -184,7 +184,7 @@ export async function sendDiscordMessage(message: DiscordMessage): Promise<boole
     });
 
     const payload: DiscordMessage = {
-      username: "MirrorMate",
+      username: "Mirror Mate",
       ...message,
       embeds: sanitizedEmbeds,
     };
@@ -240,7 +240,7 @@ export async function sendSearchResults(
     title: `Search: ${query}`,
     color: DISCORD_COLORS.search,
     fields,
-    footer: { text: "MirrorMate Search Results" },
+    footer: { text: "Mirror Mate Search Results" },
     timestamp: new Date().toISOString(),
   };
 
@@ -273,7 +273,7 @@ export async function sendWeatherInfo(
     title: `Weather: ${location}`,
     color: DISCORD_COLORS.weather,
     fields,
-    footer: { text: "MirrorMate Weather" },
+    footer: { text: "Mirror Mate Weather" },
     timestamp: new Date().toISOString(),
   };
 
@@ -300,7 +300,7 @@ export async function sendCalendarEvents(
     title: "Upcoming Events",
     color: DISCORD_COLORS.calendar,
     fields,
-    footer: { text: "MirrorMate Calendar" },
+    footer: { text: "Mirror Mate Calendar" },
     timestamp: new Date().toISOString(),
   };
 
@@ -324,7 +324,7 @@ export async function sendTextMessage(
     description: content,
     url,
     color: DISCORD_COLORS.info,
-    footer: { text: "MirrorMate" },
+    footer: { text: "Mirror Mate" },
     timestamp: new Date().toISOString(),
   };
 
@@ -347,9 +347,9 @@ export async function sendConversationSummary(
     color: DISCORD_COLORS.info,
     fields: [
       { name: "You", value: userMessage.slice(0, 1024), inline: false },
-      { name: "MirrorMate", value: assistantResponse.slice(0, 1024), inline: false },
+      { name: "Mirror Mate", value: assistantResponse.slice(0, 1024), inline: false },
     ],
-    footer: { text: "MirrorMate Conversation" },
+    footer: { text: "Mirror Mate Conversation" },
     timestamp: new Date().toISOString(),
   };
 
