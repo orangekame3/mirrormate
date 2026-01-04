@@ -2,6 +2,53 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { loadProvidersConfig } from "@/lib/providers/config-loader";
 
+// Word replacements for natural Japanese TTS pronunciation
+const PRONUNCIATION_MAP: Record<string, string> = {
+  // Apps & Services
+  "Discord": "ディスコード",
+  "discord": "ディスコード",
+  "Twitter": "ツイッター",
+  "twitter": "ツイッター",
+  "YouTube": "ユーチューブ",
+  "youtube": "ユーチューブ",
+  "Google": "グーグル",
+  "google": "グーグル",
+  "Apple": "アップル",
+  "iPhone": "アイフォン",
+  "Android": "アンドロイド",
+  "LINE": "ライン",
+  "Slack": "スラック",
+  "Zoom": "ズーム",
+  "Teams": "チームズ",
+  // Tech terms
+  "API": "エーピーアイ",
+  "URL": "ユーアールエル",
+  "AI": "エーアイ",
+  "OK": "オーケー",
+  "Wi-Fi": "ワイファイ",
+  "WiFi": "ワイファイ",
+  "Bluetooth": "ブルートゥース",
+  // Common English
+  "check": "チェック",
+  "link": "リンク",
+  "share": "シェア",
+};
+
+/**
+ * Normalize text for better Japanese TTS pronunciation
+ */
+function normalizeForTTS(text: string): string {
+  let normalized = text;
+
+  for (const [english, japanese] of Object.entries(PRONUNCIATION_MAP)) {
+    // Use word boundary matching to avoid partial replacements
+    const regex = new RegExp(`\\b${english}\\b`, "gi");
+    normalized = normalized.replace(regex, japanese);
+  }
+
+  return normalized;
+}
+
 async function generateOpenAITTS(
   text: string,
   voice: string,
@@ -77,6 +124,9 @@ export async function POST(request: NextRequest) {
     // Default to OpenAI if TTS config is not set
     const provider = ttsConfig?.provider || "openai";
 
+    // Normalize text for better pronunciation (mainly for Japanese TTS)
+    const normalizedText = provider === "voicevox" ? normalizeForTTS(text) : text;
+
     let audioBase64: string;
 
     if (provider === "voicevox") {
@@ -84,7 +134,7 @@ export async function POST(request: NextRequest) {
       const baseUrl = ttsConfig?.voicevox?.baseUrl || "http://localhost:50021";
 
       console.log(`[TTS] Using VOICEVOX (speaker: ${speaker})`);
-      audioBase64 = await generateVoicevoxTTS(text, speaker, baseUrl);
+      audioBase64 = await generateVoicevoxTTS(normalizedText, speaker, baseUrl);
     } else {
       const voice = ttsConfig?.openai?.voice || "shimmer";
       const model = ttsConfig?.openai?.model || "tts-1";

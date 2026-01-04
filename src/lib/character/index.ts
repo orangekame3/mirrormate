@@ -17,6 +17,7 @@ export interface CharacterConfig {
     personality: string[];
     speech_style: string[];
     examples: string[];
+    behaviors?: string[];
     background: string;
   };
 }
@@ -99,9 +100,17 @@ export function getSystemPrompt(): string {
     "",
     "例:",
     ...c.examples.map((e) => `- 「${e}」`),
-    "",
-    c.background.trim(),
   ];
+
+  // Add behaviors if defined
+  if (c.behaviors && c.behaviors.length > 0) {
+    sections.push("");
+    sections.push("行動指針:");
+    sections.push(...c.behaviors.map((b) => `- ${b}`));
+  }
+
+  sections.push("");
+  sections.push(c.background.trim());
 
   cachedPrompt = sections.join("\n");
   return cachedPrompt;

@@ -1,6 +1,6 @@
 # Architecture Overview
 
-MirrorMate is a Next.js application that provides an interactive AI avatar for smart mirror displays.
+Mirror Mate is a Next.js application that provides an interactive AI avatar for smart mirror displays.
 
 > **Browser Requirement**: Google Chrome is required for voice recognition (Web Speech API).
 
@@ -266,3 +266,15 @@ Memory system enables persistent user context through:
 The RAG (Retrieval-Augmented Generation) system retrieves relevant memories using semantic search to provide context-aware responses.
 
 See [Memory Documentation](memory.md)
+
+### Animation
+
+The avatar uses a finite state machine for animation control with 8 states (IDLE, AWARE, LISTENING, THINKING, SPEAKING, CONFIRMING, ERROR, SLEEP). Each state has distinct visual characteristics including eye shapes, mouth curves, and animation parameters.
+
+See [Animation Documentation](animation.md)
+
+### Discord Integration
+
+Share search results, weather info, and other data to Discord for easy access on your phone. When configured, web search results are automatically sent to your Discord channel.
+
+See [Discord Documentation](discord.md)

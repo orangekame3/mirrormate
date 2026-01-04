@@ -1,6 +1,6 @@
 # Docker Setup
 
-MirrorMate can be run using Docker with optional VOICEVOX integration.
+Mirror Mate can be run using Docker with optional VOICEVOX integration.
 
 ## Architecture
 
@@ -88,6 +88,7 @@ services:
       - GOOGLE_PRIVATE_KEY=${GOOGLE_PRIVATE_KEY}
       - GOOGLE_CALENDAR_ID=${GOOGLE_CALENDAR_ID}
       - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -164,6 +165,9 @@ GOOGLE_CALENDAR_ID=...
 
 # Optional: Web Search
 TAVILY_API_KEY=tvly-...
+
+# Optional: Discord Integration
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 ```
 
 ### Quick Start with OpenAI

@@ -27,3 +27,11 @@ features:
         urgent: false
       - minutes: 5
         urgent: true
+
+  discord:
+    enabled: true  # Set to true and configure webhookUrl to enable
+    # webhookUrl: "https://discord.com/api/webhooks/..."  # Or use DISCORD_WEBHOOK_URL env var
+    autoShare:
+      searchResults: true  # Auto-share web search results
+      weather: false       # Auto-share weather updates
+      calendar: false      # Auto-share calendar events

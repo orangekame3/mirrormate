@@ -4,7 +4,7 @@ import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MirrorMate",
+  title: "Mirror Mate",
   description: "Your friendly AI companion for smart mirror displays",
 };
 

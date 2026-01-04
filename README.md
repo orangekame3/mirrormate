@@ -1,24 +1,27 @@
-# MirrorMate
+# Mirror Mate
 
-Your friendly AI companion for smart mirror displays. Features voice recognition, customizable AI personality, and real-time lip-sync.
+Self-hosted personalized AI in a mirror.
 
 > [!IMPORTANT]
 > This application requires **Google Chrome** for voice recognition (Web Speech API).
+
+<p align="center">
+  <img src="docs/mirrormate.png" alt="Mirror Mate Preview" width="600">
+</p>
 
 https://github.com/user-attachments/assets/c9005df4-9bdb-4190-861e-c8f5f9290468
 
 ## Features
 
-- Voice-activated AI assistant with real-time speech recognition
-- Wake word activation ("OK Mirror" style)
-- Customizable AI personality and character settings
-- Multiple LLM providers (OpenAI, Ollama)
-- Multiple TTS providers (OpenAI, VOICEVOX)
-- Built-in features for weather, calendar, reminders
-- Plugin system for visual widgets (clock, etc.)
-- Rule-based workflows for automated responses
-- Multi-language support (Japanese, English)
-- Visual effects (confetti, hearts, sparkles)
+- **Voice Interaction** - Real-time speech recognition with wake word activation
+- **Personalized Memory** - RAG-based memory system that remembers user preferences and context
+- **Customizable Character** - Define AI personality, speech style, and appearance
+- **Multiple Providers** - Support for OpenAI, Ollama (LLM) and OpenAI TTS, VOICEVOX (TTS)
+- **Discord Integration** - Share search results and information to your phone
+- **Expressive Avatar** - 8-state animation system with lip-sync and natural expressions
+- **Plugin System** - Visual widgets (clock, etc.) for the mirror display
+- **Built-in Features** - Weather, calendar, reminders, web search
+- **Visual Effects** - Confetti, hearts, sparkles reactions
 
 ## Quick Start
 
@@ -47,24 +50,26 @@ Open http://localhost:3000 in Chrome - that's it!
 For local development without Docker:
 
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 Run tests:
 
 ```bash
-npm run test
+bun run test
 ```
 
-> **Note**: You'll need to run VOICEVOX separately or use OpenAI TTS instead.
+> **Note**: This project uses [Bun](https://bun.sh/) as the package manager. You'll also need to run VOICEVOX separately or use OpenAI TTS instead.
 
 ## Pages
 
-| Path       | Description                            |
-| ---------- | -------------------------------------- |
-| `/`        | Avatar display (for mirror projection) |
-| `/control` | Control panel (for sending messages)   |
+| Path              | Description                            |
+| ----------------- | -------------------------------------- |
+| `/`               | Avatar display (for mirror projection) |
+| `/control`        | Control panel (text input & settings)  |
+| `/control/memory` | Memory management UI                   |
+| `/demo`           | Animation demo with keyboard controls  |
 
 ## Configuration
 
@@ -84,6 +89,9 @@ All configuration is done via YAML files in the `config/` directory:
 
 - [Architecture Overview](docs/architecture.md)
 - [Providers (LLM & TTS)](docs/providers.md)
+- [Memory System](docs/memory.md)
+- [Animation States](docs/animation.md)
+- [Discord Integration](docs/discord.md)
 - [Features](docs/features.md)
 - [Plugins](docs/plugins.md)
 - [Character Configuration](docs/character.md)
@@ -94,6 +102,9 @@ All configuration is done via YAML files in the `config/` directory:
 ## Tech Stack
 
 - Next.js 15 / React 19
+- Bun (package manager)
+- Three.js (3D avatar)
+- SQLite + Drizzle ORM (memory storage)
 - Ollama / OpenAI API
 - VOICEVOX / OpenAI TTS
 - Web Speech API
@@ -101,7 +112,7 @@ All configuration is done via YAML files in the `config/` directory:
 
 ## Inspired By
 
-This project is inspired by [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror), the open-source modular smart mirror platform. MirrorMate takes a different approach by focusing on voice-first AI interaction with real-time lip-sync avatar display.
+This project is inspired by [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror), the open-source modular smart mirror platform. Mirror Mate takes a different approach by focusing on voice-first AI interaction with real-time lip-sync avatar display.
 
 ## Contributing
 
