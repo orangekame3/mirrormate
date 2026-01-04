@@ -376,8 +376,16 @@ export default function AvatarPage() {
           // Add to message history
           messagesRef.current.push({ role: "assistant", content: data.message });
 
-          // Detect weather/calendar info and show card
-          addInfoCard(data.message);
+          // Show info cards from tools
+          if (data.infoCards && data.infoCards.length > 0) {
+            const newCards: InfoCard[] = data.infoCards.map((card: { type: InfoCard["type"]; title: string; items: string[] }) => ({
+              id: crypto.randomUUID(),
+              type: card.type,
+              title: card.title,
+              items: card.items,
+            }));
+            setInfoCards((prev) => [...prev, ...newCards]);
+          }
 
           // Show effect
           if (data.effect === "confetti" || data.effect === "hearts" || data.effect === "sparkles") {

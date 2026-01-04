@@ -1,6 +1,6 @@
-import { Tool } from "./types";
+import { Tool, ToolExecuteResult } from "./types";
 import { sendTextMessage, sendSearchResults, isDiscordEnabled } from "../discord";
-import { getLastSearchResults } from "./web-search";
+import { getLastSearchResults, findSearchResultsByQuery } from "./web-search";
 
 export const discordShareTool: Tool = {
   definition: {
@@ -31,29 +31,51 @@ export const discordShareTool: Tool = {
     },
   },
 
-  async execute(args: Record<string, unknown>): Promise<string> {
+  async execute(args: Record<string, unknown>): Promise<ToolExecuteResult> {
     const title = args.title as string;
     const content = args.content as string;
     const url = args.url as string | undefined;
     const includeSearchResults = args.includeSearchResults === "true" || args.includeSearchResults === true;
 
     if (!isDiscordEnabled()) {
-      return "Discord integration is not configured. Please set DISCORD_WEBHOOK_URL environment variable.";
+      return { result: "Discord integration is not configured. Please set DISCORD_WEBHOOK_URL environment variable." };
     }
 
     console.log(`[Discord] Sharing: ${title}, includeSearchResults: ${includeSearchResults}`);
 
     try {
       let success = false;
+      let sharedQuery = title;
+      let sharedCount = 0;
 
       // If including search results, send them with URLs
       if (includeSearchResults) {
-        const { query, results } = getLastSearchResults();
-        if (results.length > 0) {
-          success = await sendSearchResults(query || title, results);
+        // First, try to find results matching the title (user's intent)
+        let searchData = findSearchResultsByQuery(title);
+
+        // Fall back to the most recent search results
+        if (!searchData || searchData.results.length === 0) {
+          const lastResults = getLastSearchResults();
+          if (lastResults.results.length > 0) {
+            searchData = lastResults;
+          }
+        }
+
+        if (searchData && searchData.results.length > 0) {
+          const { query, results } = searchData;
+          success = await sendSearchResults(query, results);
+          sharedQuery = query;
+          sharedCount = results.length;
           if (success) {
-            // Return a message that encourages natural voice confirmation
-            return `Discord送信完了！${results.length}件のリンク付きで送った。ユーザーに「送ったよ！」と短く伝えて。`;
+            const topResults = results.slice(0, 2).map(r => r.title).join("、");
+            return {
+              result: `Discord送信完了！「${query}」について${results.length}件のリンク付きで送った（${topResults}など）。ユーザーに「送ったよ！リンクも付けておいたからね」と短く伝えて。`,
+              infoCard: {
+                type: "discord",
+                title: "Sent to Discord",
+                items: [`${sharedCount} items shared`, sharedQuery],
+              },
+            };
           }
         }
       }
@@ -62,14 +84,20 @@ export const discordShareTool: Tool = {
       success = await sendTextMessage(title, content, url);
 
       if (success) {
-        // Return a message that encourages natural voice confirmation
-        return `Discord送信完了！「${title}」を送った。ユーザーに「送ったよ！」と短く伝えて。`;
+        return {
+          result: `Discord送信完了！「${title}」の内容を送った。ユーザーに「送ったよ！」と短く伝えて。`,
+          infoCard: {
+            type: "discord",
+            title: "Sent to Discord",
+            items: [title],
+          },
+        };
       } else {
-        return "Discordへの送信に失敗した。設定を確認するよう伝えて。";
+        return { result: "Discordへの送信に失敗した。設定を確認するよう伝えて。" };
       }
     } catch (error) {
       console.error("[Discord] Share error:", error);
-      return `Discordエラー: ${(error as Error).message}`;
+      return { result: `Discordエラー: ${(error as Error).message}` };
     }
   },
 };
