@@ -38,12 +38,22 @@ export interface ReminderFeatureConfig extends FeatureConfig {
   reminders: ReminderConfig[];
 }
 
+export interface DiscordFeatureConfig extends FeatureConfig {
+  webhookUrl?: string; // Can also be set via DISCORD_WEBHOOK_URL env var
+  autoShare?: {
+    searchResults?: boolean;
+    weather?: boolean;
+    calendar?: boolean;
+  };
+}
+
 export interface FeaturesConfig {
   features: {
     weather?: WeatherFeatureConfig;
     calendar?: CalendarFeatureConfig;
     time?: TimeFeatureConfig;
     reminder?: ReminderFeatureConfig;
+    discord?: DiscordFeatureConfig;
     [key: string]: FeatureConfig | undefined;
   };
 }

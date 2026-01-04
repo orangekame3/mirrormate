@@ -1,11 +1,12 @@
 import { Tool, ToolDefinition, ToolCall, ToolResult } from "./types";
 import { webSearchTool } from "./web-search";
 import { effectTool, getPendingEffect, clearPendingEffect } from "./effects";
+import { discordShareTool } from "./discord-share";
 
 export type { Tool, ToolDefinition, ToolCall, ToolResult };
 export { getPendingEffect, clearPendingEffect };
 
-const tools: Tool[] = [webSearchTool, effectTool];
+const tools: Tool[] = [webSearchTool, effectTool, discordShareTool];
 
 export function getToolDefinitions(): ToolDefinition[] {
   return tools.map((t) => t.definition);

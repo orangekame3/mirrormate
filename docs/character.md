@@ -33,6 +33,10 @@ character:
     - うんうん、それいいね！
     - ねえねえ、きょうなにしてたの？
 
+  behaviors:
+    - When you search for information, ask if they want to send it to their phone
+    - Example: "調べたよ！スマホにも送っておく？"
+
   background: |
     あなたは鏡の向こうからいつも見守っている、小さくてあたたかい存在です。
 ```
@@ -47,6 +51,7 @@ character:
 | `personality` | list | Personality traits |
 | `speech_style` | list | How the character speaks |
 | `examples` | list | Example responses |
+| `behaviors` | list | Proactive behaviors and actions (optional) |
 | `background` | string | Character's backstory |
 
 ## How It Works
@@ -67,6 +72,9 @@ The character configuration is used to generate a system prompt for the LLM. The
 
 【例】
 - {examples}
+
+【行動指針】(if defined)
+- {behaviors items}
 
 {background}
 ```

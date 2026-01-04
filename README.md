@@ -1,9 +1,13 @@
 # MirrorMate
 
-Your friendly AI companion for smart mirror displays. Features voice recognition, customizable AI personality, and real-time lip-sync.
+Self-hosted personalized AI in a mirror.
 
 > [!IMPORTANT]
 > This application requires **Google Chrome** for voice recognition (Web Speech API).
+
+<p align="center">
+  <img src="docs/mirrormate.png" alt="MirrorMate Preview" width="600">
+</p>
 
 https://github.com/user-attachments/assets/c9005df4-9bdb-4190-861e-c8f5f9290468
 
