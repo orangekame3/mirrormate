@@ -1,12 +1,26 @@
-# Mirror Mate
+<p align="center">
+  <img src="docs/public/mirrormate.png" alt="Mirror Mate" width="500">
+</p>
 
-Self-hosted personalized AI in a mirror.
-
-**[Documentation](https://www.orangekame3.net/mirrormate/)**
+<h1 align="center">Mirror Mate</h1>
 
 <p align="center">
-  <img src="docs/public/mirrormate.png" alt="Mirror Mate Preview" width="600">
+  <strong>Self-hosted personalized AI in a mirror</strong>
 </p>
+
+<p align="center">
+  <a href="https://www.orangekame3.net/mirrormate/">Documentation</a> •
+  <a href="https://www.orangekame3.net/mirrormate/guide/getting-started">Getting Started</a> •
+  <a href="https://github.com/orangekame3/mirrormate/releases">Releases</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/orangekame3/mirrormate/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <a href="https://github.com/orangekame3/mirrormate/releases"><img src="https://img.shields.io/github/v/release/orangekame3/mirrormate" alt="Release"></a>
+  <a href="https://github.com/orangekame3/mirrormate/actions"><img src="https://github.com/orangekame3/mirrormate/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+</p>
+
+---
 
 https://github.com/user-attachments/assets/c9005df4-9bdb-4190-861e-c8f5f9290468
 
