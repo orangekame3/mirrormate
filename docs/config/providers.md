@@ -267,7 +267,7 @@ providers:
 | `episode` | Recent interactions and events |
 | `knowledge` | Facts and learned information |
 
-See [Memory Documentation](memory.md) for details.
+See [Memory Documentation](/guide/memory) for details.
 
 ---
 
@@ -307,4 +307,4 @@ providers:
       minConfidence: 0.5
 ```
 
-See [Docker Documentation](docker.md) for details.
+See [Docker Documentation](/guide/docker) for details.
