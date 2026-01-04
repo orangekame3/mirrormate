@@ -4,20 +4,22 @@ FROM node:22-slim AS base
 FROM base AS deps
 WORKDIR /app
 
-# Install build dependencies for native modules (better-sqlite3)
+# Install build dependencies for native modules (better-sqlite3), bun, and git deps
 RUN apt-get update && apt-get install -y \
     python3 \
     make \
     g++ \
+    curl \
+    unzip \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure npm for better network reliability
-RUN npm config set fetch-retries 5 && \
-    npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000
+# Install Bun for faster dependency installation
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:$PATH"
 
-COPY package.json package-lock.json* ./
-RUN npm ci
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder

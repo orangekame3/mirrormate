@@ -33,7 +33,7 @@ The `source` field specifies where to get the plugin:
 | Format | Description | Example |
 |--------|-------------|---------|
 | `github:owner/repo` | Install from GitHub repository | `github:orangekame3/mirrormate-clock-plugin` |
-| `npm:package-name` | Install from npm registry | `npm:mirrormate-clock-plugin` |
+| `npm:package-name` | Install from npm/bun registry | `npm:mirrormate-clock-plugin` |
 | `local:plugin-name` | Use from local `plugins/` directory | `local:my-custom-plugin` |
 
 ### Position Options
@@ -56,7 +56,7 @@ Plugins can be placed in any of the four corners:
 1. Add the plugin to `package.json`:
 
 ```bash
-npm install github:orangekame3/mirrormate-clock-plugin
+bun add github:orangekame3/mirrormate-clock-plugin
 ```
 
 2. Configure in `config/plugins.yaml`:
@@ -79,10 +79,10 @@ const pluginComponents: Record<string, React.ComponentType<{ config?: Record<str
 };
 ```
 
-### From npm
+### From npm/bun registry
 
 ```bash
-npm install mirrormate-clock-plugin
+bun add mirrormate-clock-plugin
 ```
 
 Then configure the same way with `source: npm:mirrormate-clock-plugin`.
@@ -249,7 +249,7 @@ export default defineConfig({
 1. Build the plugin:
 
 ```bash
-npm run build
+bun run build
 ```
 
 2. Push to GitHub:
@@ -261,7 +261,7 @@ git push origin main
 3. Users can install via:
 
 ```bash
-npm install github:your-username/mirrormate-my-plugin
+bun add github:your-username/mirrormate-my-plugin
 ```
 
 ---

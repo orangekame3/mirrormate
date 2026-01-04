@@ -1,4 +1,4 @@
-# MirrorMate
+# Mirror Mate
 
 Self-hosted personalized AI in a mirror.
 
@@ -51,17 +51,17 @@ Open http://localhost:3000 in Chrome - that's it!
 For local development without Docker:
 
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 Run tests:
 
 ```bash
-npm run test
+bun run test
 ```
 
-> **Note**: You'll need to run VOICEVOX separately or use OpenAI TTS instead.
+> **Note**: This project uses [Bun](https://bun.sh/) as the package manager. You'll also need to run VOICEVOX separately or use OpenAI TTS instead.
 
 ## Pages
 
@@ -98,6 +98,7 @@ All configuration is done via YAML files in the `config/` directory:
 ## Tech Stack
 
 - Next.js 15 / React 19
+- Bun (package manager)
 - Ollama / OpenAI API
 - VOICEVOX / OpenAI TTS
 - Web Speech API
@@ -105,7 +106,7 @@ All configuration is done via YAML files in the `config/` directory:
 
 ## Inspired By
 
-This project is inspired by [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror), the open-source modular smart mirror platform. MirrorMate takes a different approach by focusing on voice-first AI interaction with real-time lip-sync avatar display.
+This project is inspired by [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror), the open-source modular smart mirror platform. Mirror Mate takes a different approach by focusing on voice-first AI interaction with real-time lip-sync avatar display.
 
 ## Contributing
 

@@ -273,7 +273,7 @@ ollama pull bge-m3
 mkdir -p data
 
 # Run database migration
-npm run db:push
+bun run db:push
 ```
 
 ### 3. Configure Providers
@@ -303,7 +303,7 @@ providers:
 
 ```bash
 # Start the development server
-npm run dev
+bun run dev
 
 # Open memory management
 open http://localhost:3000/control/memory
@@ -360,7 +360,7 @@ See [Docker Documentation](docker.md) for details.
 
 **Solution**:
 1. Create data directory: `mkdir -p data`
-2. Run migration: `npm run db:push`
+2. Run migration: `bun run db:push`
 
 ### Memory Not Being Extracted
 
