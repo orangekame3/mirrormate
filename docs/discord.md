@@ -1,6 +1,6 @@
 # Discord Integration
 
-MirrorMate can share information to Discord, allowing you to access search results, weather info, and other data on your phone.
+Mirror Mate can share information to Discord, allowing you to access search results, weather info, and other data on your phone.
 
 ## Overview
 
@@ -20,7 +20,7 @@ flowchart LR
 2. Right-click on the channel where you want to receive messages
 3. Select **Edit Channel** → **Integrations** → **Webhooks**
 4. Click **New Webhook**
-5. Name it "MirrorMate" (optional)
+5. Name it "Mirror Mate" (optional)
 6. Copy the **Webhook URL**
 
 ### 2. Configure in features.yaml (Recommended)
@@ -90,7 +90,7 @@ Messages are sent as rich embeds with the following structure:
 │ New rendering strategy that...      │
 │ 🔗 Link                             │
 ├─────────────────────────────────────┤
-│ MirrorMate Search Results           │
+│ Mirror Mate Search Results           │
 │ Today at 14:32                      │
 └─────────────────────────────────────┘
 ```

@@ -1,6 +1,6 @@
 # Providers
 
-MirrorMate uses external providers for LLM (language model), TTS (text-to-speech), and Embedding (vector generation). Providers are configured in `config/providers.yaml`.
+Mirror Mate uses external providers for LLM (language model), TTS (text-to-speech), and Embedding (vector generation). Providers are configured in `config/providers.yaml`.
 
 ## Configuration
 

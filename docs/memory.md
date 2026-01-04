@@ -1,6 +1,6 @@
 # Memory System
 
-MirrorMate includes a memory system that enables persistent user context through RAG (Retrieval-Augmented Generation). The system stores user information, extracts memories from conversations, and provides relevant context to the AI.
+Mirror Mate includes a memory system that enables persistent user context through RAG (Retrieval-Augmented Generation). The system stores user information, extracts memories from conversations, and provides relevant context to the AI.
 
 ## Overview
 
@@ -183,7 +183,7 @@ The LLM is prompted to extract:
 
 ## Database Schema
 
-MirrorMate uses SQLite with Drizzle ORM for persistence.
+Mirror Mate uses SQLite with Drizzle ORM for persistence.
 
 ### Tables
 

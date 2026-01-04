@@ -1,6 +1,6 @@
-# Contributing to MirrorMate
+# Contributing to Mirror Mate
 
-Thank you for your interest in contributing to MirrorMate! This document provides guidelines for contributing.
+Thank you for your interest in contributing to Mirror Mate! This document provides guidelines for contributing.
 
 ## Code of Conduct
 

@@ -31,7 +31,7 @@ export async function POST() {
   try {
     const success = await sendTextMessage(
       "Test Message",
-      "This is a test message from MirrorMate!",
+      "This is a test message from Mirror Mate!",
     );
 
     return NextResponse.json({ success });

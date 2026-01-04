@@ -1,6 +1,6 @@
 # Features
 
-MirrorMate includes built-in features that provide contextual information to the AI. Features fetch external data and inject it into the system prompt.
+Mirror Mate includes built-in features that provide contextual information to the AI. Features fetch external data and inject it into the system prompt.
 
 ## Configuration
 

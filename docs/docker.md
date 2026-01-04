@@ -1,6 +1,6 @@
 # Docker Setup
 
-MirrorMate can be run using Docker with optional VOICEVOX integration.
+Mirror Mate can be run using Docker with optional VOICEVOX integration.
 
 ## Architecture
 
