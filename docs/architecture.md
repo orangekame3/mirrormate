@@ -266,3 +266,9 @@ Memory system enables persistent user context through:
 The RAG (Retrieval-Augmented Generation) system retrieves relevant memories using semantic search to provide context-aware responses.
 
 See [Memory Documentation](memory.md)
+
+### Animation
+
+The avatar uses a finite state machine for animation control with 8 states (IDLE, AWARE, LISTENING, THINKING, SPEAKING, CONFIRMING, ERROR, SLEEP). Each state has distinct visual characteristics including eye shapes, mouth curves, and animation parameters.
+
+See [Animation Documentation](animation.md)

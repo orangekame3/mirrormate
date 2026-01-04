@@ -48,6 +48,22 @@ export function useSpeechRecognition({
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const shouldRestartRef = useRef(true);
   const isListeningRef = useRef(false);
+  const restartAttemptsRef = useRef(0);
+  const maxRestartAttempts = 5;
+  const restartDelayRef = useRef(100);
+
+  // Use refs for callbacks to avoid recreating recognition instance
+  const onResultRef = useRef(onResult);
+  const onInterimResultRef = useRef(onInterimResult);
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onResultRef.current = onResult;
+  }, [onResult]);
+
+  useEffect(() => {
+    onInterimResultRef.current = onInterimResult;
+  }, [onInterimResult]);
 
   useEffect(() => {
     const SpeechRecognitionAPI =
@@ -69,6 +85,9 @@ export function useSpeechRecognition({
       console.log("[SpeechRecognition] Started listening");
       isListeningRef.current = true;
       setIsListening(true);
+      // Reset restart attempts on successful start
+      restartAttemptsRef.current = 0;
+      restartDelayRef.current = 100;
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -86,13 +105,13 @@ export function useSpeechRecognition({
         }
       }
 
-      if (interimTranscript && onInterimResult) {
-        onInterimResult(interimTranscript);
+      if (interimTranscript && onInterimResultRef.current) {
+        onInterimResultRef.current(interimTranscript);
       }
 
       if (finalTranscript) {
         console.log("[SpeechRecognition] Final result:", finalTranscript);
-        onResult(finalTranscript);
+        onResultRef.current(finalTranscript);
       }
     };
 
@@ -108,12 +127,17 @@ export function useSpeechRecognition({
           console.warn("[SpeechRecognition] Network error - will retry");
           break;
         case "no-speech":
-          // No speech detected is not really an error
+          // No speech detected is not really an error, reset attempts
           console.log("[SpeechRecognition] No speech detected");
+          restartAttemptsRef.current = 0;
           break;
         case "aborted":
           // Aborted by user/code, not an error
           console.log("[SpeechRecognition] Aborted");
+          break;
+        case "audio-capture":
+          // Microphone not available
+          console.error("[SpeechRecognition] Audio capture failed");
           break;
         default:
           console.error("[SpeechRecognition] Error:", event.error);
@@ -125,20 +149,32 @@ export function useSpeechRecognition({
       isListeningRef.current = false;
       setIsListening(false);
 
-      // Auto restart (if no error and not currently listening)
-      if (shouldRestartRef.current && !isListeningRef.current) {
-        console.log("[SpeechRecognition] Restarting...");
+      // Auto restart with exponential backoff
+      if (shouldRestartRef.current) {
+        if (restartAttemptsRef.current >= maxRestartAttempts) {
+          console.warn("[SpeechRecognition] Max restart attempts reached, waiting longer...");
+          // Reset attempts but use longer delay
+          restartAttemptsRef.current = 0;
+          restartDelayRef.current = 2000;
+        }
+
+        const delay = restartDelayRef.current;
+        restartAttemptsRef.current++;
+
+        console.log(`[SpeechRecognition] Restarting in ${delay}ms (attempt ${restartAttemptsRef.current})...`);
+
         setTimeout(() => {
-          // Check again (state may change during timeout)
           if (shouldRestartRef.current && !isListeningRef.current) {
             try {
               recognition.start();
             } catch (e) {
-              // Already started - silently ignore
               console.log("[SpeechRecognition] Already running, skip restart");
             }
           }
-        }, 100);
+        }, delay);
+
+        // Increase delay for next attempt (exponential backoff, max 2s)
+        restartDelayRef.current = Math.min(restartDelayRef.current * 1.5, 2000);
       }
     };
 
@@ -148,7 +184,7 @@ export function useSpeechRecognition({
       shouldRestartRef.current = false;
       recognition.abort();
     };
-  }, [lang, onResult, onInterimResult]);
+  }, [lang]); // Only depend on lang, not callbacks
 
   const start = useCallback(() => {
     if (!recognitionRef.current || isListeningRef.current) return;
