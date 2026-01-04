@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
 import { ConversationContext } from "./types";
+import { getLocale, type Locale } from "../app";
 
 /**
  * Memory extraction config structure
@@ -23,6 +24,7 @@ interface MemoryExtractionConfig {
 }
 
 let cachedConfig: MemoryExtractionConfig | null = null;
+let cachedLocale: Locale | null = null;
 
 /**
  * Default config (fallback)
@@ -77,15 +79,35 @@ Output in JSON format.`,
 };
 
 function getConfigPath(): string {
-  return path.join(process.cwd(), "config", "memory.yaml");
+  const configDir = path.join(process.cwd(), "config");
+  const locale = getLocale();
+
+  // Use locale-specific config
+  const localePath = path.join(configDir, "locales", locale, "memory.yaml");
+
+  if (fs.existsSync(localePath)) {
+    return localePath;
+  }
+
+  // Fallback to root config for backward compatibility
+  return path.join(configDir, "memory.yaml");
 }
 
 function loadConfig(): MemoryExtractionConfig {
+  const locale = getLocale();
+
+  // Clear cache if locale changed
+  if (cachedLocale !== locale) {
+    cachedConfig = null;
+    cachedLocale = locale;
+  }
+
   if (cachedConfig) {
     return cachedConfig;
   }
 
   const configPath = getConfigPath();
+  console.log(`[Memory] Loading config from: ${configPath}`);
 
   if (!fs.existsSync(configPath)) {
     console.log("[Memory] Config file not found, using defaults");

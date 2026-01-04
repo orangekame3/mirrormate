@@ -1,0 +1,42 @@
+modules:
+  # Today's historical events
+  today_info:
+    type: api
+    description: Look up what day it is (anniversaries, events)
+    config:
+      source: wikipedia_api
+
+  # Weather information (uses feature)
+  weather:
+    type: feature
+    description: Get current weather and temperature
+    config:
+      feature: weather
+
+  # Calendar schedule (uses feature)
+  calendar:
+    type: feature
+    description: Get today's and upcoming schedule
+    config:
+      feature: calendar
+
+  # Current time (uses feature)
+  time:
+    type: feature
+    description: Get current date and time
+    config:
+      feature: time
+
+  # Web search (uses tool)
+  web_search:
+    type: tool
+    description: Search for information on the internet
+    config:
+      tool: web_search
+
+  # Custom message
+  custom_message:
+    type: static
+    description: Return a fixed message
+    config:
+      message: ""

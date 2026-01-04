@@ -2,5 +2,6 @@
 
 app:
   # Language setting
-  # Supported: "ja" (Japanese), "en" (English)
+  # "ja" - Japanese (default): Uses config/locales/ja/
+  # "en" - English: Uses config/locales/en/
   locale: "ja"

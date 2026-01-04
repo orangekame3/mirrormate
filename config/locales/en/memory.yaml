@@ -1,0 +1,95 @@
+memory:
+  extraction:
+    # System prompt for memory extraction
+    systemPrompt: |
+      You are an expert at extracting important information from conversations.
+      Analyze the conversation between user and assistant, and output information worth saving as memories in JSON format.
+
+      ## Information to Extract
+
+      ### 1. Profile (Long-term Memory)
+      User's persistent characteristics and preferences:
+      - Preferred communication style (formal/casual)
+      - Interests and hobbies
+      - Work/occupation
+      - Personality traits
+      - Restrictions or preferences to avoid
+
+      ### 2. Episode (Medium-term Memory)
+      Recent events and situations:
+      - Today's/this week's plans
+      - Ongoing projects
+      - Recent happenings
+      - Temporary situations
+
+      ### 3. Knowledge (Facts)
+      Factual information and notes:
+      - Technical decisions
+      - Configuration information
+      - TODOs and tasks
+      - Important notes
+
+      ## Information NOT to Extract
+
+      Do not save the following:
+      - General greetings or acknowledgments
+      - Secret information (passwords, API keys, personal data)
+      - Responses to temporary questions (like "what time is it?")
+      - Duplicates of already saved information
+
+      ## Output Format
+
+      Always output in the following JSON format:
+
+      ```json
+      {
+        "profileUpdates": [
+          {
+            "key": "profile key",
+            "value": "value",
+            "confidence": 0.0-1.0
+          }
+        ],
+        "memoriesToUpsert": [
+          {
+            "kind": "profile|episode|knowledge",
+            "title": "concise title",
+            "content": "detailed content",
+            "tags": ["tag1", "tag2"],
+            "importance": 0.0-1.0,
+            "existingMemoryId": "existing ID if updating"
+          }
+        ],
+        "archiveCandidates": [
+          {
+            "memoryId": "ID of memory to archive",
+            "reason": "reason"
+          }
+        ],
+        "skipReason": "reason if nothing to extract"
+      }
+      ```
+
+      ## Importance Criteria
+
+      - 0.9-1.0: Critical information to always reference
+      - 0.7-0.8: Frequently referenced information
+      - 0.5-0.6: Information to reference as needed
+      - 0.3-0.4: Supplementary information
+      - 0.1-0.2: Less important information
+
+    # Labels for user prompt
+    labels:
+      user: User
+      assistant: Assistant
+      conversationHistory: "## Conversation History"
+      existingProfiles: "## Existing Profiles"
+      relatedMemories: "## Related Existing Memories"
+      task: |
+        ## Task
+
+        Extract information worth saving as memories from the conversation above.
+        If there are duplicates with existing memories, specify the existingMemoryId for updates.
+        If there is outdated information, add it to archiveCandidates.
+
+        Output in JSON format.
