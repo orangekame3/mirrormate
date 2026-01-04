@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import { getAllContexts } from "@/lib/features/registry";
 import { getLLMProvider, ChatMessage } from "@/lib/llm";
 import { getSystemPrompt } from "@/lib/character";
-import { getToolDefinitions, executeTool, getPendingEffect, clearPendingEffect } from "@/lib/tools";
+import { getToolDefinitions, executeTool, getPendingEffect, clearPendingEffect, ToolInfoCard } from "@/lib/tools";
 import { executeRule, formatRuleContext } from "@/lib/rules";
 import { loadProvidersConfig, getEmbeddingProvider } from "@/lib/providers";
 import { RAGService, getSimpleContext, MemoryService } from "@/lib/memory";
@@ -126,6 +126,9 @@ export async function POST(request: NextRequest) {
 
     let assistantMessage = "";
     let iterations = 0;
+    let discordShared = false;
+    let toolsUsed = false;
+    const infoCards: ToolInfoCard[] = [];
 
     // Clear any pending effects from previous requests
     clearPendingEffect();
@@ -146,6 +149,7 @@ export async function POST(request: NextRequest) {
 
       // Process tool calls
       console.log(`[Chat] Processing ${result.toolCalls.length} tool call(s)`);
+      toolsUsed = true;
 
       // Add assistant message with tool calls
       chatMessages.push({
@@ -164,6 +168,15 @@ export async function POST(request: NextRequest) {
       for (const toolCall of result.toolCalls) {
         console.log(`[Chat] Executing tool: ${toolCall.name}`);
         const toolResult = await executeTool(toolCall);
+
+        // Collect info cards from tools
+        if (toolResult.infoCard) {
+          infoCards.push(toolResult.infoCard);
+          // Track Discord share via info card
+          if (toolResult.infoCard.type === "discord") {
+            discordShared = true;
+          }
+        }
 
         chatMessages.push({
           role: "tool",
@@ -228,12 +241,18 @@ export async function POST(request: NextRequest) {
         message: assistantMessage,
         audio: audioBase64,
         effect,
+        discordShared,
+        toolsUsed,
+        infoCards,
       });
     }
 
     return NextResponse.json({
       message: assistantMessage,
       effect,
+      discordShared,
+      toolsUsed,
+      infoCards,
     });
   } catch (error) {
     console.error("Chat API error:", error);

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 
 export interface InfoCard {
   id: string;
-  type: "weather" | "calendar" | "time" | "reminder" | "discord";
+  type: "weather" | "calendar" | "time" | "reminder" | "discord" | "search";
   title: string;
   items: string[];
   urgent?: boolean;
@@ -106,6 +106,12 @@ function InfoCardComponent({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         );
+      case "search":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        );
     }
   };
 
@@ -147,6 +153,12 @@ function InfoCardComponent({
           borderColor: "border-indigo-500/30",
           iconColor: "text-indigo-400",
         };
+      case "search":
+        return {
+          bgColor: "from-cyan-500/20 to-teal-500/20",
+          borderColor: "border-cyan-500/30",
+          iconColor: "text-cyan-400",
+        };
     }
   };
 
@@ -166,6 +178,8 @@ function InfoCardComponent({
         return card.urgent ? "bg-red-400" : "bg-emerald-400";
       case "discord":
         return "bg-indigo-400";
+      case "search":
+        return "bg-cyan-400";
     }
   };
 
@@ -206,28 +220,8 @@ function InfoCardComponent({
 export function detectInfoFromResponse(response: string): InfoCard | null {
   const id = crypto.randomUUID();
 
-  // Discord share detection (check first as it's a specific action)
-  const discordPatterns = [
-    /Discord.{0,5}(送|共有)/,
-    /ディスコード.{0,5}(送|共有)/,
-    /スマホ.{0,5}(送|共有)/,
-    /(送った|送ったよ|共有した).{0,10}(Discord|ディスコード|スマホ)/i,
-  ];
-
-  const hasDiscord = discordPatterns.some((pattern) => pattern.test(response));
-
-  if (hasDiscord) {
-    // Extract count of items if mentioned
-    const countMatch = response.match(/(\d+)件/);
-    const count = countMatch ? countMatch[1] : "";
-
-    return {
-      id,
-      type: "discord",
-      title: "Sent to Discord",
-      items: count ? [`${count} items shared`] : ["Shared successfully"],
-    };
-  }
+  // Note: Discord detection is handled via discordShared flag from API response
+  // to avoid false positives when LLM says "I'll send to Discord" before actually sending
 
   // Weather detection
   const weatherPatterns = [
