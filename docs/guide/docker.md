@@ -4,30 +4,24 @@ Mirror Mate can be run using Docker with optional VOICEVOX integration.
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         Host Machine                         │
-│  ┌─────────────────┐                                        │
-│  │     Ollama      │◄─── http://host.docker.internal:11434  │
-│  │ (LLM/Embedding) │                                        │
-│  │   (port 11434)  │                                        │
-│  └─────────────────┘                                        │
-└─────────────────────────────────────────────────────────────┘
-         ▲
-         │ host.docker.internal
-         │
-┌─────────────────────────────────────────────────────────────┐
-│                      Docker Network                          │
-│  ┌─────────────────┐         ┌─────────────────┐            │
-│  │   mirrormate    │────────►│    voicevox     │            │
-│  │   (port 3000)   │         │  (port 50021)   │            │
-│  │                 │                                        │
-│  │  ┌───────────┐  │                                        │
-│  │  │  SQLite   │  │◄─── mirrormate-data volume             │
-│  │  │ (memory)  │  │                                        │
-│  │  └───────────┘  │                                        │
-│  └─────────────────┘         └─────────────────┘            │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Host["Host Machine"]
+        Ollama["Ollama<br/>(LLM/Embedding)<br/>:11434"]
+    end
+
+    subgraph Docker["Docker Network"]
+        subgraph MM["mirrormate :3000"]
+            App["Next.js App"]
+            SQLite[(SQLite<br/>Memory)]
+        end
+        VOICEVOX["voicevox<br/>:50021"]
+
+        MM -->|TTS Request| VOICEVOX
+        Volume[("mirrormate-data<br/>volume")] -.-> SQLite
+    end
+
+    MM -->|host.docker.internal:11434| Ollama
 ```
 
 ## Quick Start

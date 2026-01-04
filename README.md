@@ -2,11 +2,13 @@
 
 Self-hosted personalized AI in a mirror.
 
+**[Documentation](https://www.orangekame3.net/mirrormate/)**
+
 > [!IMPORTANT]
 > This application requires **Google Chrome** for voice recognition (Web Speech API).
 
 <p align="center">
-  <img src="docs/mirrormate.png" alt="Mirror Mate Preview" width="600">
+  <img src="docs/public/mirrormate.png" alt="Mirror Mate Preview" width="600">
 </p>
 
 https://github.com/user-attachments/assets/c9005df4-9bdb-4190-861e-c8f5f9290468
@@ -60,7 +62,8 @@ Run tests:
 bun run test
 ```
 
-> **Note**: This project uses [Bun](https://bun.sh/) as the package manager. You'll also need to run VOICEVOX separately or use OpenAI TTS instead.
+> [!NOTE]
+> This project uses [Bun](https://bun.sh/) as the package manager. You'll also need to run VOICEVOX separately or use OpenAI TTS instead.
 
 ## Pages
 
@@ -84,20 +87,6 @@ All configuration is done via YAML files in the `config/` directory:
 | `character.yaml` | AI personality, speech style, wake word    |
 | `rules.yaml`     | Trigger-based automated workflows          |
 | `modules.yaml`   | Module definitions for rules               |
-
-## Documentation
-
-- [Architecture Overview](docs/architecture.md)
-- [Providers (LLM & TTS)](docs/providers.md)
-- [Memory System](docs/memory.md)
-- [Animation States](docs/animation.md)
-- [Discord Integration](docs/discord.md)
-- [Features](docs/features.md)
-- [Plugins](docs/plugins.md)
-- [Character Configuration](docs/character.md)
-- [Rules & Modules](docs/rules.md)
-- [Tools](docs/tools.md)
-- [Docker Setup](docs/docker.md)
 
 ## Tech Stack
 

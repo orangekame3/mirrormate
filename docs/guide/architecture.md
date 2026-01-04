@@ -6,95 +6,86 @@ Mirror Mate is a Next.js application that provides an interactive AI avatar for 
 
 ## System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Frontend                                 │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐    BroadcastChannel    ┌─────────────────┐     │
-│  │  / (Avatar) │◄────────────────────►  │ /control (Panel)│     │
-│  └──────┬──────┘                        └────────┬────────┘     │
-│         │                                        │              │
-│  ┌──────▼──────┐                        ┌────────▼────────┐     │
-│  │SimpleAvatar │                        │  Text Input     │     │
-│  │  Confetti   │                        │  Mic Control    │     │
-│  │FloatingInfo │                        └─────────────────┘     │
-│  └──────┬──────┘                                                │
-│         │ Web Speech API                                        │
-│  ┌──────▼──────────┐                                            │
-│  │useSpeechRecog.  │                                            │
-│  └─────────────────┘                                            │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                         Backend (API Routes)                     │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐     │
-│  │  /api/chat     │  │  /api/tts      │  │ /api/reminder  │     │
-│  └───────┬────────┘  └───────┬────────┘  └───────┬────────┘     │
-│          │                   │                   │              │
-│          ▼                   ▼                   ▼              │
-│  ┌───────────────────────────────────────────────────────┐      │
-│  │                    Core Libraries                      │      │
-│  ├───────────────────────────────────────────────────────┤      │
-│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────────┐  │      │
-│  │  │   LLM   │ │Features │ │  Rules  │ │  Character  │  │      │
-│  │  └────┬────┘ └────┬────┘ └────┬────┘ └──────┬──────┘  │      │
-│  │       │           │           │             │         │      │
-│  │  ┌────▼────┐ ┌────▼────┐ ┌────▼────┐ ┌──────▼──────┐  │      │
-│  │  │ OpenAI  │ │ Weather │ │ Modules │ │  Prompts    │  │      │
-│  │  │ Ollama  │ │Calendar │ │ Engine  │ │  Persona    │  │      │
-│  │  └─────────┘ │  Time   │ └─────────┘ └─────────────┘  │      │
-│  │              │Reminder │                              │      │
-│  │              └─────────┘                              │      │
-│  │  ┌─────────────────────────────────────────────────┐  │      │
-│  │  │                    Tools                         │  │      │
-│  │  │  ┌────────────┐  ┌────────────┐                 │  │      │
-│  │  │  │ Web Search │  │  Effects   │                 │  │      │
-│  │  │  │  (Tavily)  │  │ (Confetti) │                 │  │      │
-│  │  │  └────────────┘  └────────────┘                 │  │      │
-│  │  └─────────────────────────────────────────────────┘  │      │
-│  └───────────────────────────────────────────────────────┘      │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                         Data Layer                               │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌───────────────────────────────────────────────────────┐      │
-│  │                    SQLite (Drizzle ORM)                │      │
-│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────────┐  │      │
-│  │  │  Users  │ │Sessions │ │Messages │ │  Memories   │  │      │
-│  │  └─────────┘ └─────────┘ └─────────┘ └──────┬──────┘  │      │
-│  │                                             │         │      │
-│  │  ┌───────────────────────────────────────────────────┐│      │
-│  │  │              Memory Embeddings                     ││      │
-│  │  │  (Vector storage for semantic search)              ││      │
-│  │  └───────────────────────────────────────────────────┘│      │
-│  └───────────────────────────────────────────────────────┘      │
-│                              │                                   │
-│  ┌───────────────────────────▼───────────────────────────┐      │
-│  │                    Memory System                       │      │
-│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────────┐  │      │
-│  │  │   RAG   │ │Extractor│ │ Handler │ │  Embedding  │  │      │
-│  │  │ Service │ │  (LLM)  │ │ (CRUD)  │ │  Provider   │  │      │
-│  │  └─────────┘ └─────────┘ └─────────┘ └─────────────┘  │      │
-│  └───────────────────────────────────────────────────────┘      │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      External Services                           │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐            │
-│  │  Ollama  │ │  OpenAI  │ │ VOICEVOX │ │Open-Meteo│            │
-│  │(LLM/Emb) │ │(LLM/TTS) │ │  (TTS)   │ │(Weather) │            │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘            │
-│  ┌──────────┐ ┌──────────┐                                      │
-│  │  Google  │ │  Tavily  │                                      │
-│  │ Calendar │ │ (Search) │                                      │
-│  └──────────┘ └──────────┘                                      │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Frontend["Frontend"]
+        Avatar["/ (Avatar)"]
+        Control["/control (Panel)"]
+        Avatar <-->|BroadcastChannel| Control
+
+        subgraph AvatarComponents["Avatar Components"]
+            SimpleAvatar
+            Confetti
+            FloatingInfo
+        end
+
+        subgraph ControlComponents["Control Components"]
+            TextInput["Text Input"]
+            MicControl["Mic Control"]
+        end
+
+        Avatar --> AvatarComponents
+        Control --> ControlComponents
+        AvatarComponents --> SpeechRecog["useSpeechRecognition"]
+        SpeechRecog -->|Web Speech API| Browser["Browser"]
+    end
+
+    subgraph Backend["Backend (API Routes)"]
+        ChatAPI["/api/chat"]
+        TTSAPI["/api/tts"]
+        ReminderAPI["/api/reminder"]
+
+        subgraph CoreLibs["Core Libraries"]
+            LLM["LLM<br/>OpenAI / Ollama"]
+            Features["Features<br/>Weather / Calendar / Time"]
+            Rules["Rules<br/>Modules Engine"]
+            Character["Character<br/>Prompts / Persona"]
+        end
+
+        subgraph Tools["Tools"]
+            WebSearch["Web Search<br/>(Tavily)"]
+            Effects["Effects<br/>(Confetti)"]
+        end
+
+        ChatAPI --> CoreLibs
+        TTSAPI --> CoreLibs
+        ReminderAPI --> CoreLibs
+        CoreLibs --> Tools
+    end
+
+    subgraph DataLayer["Data Layer"]
+        subgraph SQLite["SQLite (Drizzle ORM)"]
+            Users[(Users)]
+            Sessions[(Sessions)]
+            Messages[(Messages)]
+            Memories[(Memories)]
+            Embeddings[(Memory Embeddings)]
+        end
+
+        subgraph MemorySystem["Memory System"]
+            RAG["RAG Service"]
+            Extractor["Extractor (LLM)"]
+            Handler["Handler (CRUD)"]
+            EmbeddingProvider["Embedding Provider"]
+        end
+
+        Memories --> Embeddings
+        SQLite --> MemorySystem
+    end
+
+    subgraph External["External Services"]
+        Ollama["Ollama<br/>(LLM/Embedding)"]
+        OpenAI["OpenAI<br/>(LLM/TTS)"]
+        VOICEVOX["VOICEVOX<br/>(TTS)"]
+        OpenMeteo["Open-Meteo<br/>(Weather)"]
+        GoogleCal["Google Calendar"]
+        Tavily["Tavily<br/>(Search)"]
+    end
+
+    Frontend --> Backend
+    Backend --> DataLayer
+    DataLayer --> External
+    Backend --> External
 ```
 
 ## Directory Structure

@@ -4,27 +4,30 @@ Mirror Mate includes a memory system that enables persistent user context throug
 
 ## Overview
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Memory Flow                               │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  User Input ──► Embed Query ──► Semantic Search ──► RAG Context │
-│       │                              │                           │
-│       │                              ▼                           │
-│       │                    ┌─────────────────┐                   │
-│       │                    │   Memories DB   │                   │
-│       │                    │  ┌───────────┐  │                   │
-│       │                    │  │  Profile  │  │                   │
-│       │                    │  │  Episode  │  │                   │
-│       │                    │  │ Knowledge │  │                   │
-│       │                    │  └───────────┘  │                   │
-│       │                    └─────────────────┘                   │
-│       │                              ▲                           │
-│       ▼                              │                           │
-│  LLM Response ──► Extract Memories ──┘                           │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph Input["Input Flow"]
+        UserInput["User Input"]
+        Embed["Embed Query"]
+        Search["Semantic Search"]
+        Context["RAG Context"]
+    end
+
+    subgraph DB["Memories DB"]
+        Profile[(Profile)]
+        Episode[(Episode)]
+        Knowledge[(Knowledge)]
+    end
+
+    subgraph Output["Output Flow"]
+        LLMResponse["LLM Response"]
+        Extract["Extract Memories"]
+    end
+
+    UserInput --> Embed --> Search --> Context
+    Search <--> DB
+    UserInput --> LLMResponse
+    LLMResponse --> Extract --> DB
 ```
 
 ## Configuration
