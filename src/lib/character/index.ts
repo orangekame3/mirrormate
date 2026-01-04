@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
+import { getLocale, type Locale } from "../app";
 
 export interface WakeWordConfig {
   enabled: boolean;
@@ -24,6 +25,7 @@ export interface CharacterConfig {
 
 let cachedConfig: CharacterConfig | null = null;
 let cachedPrompt: string | null = null;
+let cachedLocale: Locale | null = null;
 
 function getConfigPath(): string {
   const configDir = path.join(process.cwd(), "config");
@@ -32,6 +34,15 @@ function getConfigPath(): string {
     return path.join(configDir, process.env.CHARACTER_CONFIG);
   }
 
+  // Use locale-specific config
+  const locale = getLocale();
+  const localePath = path.join(configDir, "locales", locale, "character.yaml");
+
+  if (fs.existsSync(localePath)) {
+    return localePath;
+  }
+
+  // Fallback to root config for backward compatibility
   return path.join(configDir, "character.yaml");
 }
 
@@ -81,6 +92,15 @@ export function loadCharacterConfig(): CharacterConfig {
 }
 
 export function getSystemPrompt(): string {
+  const locale = getLocale();
+
+  // Clear cache if locale changed
+  if (cachedLocale !== locale) {
+    cachedConfig = null;
+    cachedPrompt = null;
+    cachedLocale = locale;
+  }
+
   if (cachedPrompt) {
     return cachedPrompt;
   }
@@ -88,24 +108,40 @@ export function getSystemPrompt(): string {
   const config = loadCharacterConfig();
   const c = config.character;
 
-  const sections = [
-    `あなたは${c.description}です。`,
-    `名前は「${c.name}」。${c.appearance.join("、")}をしています。`,
-    "",
-    "性格:",
-    ...c.personality.map((p) => `- ${p}`),
-    "",
-    "話し方:",
-    ...c.speech_style.map((s) => `- ${s}`),
-    "",
-    "例:",
-    ...c.examples.map((e) => `- 「${e}」`),
-  ];
+  const isJapanese = locale === "ja";
+
+  const sections = isJapanese
+    ? [
+        `あなたは${c.description}です。`,
+        `名前は「${c.name}」。${c.appearance.join("、")}をしています。`,
+        "",
+        "性格:",
+        ...c.personality.map((p) => `- ${p}`),
+        "",
+        "話し方:",
+        ...c.speech_style.map((s) => `- ${s}`),
+        "",
+        "例:",
+        ...c.examples.map((e) => `- 「${e}」`),
+      ]
+    : [
+        `You are ${c.description}.`,
+        `Your name is "${c.name}". You have ${c.appearance.join(", ")}.`,
+        "",
+        "Personality:",
+        ...c.personality.map((p) => `- ${p}`),
+        "",
+        "Speech style:",
+        ...c.speech_style.map((s) => `- ${s}`),
+        "",
+        "Examples:",
+        ...c.examples.map((e) => `- "${e}"`),
+      ];
 
   // Add behaviors if defined
   if (c.behaviors && c.behaviors.length > 0) {
     sections.push("");
-    sections.push("行動指針:");
+    sections.push(isJapanese ? "行動指針:" : "Behaviors:");
     sections.push(...c.behaviors.map((b) => `- ${b}`));
   }
 

@@ -104,9 +104,10 @@ export function isAutoShareEnabled(type: "searchResults" | "weather" | "calendar
 
   const config = getDiscordConfig();
 
-  // Default to true for searchResults if not specified
+  // Default to false - require explicit opt-in for auto-share
+  // This allows the character to ask before sending
   if (!config?.autoShare) {
-    return type === "searchResults";
+    return false;
   }
 
   return config.autoShare[type] ?? false;
@@ -232,7 +233,7 @@ export async function sendSearchResults(
 
   const fields = results.slice(0, 5).map((r) => ({
     name: r.title.slice(0, 256),
-    value: `${r.content.slice(0, 200)}...\n[Link](${r.url})`,
+    value: `${r.content.slice(0, 600)}${r.content.length > 600 ? "..." : ""}\n[Link](${r.url})`,
     inline: false,
   }));
 

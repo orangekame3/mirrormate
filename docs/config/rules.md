@@ -4,26 +4,28 @@ The rule system allows you to define automated workflows that trigger based on u
 
 ## Overview
 
-```
-User: "おはよう"
-        │
-        ▼
-    Rule matching (keywords)
-        │
-        ▼
-    Execute modules (weather, calendar, etc.)
-        │
-        ▼
-    Inject results into LLM context
-        │
-        ▼
-    LLM generates response with response_hint
+```mermaid
+flowchart TD
+    A["User Input"] --> B{"Rule Matching<br/>(keywords)"}
+    B -->|Match| C["Execute Modules<br/>(weather, calendar, etc.)"]
+    B -->|No Match| E["Normal Processing"]
+    C --> D["Inject Results<br/>into LLM Context"]
+    D --> F["LLM Response<br/>with response_hint"]
 ```
 
 ## Configuration Files
 
-- `config/rules.yaml` - Define rules with triggers and actions
-- `config/modules.yaml` - Define reusable modules
+Rules and modules are locale-specific. Edit the files for your language:
+
+- **Japanese**: `config/locales/ja/rules.yaml`, `config/locales/ja/modules.yaml`
+- **English**: `config/locales/en/rules.yaml`, `config/locales/en/modules.yaml`
+
+Set the locale in `config/app.yaml`:
+
+```yaml
+app:
+  locale: "en"  # or "ja"
+```
 
 ## Rules Configuration
 
@@ -49,7 +51,33 @@ rules:
 
 ### Example: Morning Greeting
 
-```yaml
+::: code-group
+
+```yaml [English]
+rules:
+  morning_greeting:
+    description: Share daily information with a morning greeting
+    triggers:
+      keywords:
+        - good morning
+        - morning
+    actions:
+      - module: time
+      - module: weather
+      - module: calendar
+      - module: web_search
+        params:
+          query: "today's news headlines"
+    response_hint: |
+      As a morning greeting, summarize these in a friendly way:
+      - Today's date and day of the week
+      - Today's weather
+      - Today's schedule
+      - Today's major news (just 1-2 items briefly)
+    effect: confetti
+```
+
+```yaml [Japanese]
 rules:
   morning_greeting:
     description: 朝の挨拶で一日の情報をまとめて伝える
@@ -57,7 +85,6 @@ rules:
       keywords:
         - おはよう
         - おはようございます
-        - good morning
     actions:
       - module: time
       - module: weather
@@ -73,6 +100,8 @@ rules:
       - 今日の主要ニュース（1-2個だけ簡潔に）
     effect: confetti
 ```
+
+:::
 
 ### Triggers
 
@@ -131,7 +160,18 @@ Modules are reusable data sources that can be called by rules.
 
 Use an existing feature:
 
-```yaml
+::: code-group
+
+```yaml [English]
+modules:
+  weather:
+    type: feature
+    description: Get current weather and temperature
+    config:
+      feature: weather
+```
+
+```yaml [Japanese]
 modules:
   weather:
     type: feature
@@ -140,11 +180,24 @@ modules:
       feature: weather
 ```
 
+:::
+
 ### Tool Module
 
 Use an existing tool:
 
-```yaml
+::: code-group
+
+```yaml [English]
+modules:
+  web_search:
+    type: tool
+    description: Search for information on the internet
+    config:
+      tool: web_search
+```
+
+```yaml [Japanese]
 modules:
   web_search:
     type: tool
@@ -153,18 +206,33 @@ modules:
       tool: web_search
 ```
 
+:::
+
 ### API Module
 
-Call an external API:
+Call an external API. The Wikipedia API automatically uses the appropriate language based on locale:
 
-```yaml
+::: code-group
+
+```yaml [English]
+modules:
+  today_info:
+    type: api
+    description: Look up what day it is (anniversaries, events)
+    config:
+      source: wikipedia_api  # Uses en.wikipedia.org
+```
+
+```yaml [Japanese]
 modules:
   today_info:
     type: api
     description: 今日がなんの日か調べる
     config:
-      source: wikipedia_api
+      source: wikipedia_api  # Uses ja.wikipedia.org
 ```
+
+:::
 
 ### Static Module
 
@@ -174,7 +242,7 @@ Return a static message:
 modules:
   custom_message:
     type: static
-    description: 固定メッセージを返す
+    description: Return a fixed message
     config:
       message: "This is a static message"
 ```
@@ -187,76 +255,7 @@ modules:
 | `weather` | feature | Current weather |
 | `calendar` | feature | Today's events |
 | `web_search` | tool | Web search via Tavily |
-| `today_info` | api | "What day is today" info |
-
-## Complete Example
-
-### rules.yaml
-
-```yaml
-rules:
-  morning_greeting:
-    description: Morning greeting with daily info
-    triggers:
-      keywords:
-        - おはよう
-    actions:
-      - module: time
-      - module: weather
-      - module: calendar
-    response_hint: |
-      朝の挨拶として天気と予定を伝えて
-    effect: confetti
-
-  good_night:
-    description: Good night with tomorrow's schedule
-    triggers:
-      keywords:
-        - おやすみ
-    actions:
-      - module: calendar
-      - module: weather
-    response_hint: |
-      明日の予定と天気を伝えておやすみを言って
-    effect: sparkles
-
-  news_request:
-    description: Search and report news
-    triggers:
-      keywords:
-        - ニュース
-    actions:
-      - module: web_search
-        params:
-          query: "今日のニュース 日本"
-    response_hint: |
-      主要なニュースを2-3個簡潔に伝えて
-```
-
-### modules.yaml
-
-```yaml
-modules:
-  time:
-    type: feature
-    config:
-      feature: time
-
-  weather:
-    type: feature
-    config:
-      feature: weather
-
-  calendar:
-    type: feature
-    config:
-      feature: calendar
-
-  web_search:
-    type: tool
-    config:
-      tool: web_search
-```
+| `today_info` | api | "What day is today" info (locale-aware) |
 
 ## How Rules Override Normal Behavior
 

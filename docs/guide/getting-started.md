@@ -19,10 +19,15 @@ docker run -p 3000:3000 \
   -e OPENAI_API_KEY=sk-your-key \
   -e LLM_PROVIDER=openai \
   -e TTS_PROVIDER=openai \
+  -e LOCALE=en \
   ghcr.io/orangekame3/mirrormate:latest
 ```
 
 Open http://localhost:3000 in Chrome.
+
+> Set `LOCALE=en` for English or `LOCALE=ja` for Japanese (default).
+
+Say **"OK Mira"** (English) or **"OK ミラ"** (Japanese) to start talking!
 
 ### Option 2: Ollama + VOICEVOX (No API key required)
 
@@ -39,7 +44,7 @@ cd mirrormate
 docker compose up -d
 ```
 
-Open http://localhost:3000 in Chrome.
+Open http://localhost:3000 in Chrome. Say **"OK ミラ"** to start talking!
 
 ## Pages
 
@@ -56,13 +61,33 @@ All configuration is done via YAML files in the `config/` directory:
 
 | File | Description |
 |------|-------------|
-| `app.yaml` | Application settings (language, etc.) |
+| `app.yaml` | Application settings (language/locale) |
 | `providers.yaml` | LLM and TTS provider settings |
 | `features.yaml` | Weather, calendar, time, reminder settings |
 | `plugins.yaml` | Visual widget plugins (clock, etc.) |
-| `character.yaml` | AI personality, speech style, wake word |
-| `rules.yaml` | Trigger-based automated workflows |
-| `modules.yaml` | Module definitions for rules |
+| `locales/[lang]/` | Language-specific configs (character, memory, rules, modules) |
+
+### Language Support
+
+Mirror Mate supports multiple languages. Set the locale in `config/app.yaml`:
+
+```yaml
+app:
+  locale: "en"  # or "ja" for Japanese
+```
+
+This affects:
+- Character personality and speech style (`config/locales/[lang]/character.yaml`)
+- Memory extraction prompts (`config/locales/[lang]/memory.yaml`)
+- Rules and modules (`config/locales/[lang]/rules.yaml`, `modules.yaml`)
+- Database file (`data/mirrormate.[lang].db`)
+- Wikipedia API language for "today's info"
+
+You can also set the locale via environment variable (overrides config file):
+
+```bash
+LOCALE=en  # or ja
+```
 
 ## Local Development
 

@@ -3,15 +3,36 @@ import * as path from "path";
 import * as yaml from "js-yaml";
 import { RulesConfig, Rule, RuleMatch, ModuleResult } from "./types";
 import { executeModules } from "./modules";
+import { getLocale, type Locale } from "../app";
 
 let cachedConfig: RulesConfig | null = null;
+let cachedLocale: Locale | null = null;
+
+function getConfigPath(): string {
+  const configDir = path.join(process.cwd(), "config");
+  const locale = getLocale();
+  const localePath = path.join(configDir, "locales", locale, "rules.yaml");
+  if (fs.existsSync(localePath)) {
+    return localePath;
+  }
+  // Fallback to root config for backward compatibility
+  return path.join(configDir, "rules.yaml");
+}
 
 function loadRulesConfig(): RulesConfig {
+  const locale = getLocale();
+
+  // Invalidate cache if locale changed
+  if (cachedLocale !== null && cachedLocale !== locale) {
+    cachedConfig = null;
+  }
+
   if (cachedConfig) {
     return cachedConfig;
   }
 
-  const configPath = path.join(process.cwd(), "config", "rules.yaml");
+  const configPath = getConfigPath();
+  console.log(`[RuleEngine] Loading rules from: ${configPath}`);
 
   if (!fs.existsSync(configPath)) {
     return { rules: {} };
@@ -19,6 +40,7 @@ function loadRulesConfig(): RulesConfig {
 
   const fileContents = fs.readFileSync(configPath, "utf8");
   cachedConfig = yaml.load(fileContents) as RulesConfig;
+  cachedLocale = locale;
 
   return cachedConfig;
 }
@@ -74,14 +96,28 @@ export async function executeRule(userMessage: string): Promise<RuleExecutionRes
   };
 }
 
+// Locale-specific labels for rule context formatting
+const contextLabels = {
+  ja: {
+    ruleInfo: "【ルールによる取得情報】",
+    responseHint: "【応答のヒント】",
+  },
+  en: {
+    ruleInfo: "[Information from Rule]",
+    responseHint: "[Response Hint]",
+  },
+} as const;
+
 export function formatRuleContext(result: RuleExecutionResult): string {
   if (!result.matched || result.moduleResults.length === 0) {
     return "";
   }
 
+  const locale = getLocale();
+  const labels = contextLabels[locale] || contextLabels.en;
   const sections: string[] = [];
 
-  sections.push("【ルールによる取得情報】");
+  sections.push(labels.ruleInfo);
 
   for (const moduleResult of result.moduleResults) {
     if (moduleResult.content) {
@@ -91,7 +127,7 @@ export function formatRuleContext(result: RuleExecutionResult): string {
 
   if (result.responseHint) {
     sections.push("");
-    sections.push("【応答のヒント】");
+    sections.push(labels.responseHint);
     sections.push(result.responseHint);
   }
 

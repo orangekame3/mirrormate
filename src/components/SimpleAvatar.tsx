@@ -106,6 +106,11 @@ export default function SimpleAvatar({
     mouth.group.position.set(0, -0.35, 0);
     mainGroup.add(mouth.group);
 
+    // Create Zzz effect for sleep state
+    const zzzGroup = createZzzEffect();
+    zzzGroup.visible = false;
+    mainGroup.add(zzzGroup);
+
     const sceneData = {
       renderer,
       scene,
@@ -114,6 +119,7 @@ export default function SimpleAvatar({
       leftEye,
       rightEye,
       mouth,
+      zzzGroup,
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -282,6 +288,69 @@ function createMouthWithCurve() {
   return { group, mesh, geometry };
 }
 
+// Create Zzz effect for sleep state
+function createZzzEffect(): THREE.Group {
+  const group = new THREE.Group();
+  group.position.set(0.5, 0.3, 0);
+
+  // Create 3 Z letters at different positions
+  const zPositions = [
+    { x: 0, y: 0, scale: 0.08, delay: 0 },
+    { x: 0.15, y: 0.2, scale: 0.06, delay: 0.3 },
+    { x: 0.25, y: 0.4, scale: 0.045, delay: 0.6 },
+  ];
+
+  zPositions.forEach((pos, index) => {
+    const zMesh = createZLetter(pos.scale);
+    zMesh.position.set(pos.x, pos.y, 0);
+    zMesh.userData = { baseY: pos.y, delay: pos.delay, index };
+    group.add(zMesh);
+  });
+
+  return group;
+}
+
+// Create a single Z letter mesh
+function createZLetter(scale: number): THREE.Mesh {
+  const shape = new THREE.Shape();
+
+  // Draw Z shape
+  const w = 1;
+  const h = 1.2;
+  const thickness = 0.25;
+
+  // Top horizontal
+  shape.moveTo(0, h);
+  shape.lineTo(w, h);
+  shape.lineTo(w, h - thickness);
+  shape.lineTo(thickness * 1.5, h - thickness);
+
+  // Diagonal
+  shape.lineTo(w, thickness);
+
+  // Bottom horizontal
+  shape.lineTo(w, 0);
+  shape.lineTo(0, 0);
+  shape.lineTo(0, thickness);
+  shape.lineTo(w - thickness * 1.5, thickness);
+
+  // Back up diagonal
+  shape.lineTo(0, h - thickness);
+  shape.lineTo(0, h);
+
+  const geometry = new THREE.ShapeGeometry(shape);
+  geometry.center();
+  geometry.scale(scale, scale, 1);
+
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.7,
+  });
+
+  return new THREE.Mesh(geometry, material);
+}
+
 // Update mouth geometry based on curve
 function updateMouthGeometry(
   mouth: { group: THREE.Group; mesh: THREE.Mesh; geometry: THREE.ShapeGeometry },
@@ -330,6 +399,7 @@ function updateScene(
     leftEye: { group: THREE.Group; shapes: EyeShapes };
     rightEye: { group: THREE.Group; shapes: EyeShapes };
     mouth: { group: THREE.Group; mesh: THREE.Mesh; geometry: THREE.ShapeGeometry };
+    zzzGroup: THREE.Group;
   },
   time: number,
   state: { isSpeaking: boolean; isThinking: boolean; smoothMouth: number; avatarState: AvatarState },
@@ -344,7 +414,7 @@ function updateScene(
     targetMouthCurve: number;
   }
 ) {
-  const { camera, mainGroup, leftEye, rightEye, mouth } = data;
+  const { camera, mainGroup, leftEye, rightEye, mouth, zzzGroup } = data;
   const { isSpeaking, isThinking, smoothMouth, avatarState } = state;
 
   // ========== EYE SHAPE TRANSITION ==========
@@ -434,15 +504,29 @@ function updateScene(
   }
 
   // ========== BREATHING ==========
-  let breathScale = Math.sin(time * 1.2) * 0.02;
-  if (animParams?.breathScale !== undefined) {
-    breathScale += animParams.breathScale;
+  let breathScale: number;
+  let floatY: number;
+  let floatX: number;
+
+  if (avatarState === "SLEEP") {
+    // Slower, deeper breathing when sleeping
+    breathScale = Math.sin(time * 0.5) * 0.035;
+    // Gentle floating like dreaming
+    floatY = Math.sin(time * 0.3) * 0.02;
+    floatX = Math.sin(time * 0.2) * 0.01;
+  } else {
+    breathScale = Math.sin(time * 1.2) * 0.02;
+    if (animParams?.breathScale !== undefined) {
+      breathScale += animParams.breathScale;
+    }
+    floatY = Math.sin(time * 0.7) * 0.03;
+    floatX = Math.sin(time * 0.5) * 0.02;
   }
   mainGroup.scale.set(1 + breathScale, 1 + breathScale * 0.6, 1);
 
   // Floating animation
-  mainGroup.position.y = Math.sin(time * 0.7) * 0.03;
-  mainGroup.position.x = Math.sin(time * 0.5) * 0.02;
+  mainGroup.position.y = floatY;
+  mainGroup.position.x = floatX;
 
   // Face direction
   const headTiltX = mouse.x * 0.15 + gazeX * 0.2;
@@ -494,11 +578,41 @@ function updateScene(
     mouth.group.rotation.z *= 0.9;
   }
 
-  // ========== THINKING TILT ==========
-  if (isThinking) {
+  // ========== STATE-BASED TILT ==========
+  if (avatarState === "SLEEP") {
+    // Lean to one side when sleeping, with gentle sway
+    const sleepTilt = 0.15 + Math.sin(time * 0.3) * 0.02;
+    mainGroup.rotation.z += (sleepTilt - mainGroup.rotation.z) * 0.02;
+  } else if (isThinking) {
     mainGroup.rotation.z = Math.sin(time * 0.9) * 0.04;
   } else {
     mainGroup.rotation.z *= 0.95;
+  }
+
+  // ========== ZZZ EFFECT ==========
+  if (avatarState === "SLEEP") {
+    zzzGroup.visible = true;
+    // Counter-rotate to keep Zzz upright despite head tilt
+    zzzGroup.rotation.z = -mainGroup.rotation.z;
+
+    // Animate each Z letter
+    zzzGroup.children.forEach((child) => {
+      const mesh = child as THREE.Mesh;
+      const { baseY, delay } = mesh.userData;
+
+      // Floating animation with delay
+      const animTime = (time + delay) % 3;
+      const floatProgress = animTime / 3;
+
+      // Float up and fade out
+      mesh.position.y = baseY + floatProgress * 0.15;
+      (mesh.material as THREE.MeshBasicMaterial).opacity = 0.7 * (1 - floatProgress * 0.5);
+
+      // Gentle sway
+      mesh.position.x = mesh.userData.index * 0.15 + Math.sin(time * 0.8 + delay * 2) * 0.02;
+    });
+  } else {
+    zzzGroup.visible = false;
   }
 
   // Subtle camera movement

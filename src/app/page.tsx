@@ -25,7 +25,7 @@ export default function AvatarPage() {
   const [displayText, setDisplayText] = useState("");
   const [isTextFading, setIsTextFading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [speechEnabled, setSpeechEnabled] = useState(false);
+  const [speechEnabled, setSpeechEnabled] = useState(true);
   const [infoCards, setInfoCards] = useState<InfoCard[]>([]);
   const [showEffect, setShowEffect] = useState(false);
   const [effectType, setEffectType] = useState<EffectType>("confetti");
@@ -376,8 +376,16 @@ export default function AvatarPage() {
           // Add to message history
           messagesRef.current.push({ role: "assistant", content: data.message });
 
-          // Detect weather/calendar info and show card
-          addInfoCard(data.message);
+          // Show info cards from tools
+          if (data.infoCards && data.infoCards.length > 0) {
+            const newCards: InfoCard[] = data.infoCards.map((card: { type: InfoCard["type"]; title: string; items: string[] }) => ({
+              id: crypto.randomUUID(),
+              type: card.type,
+              title: card.title,
+              items: card.items,
+            }));
+            setInfoCards((prev) => [...prev, ...newCards]);
+          }
 
           // Show effect
           if (data.effect === "confetti" || data.effect === "hearts" || data.effect === "sparkles") {

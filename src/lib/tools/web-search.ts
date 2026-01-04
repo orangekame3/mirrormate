@@ -1,5 +1,5 @@
 import dns from "dns";
-import { Tool } from "./types";
+import { Tool, ToolExecuteResult } from "./types";
 import { sendSearchResults, isAutoShareEnabled } from "../discord";
 
 // Force IPv4 first to avoid ETIMEDOUT on some networks
@@ -12,12 +12,57 @@ interface TavilySearchResult {
   score: number;
 }
 
-// Store last search results for sharing
-let lastSearchResults: TavilySearchResult[] = [];
-let lastSearchQuery: string = "";
+// Store search history for sharing (max 5 entries)
+const MAX_SEARCH_HISTORY = 5;
+const searchHistory: Array<{ query: string; results: TavilySearchResult[]; timestamp: number }> = [];
 
+/**
+ * Add search results to history
+ */
+function addToSearchHistory(query: string, results: TavilySearchResult[]): void {
+  // Remove oldest if at capacity
+  if (searchHistory.length >= MAX_SEARCH_HISTORY) {
+    searchHistory.shift();
+  }
+  searchHistory.push({ query, results, timestamp: Date.now() });
+}
+
+/**
+ * Get the most recent search results
+ */
 export function getLastSearchResults(): { query: string; results: TavilySearchResult[] } {
-  return { query: lastSearchQuery, results: lastSearchResults };
+  if (searchHistory.length === 0) {
+    return { query: "", results: [] };
+  }
+  const last = searchHistory[searchHistory.length - 1];
+  return { query: last.query, results: last.results };
+}
+
+/**
+ * Find search results by query (partial match)
+ */
+export function findSearchResultsByQuery(searchTerm: string): { query: string; results: TavilySearchResult[] } | null {
+  const normalizedTerm = searchTerm.toLowerCase().trim();
+
+  // Search from newest to oldest
+  for (let i = searchHistory.length - 1; i >= 0; i--) {
+    const entry = searchHistory[i];
+    const normalizedQuery = entry.query.toLowerCase();
+
+    // Check for partial match
+    if (normalizedQuery.includes(normalizedTerm) || normalizedTerm.includes(normalizedQuery)) {
+      return { query: entry.query, results: entry.results };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Get all search history (for debugging)
+ */
+export function getSearchHistory(): Array<{ query: string; resultsCount: number }> {
+  return searchHistory.map(h => ({ query: h.query, resultsCount: h.results.length }));
 }
 
 interface TavilyResponse {
@@ -70,11 +115,11 @@ export const webSearchTool: Tool = {
     },
   },
 
-  async execute(args: Record<string, unknown>): Promise<string> {
+  async execute(args: Record<string, unknown>): Promise<ToolExecuteResult> {
     const query = args.query as string;
 
     if (!query) {
-      return "No search query provided.";
+      return { result: "No search query provided." };
     }
 
     console.log(`[WebSearch] Searching for: ${query}`);
@@ -83,12 +128,11 @@ export const webSearchTool: Tool = {
       const results = await searchTavily(query, 5);
 
       if (results.length === 0) {
-        return `No results found for "${query}".`;
+        return { result: `No results found for "${query}".` };
       }
 
-      // Store for later sharing
-      lastSearchQuery = query;
-      lastSearchResults = results;
+      // Store in search history for later sharing
+      addToSearchHistory(query, results);
 
       // Include URLs in the formatted output for LLM awareness
       const formatted = results
@@ -105,10 +149,18 @@ export const webSearchTool: Tool = {
         console.log("[WebSearch] Results shared to Discord");
       }
 
-      return `Search results:\n\n${formatted}`;
+      // Return result with info card for UI display
+      return {
+        result: `Search results:\n\n${formatted}`,
+        infoCard: {
+          type: "search",
+          title: `Search: ${query}`,
+          items: results.slice(0, 3).map((r) => r.title),
+        },
+      };
     } catch (error) {
       console.error("[WebSearch] Error:", error);
-      return `Error during search: ${(error as Error).message}`;
+      return { result: `Error during search: ${(error as Error).message}` };
     }
   },
 };

@@ -1,9 +1,9 @@
-import { Tool, ToolDefinition, ToolCall, ToolResult } from "./types";
+import { Tool, ToolDefinition, ToolCall, ToolResult, ToolInfoCard } from "./types";
 import { webSearchTool } from "./web-search";
 import { effectTool, getPendingEffect, clearPendingEffect } from "./effects";
 import { discordShareTool } from "./discord-share";
 
-export type { Tool, ToolDefinition, ToolCall, ToolResult };
+export type { Tool, ToolDefinition, ToolCall, ToolResult, ToolInfoCard };
 export { getPendingEffect, clearPendingEffect };
 
 const tools: Tool[] = [webSearchTool, effectTool, discordShareTool];
@@ -26,9 +26,19 @@ export async function executeTool(call: ToolCall): Promise<ToolResult> {
     };
   }
 
-  const result = await tool.execute(call.arguments);
+  const execResult = await tool.execute(call.arguments);
+
+  // Handle both string and ToolExecuteResult return types
+  if (typeof execResult === "string") {
+    return {
+      name: call.name,
+      result: execResult,
+    };
+  }
+
   return {
     name: call.name,
-    result,
+    result: execResult.result,
+    infoCard: execResult.infoCard,
   };
 }
