@@ -235,25 +235,25 @@ data/
 
 Features provide contextual information (weather, calendar, time) that is injected into the system prompt. They run before the LLM call.
 
-See [Features Documentation](features.md)
+See [Features Documentation](/config/features)
 
 ### Rules
 
 Rules define trigger-based workflows. When a user message matches a trigger (keyword, pattern), the rule's modules are executed and results are injected into the context.
 
-See [Rules Documentation](rules.md)
+See [Rules Documentation](/config/rules)
 
 ### Tools
 
 Tools are functions that the LLM can call during the conversation (function calling). Used for web search and triggering effects.
 
-See [Tools Documentation](tools.md)
+See [Tools Documentation](/config/tools)
 
 ### Character
 
 Character configuration defines the AI's personality, speech style, and system prompt.
 
-See [Character Documentation](character.md)
+See [Character Documentation](/config/character)
 
 ### Memory
 
@@ -265,16 +265,16 @@ Memory system enables persistent user context through:
 
 The RAG (Retrieval-Augmented Generation) system retrieves relevant memories using semantic search to provide context-aware responses.
 
-See [Memory Documentation](memory.md)
+See [Memory Documentation](/guide/memory)
 
 ### Animation
 
 The avatar uses a finite state machine for animation control with 8 states (IDLE, AWARE, LISTENING, THINKING, SPEAKING, CONFIRMING, ERROR, SLEEP). Each state has distinct visual characteristics including eye shapes, mouth curves, and animation parameters.
 
-See [Animation Documentation](animation.md)
+See [Animation Documentation](/guide/animation)
 
 ### Discord Integration
 
 Share search results, weather info, and other data to Discord for easy access on your phone. When configured, web search results are automatically sent to your Discord channel.
 
-See [Discord Documentation](discord.md)
+See [Discord Documentation](/guide/discord)

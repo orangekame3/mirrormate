@@ -35,6 +35,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# vitepress
+docs/.vitepress/dist
+docs/.vitepress/cache
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
