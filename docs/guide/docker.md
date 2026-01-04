@@ -146,6 +146,9 @@ Create a `.env` file:
 # Required for OpenAI LLM/TTS
 OPENAI_API_KEY=sk-...
 
+# Optional: Language setting (en or ja, default: ja)
+LOCALE=en
+
 # Optional: Override LLM provider (openai or ollama)
 LLM_PROVIDER=openai
 
@@ -173,6 +176,7 @@ docker run -p 3000:3000 \
   -e OPENAI_API_KEY=sk-xxx \
   -e LLM_PROVIDER=openai \
   -e TTS_PROVIDER=openai \
+  -e LOCALE=en \
   ghcr.io/orangekame3/mirrormate:latest
 ```
 

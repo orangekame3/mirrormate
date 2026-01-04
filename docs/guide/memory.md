@@ -32,10 +32,12 @@ flowchart LR
 
 ## Configuration
 
-Memory settings are configured in two files:
+Memory settings are configured in:
 
 - `config/providers.yaml` - Provider and RAG settings
-- `config/memory.yaml` - Extraction prompts and labels
+- `config/locales/[lang]/memory.yaml` - Extraction prompts (locale-specific)
+
+The database is also locale-specific: `data/mirrormate.[lang].db`
 
 ```yaml
 providers:

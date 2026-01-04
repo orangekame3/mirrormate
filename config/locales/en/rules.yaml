@@ -1,0 +1,74 @@
+rules:
+  # Morning greeting
+  morning_greeting:
+    description: Share daily information with a morning greeting
+    triggers:
+      keywords:
+        - good morning
+        - morning
+        - hey morning
+    actions:
+      - module: time
+      - module: today_info
+      - module: weather
+      - module: calendar
+      - module: web_search
+        params:
+          query: "today's news headlines"
+    response_hint: |
+      As a morning greeting, summarize these in a friendly way:
+      - Today's date and day of the week
+      - What day it is (anniversaries, events)
+      - Today's weather
+      - Today's schedule
+      - Today's major news (just 1-2 items briefly)
+
+  # Coming home greeting
+  coming_home:
+    description: Greeting when returning home
+    triggers:
+      keywords:
+        - i'm home
+        - i'm back
+        - just got home
+    actions:
+      - module: time
+      - module: calendar
+    response_hint: |
+      As a welcome home greeting:
+      - If there are remaining plans, let them know
+      - If not, say something warm like "great job today"
+
+  # Good night greeting
+  good_night:
+    description: Tell tomorrow's schedule before bed
+    triggers:
+      keywords:
+        - good night
+        - going to bed
+        - sleep well
+    actions:
+      - module: calendar
+      - module: weather
+    response_hint: |
+      As a good night greeting:
+      - Briefly mention tomorrow's schedule
+      - Share tomorrow's weather
+      - Say something warm like "sleep well"
+
+  # News request
+  news_request:
+    description: Search and share today's news
+    triggers:
+      keywords:
+        - today's news
+        - tell me the news
+        - recent news
+        - what's happening
+    actions:
+      - module: web_search
+        params:
+          query: "today's news headlines"
+    response_hint: |
+      Pick 2-3 major news items from the search results
+      and share them briefly

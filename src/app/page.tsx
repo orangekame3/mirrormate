@@ -25,7 +25,7 @@ export default function AvatarPage() {
   const [displayText, setDisplayText] = useState("");
   const [isTextFading, setIsTextFading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [speechEnabled, setSpeechEnabled] = useState(false);
+  const [speechEnabled, setSpeechEnabled] = useState(true);
   const [infoCards, setInfoCards] = useState<InfoCard[]>([]);
   const [showEffect, setShowEffect] = useState(false);
   const [effectType, setEffectType] = useState<EffectType>("confetti");

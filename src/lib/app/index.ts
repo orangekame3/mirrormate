@@ -46,6 +46,12 @@ export function loadAppConfig(): AppConfig {
 }
 
 export function getLocale(): Locale {
+  // Environment variable takes precedence
+  const envLocale = process.env.LOCALE;
+  if (envLocale === "ja" || envLocale === "en") {
+    return envLocale;
+  }
+
   const config = loadAppConfig();
   return config.app.locale;
 }

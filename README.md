@@ -35,17 +35,18 @@ https://github.com/user-attachments/assets/c9005df4-9bdb-4190-861e-c8f5f9290468
 
 ## Quick Start
 
-**OpenAI:**
+**OpenAI (English):**
 
 ```bash
 docker run -p 3000:3000 \
   -e OPENAI_API_KEY=sk-xxx \
   -e LLM_PROVIDER=openai \
   -e TTS_PROVIDER=openai \
+  -e LOCALE=en \
   ghcr.io/orangekame3/mirrormate:latest
 ```
 
-**Ollama + VOICEVOX (local):**
+**Ollama + VOICEVOX (Japanese, local):**
 
 ```bash
 ollama pull qwen2.5:14b
@@ -54,6 +55,12 @@ cd mirrormate && docker compose up -d
 ```
 
 Open http://localhost:3000 in **Chrome**.
+
+> Set `LOCALE=en` for English or `LOCALE=ja` for Japanese (default).
+
+**Say the wake word to start:**
+- English: *"OK Mira"*
+- Japanese: *"OK ミラ"*
 
 ## Development
 
