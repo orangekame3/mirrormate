@@ -272,3 +272,9 @@ See [Memory Documentation](memory.md)
 The avatar uses a finite state machine for animation control with 8 states (IDLE, AWARE, LISTENING, THINKING, SPEAKING, CONFIRMING, ERROR, SLEEP). Each state has distinct visual characteristics including eye shapes, mouth curves, and animation parameters.
 
 See [Animation Documentation](animation.md)
+
+### Discord Integration
+
+Share search results, weather info, and other data to Discord for easy access on your phone. When configured, web search results are automatically sent to your Discord channel.
+
+See [Discord Documentation](discord.md)

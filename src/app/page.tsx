@@ -13,6 +13,7 @@ import { useLongThinkingPulse } from "@/hooks/useLongThinkingPulse";
 import { FloatingInfo, InfoCard, detectInfoFromResponse } from "@/components/FloatingInfo";
 import PluginRenderer from "@/components/PluginRenderer";
 import { mapBroadcastToEvent, type BroadcastMessage } from "@/lib/animation/broadcast-adapter";
+import { getAcknowledgment } from "@/lib/quick-ack";
 
 export default function AvatarPage() {
   const t = useTranslations("mic");
@@ -323,7 +324,34 @@ export default function AvatarPage() {
       messagesRef.current.push({ role: "user", content: transcript });
 
       try {
-        const res = await fetch("/api/chat", {
+        // Generate quick acknowledgment for immediate feedback
+        const ack = getAcknowledgment(transcript);
+
+        // Start acknowledgment TTS immediately (non-blocking)
+        let ackAudioPromise: Promise<void> | null = null;
+        if (ack) {
+          setDisplayText(ack);
+          ackAudioPromise = (async () => {
+            try {
+              const ttsRes = await fetch("/api/tts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: ack }),
+              });
+              if (ttsRes.ok) {
+                const ttsData = await ttsRes.json();
+                if (ttsData.audio) {
+                  await playAudio(ttsData.audio);
+                }
+              }
+            } catch (e) {
+              console.error("Ack TTS error:", e);
+            }
+          })();
+        }
+
+        // Start chat API call in parallel with acknowledgment
+        const chatPromise = fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -331,6 +359,14 @@ export default function AvatarPage() {
             withAudio: false,
           }),
         });
+
+        // Wait for acknowledgment to finish playing (if any)
+        if (ackAudioPromise) {
+          await ackAudioPromise;
+        }
+
+        // Now process chat response
+        const res = await chatPromise;
 
         if (res.ok) {
           const data = await res.json();
