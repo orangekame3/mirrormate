@@ -22,6 +22,7 @@ export interface BroadcastMessage {
     | "mic_status"
     | "mic_request_status"
     | "effect"
+    | "settings_changed"
     // New animation state types
     | "avatar_state_change"
     | "user_presence"
@@ -90,6 +91,7 @@ export function mapBroadcastToEvent(message: BroadcastMessage): AvatarEvent | nu
     case "mic_status":
     case "mic_request_status":
     case "effect":
+    case "settings_changed":
     case "avatar_state_change":
       return null;
 

@@ -30,6 +30,8 @@ export default function AvatarPage() {
   const [showEffect, setShowEffect] = useState(false);
   const [effectType, setEffectType] = useState<EffectType>("confetti");
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [currentSpeaker, setCurrentSpeaker] = useState<number | null>(null);
+  const [currentCharacter, setCurrentCharacter] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const textFadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -37,6 +39,39 @@ export default function AvatarPage() {
   const animationRef = useRef<number>(0);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const messagesRef = useRef<Array<{ role: string; content: string }>>([]);
+
+  // Load saved settings on mount (from DB with localStorage fallback)
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const response = await fetch("/api/settings");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.speakerId !== null && data.speakerId !== undefined) {
+            setCurrentSpeaker(data.speakerId);
+          }
+          if (data.characterId) {
+            setCurrentCharacter(data.characterId);
+          }
+          return;
+        }
+      } catch {
+        // Fall back to localStorage
+      }
+
+      // Fallback to localStorage
+      const savedSpeaker = localStorage.getItem("mirrormate:speaker");
+      const savedCharacter = localStorage.getItem("mirrormate:character");
+      if (savedSpeaker) {
+        setCurrentSpeaker(parseInt(savedSpeaker, 10));
+      }
+      if (savedCharacter) {
+        setCurrentCharacter(savedCharacter);
+      }
+    }
+
+    loadSettings();
+  }, []);
 
   // Animation state machine
   const { state: avatarState, context: stateContext, dispatch: dispatchState } = useAvatarState();
@@ -243,7 +278,7 @@ export default function AvatarPage() {
           const res = await fetch("/api/tts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: message }),
+            body: JSON.stringify({ text: message, speaker: currentSpeaker ?? undefined }),
           });
           if (res.ok) {
             const data = await res.json();
@@ -256,7 +291,7 @@ export default function AvatarPage() {
         }
       }
     },
-    [isSpeaking, isProcessing, playAudio]
+    [isSpeaking, isProcessing, playAudio, currentSpeaker]
   );
 
   // Reminder hook (config loaded from YAML)
@@ -336,7 +371,7 @@ export default function AvatarPage() {
               const ttsRes = await fetch("/api/tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: ack }),
+                body: JSON.stringify({ text: ack, speaker: currentSpeaker ?? undefined }),
               });
               if (ttsRes.ok) {
                 const ttsData = await ttsRes.json();
@@ -357,6 +392,7 @@ export default function AvatarPage() {
           body: JSON.stringify({
             messages: messagesRef.current,
             withAudio: false,
+            characterId: currentCharacter ?? undefined,
           }),
         });
 
@@ -398,7 +434,7 @@ export default function AvatarPage() {
             const ttsRes = await fetch("/api/tts", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ text: data.message }),
+              body: JSON.stringify({ text: data.message, speaker: currentSpeaker ?? undefined }),
             });
 
             if (ttsRes.ok) {
@@ -416,7 +452,7 @@ export default function AvatarPage() {
         setIsProcessing(false);
       }
     },
-    [isProcessing, isSpeaking, playAudio, addInfoCard, isWakeWordEnabled, wakeWordMode, wakeWordConfig, checkForWakeWord, resetWakeWordTimeout]
+    [isProcessing, isSpeaking, playAudio, addInfoCard, isWakeWordEnabled, wakeWordMode, wakeWordConfig, checkForWakeWord, resetWakeWordTimeout, currentSpeaker, currentCharacter]
   );
 
   // Speech recognition hook
@@ -492,10 +528,25 @@ export default function AvatarPage() {
           if (payload) {
             // Call TTS API and play audio
             try {
+              // Parse payload - can be JSON object with text and speaker, or plain text string
+              let text = payload;
+              let speaker: number | undefined;
+
+              try {
+                const parsed = JSON.parse(payload);
+                if (typeof parsed === "object" && parsed.text) {
+                  text = parsed.text;
+                  speaker = parsed.speaker ?? currentSpeaker ?? undefined;
+                }
+              } catch {
+                // Not JSON, use as plain text
+                speaker = currentSpeaker ?? undefined;
+              }
+
               const res = await fetch("/api/tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: payload }),
+                body: JSON.stringify({ text, speaker }),
               });
               if (res.ok) {
                 const data = await res.json();
@@ -505,6 +556,21 @@ export default function AvatarPage() {
               }
             } catch (e) {
               console.error("TTS error:", e);
+            }
+          }
+          break;
+        case "settings_changed":
+          if (payload) {
+            try {
+              const settings = JSON.parse(payload);
+              if (settings.speaker !== undefined) {
+                setCurrentSpeaker(settings.speaker);
+              }
+              if (settings.characterId !== undefined) {
+                setCurrentCharacter(settings.characterId);
+              }
+            } catch {
+              // Invalid JSON
             }
           }
           break;
@@ -543,7 +609,7 @@ export default function AvatarPage() {
       }
       channelRef.current?.close();
     };
-  }, [playAudio, start, stop, broadcastMicStatus, speechEnabled, isListening]);
+  }, [playAudio, start, stop, broadcastMicStatus, speechEnabled, isListening, currentSpeaker]);
 
   return (
     <main

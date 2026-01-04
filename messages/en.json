@@ -15,7 +15,12 @@
     "effects": "Effects",
     "confetti": "Confetti",
     "hearts": "Hearts",
-    "sparkles": "Sparkles"
+    "sparkles": "Sparkles",
+    "voice": "Voice",
+    "character": "Character",
+    "preview": "Preview",
+    "selectVoice": "Select voice...",
+    "selectCharacter": "Select character..."
   },
   "status": {
     "thinking": "Thinking...",

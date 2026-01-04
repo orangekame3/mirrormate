@@ -79,15 +79,50 @@ function initializeSchema(sqlite: Database.Database): void {
         created_at INTEGER NOT NULL
       );
 
+      CREATE TABLE IF NOT EXISTS user_settings (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+        speaker_id INTEGER,
+        character_id TEXT,
+        updated_at INTEGER NOT NULL
+      );
+
       CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
       CREATE INDEX IF NOT EXISTS idx_messages_session_id ON messages(session_id);
       CREATE INDEX IF NOT EXISTS idx_memories_user_id ON memories(user_id);
       CREATE INDEX IF NOT EXISTS idx_memories_kind ON memories(kind);
       CREATE INDEX IF NOT EXISTS idx_memories_status ON memories(status);
       CREATE INDEX IF NOT EXISTS idx_memory_embeddings_memory_id ON memory_embeddings(memory_id);
+      CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id);
     `);
 
     console.log("[DB] Schema initialized successfully");
+  } else {
+    // Run migrations for existing databases
+    runMigrations(sqlite);
+  }
+}
+
+// Run migrations for existing databases
+function runMigrations(sqlite: Database.Database): void {
+  // Migration: Add user_settings table if it doesn't exist
+  const userSettingsCheck = sqlite.prepare(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='user_settings'"
+  ).get();
+
+  if (!userSettingsCheck) {
+    console.log("[DB] Running migration: Adding user_settings table...");
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS user_settings (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+        speaker_id INTEGER,
+        character_id TEXT,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id);
+    `);
+    console.log("[DB] Migration complete: user_settings table added");
   }
 }
 

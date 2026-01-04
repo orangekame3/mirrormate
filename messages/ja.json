@@ -15,7 +15,12 @@
     "effects": "エフェクト",
     "confetti": "紙吹雪",
     "hearts": "ハート",
-    "sparkles": "キラキラ"
+    "sparkles": "キラキラ",
+    "voice": "声",
+    "character": "キャラクター",
+    "preview": "試聴",
+    "selectVoice": "声を選択...",
+    "selectCharacter": "キャラクターを選択..."
   },
   "status": {
     "thinking": "考え中...",
