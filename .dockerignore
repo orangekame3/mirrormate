@@ -1,12 +1,64 @@
+# Dependencies
+node_modules
+
+# Build outputs
+.next
+out
+dist
+build
+
+# Git
+.git
+.gitignore
+
+# Docker
 Dockerfile
 .dockerignore
 compose.yaml
-node_modules
-npm-debug.log
-.next
-.git
-.gitignore
-*.md
+docker-compose*.yaml
+
+# Docs (VitePress)
+docs/.vitepress/dist
+docs/.vitepress/cache
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment files
 .env
 .env.*
 !.env.example
+
+# Test & coverage
+coverage
+.nyc_output
+*.test.ts
+*.spec.ts
+__tests__
+vitest.config.ts
+
+# Misc
+*.md
+!README.md
+LICENSE
+.DS_Store
+Thumbs.db
+*.log
+
+# CI/CD
+.github
+
+# Data (should be volume mounted)
+data
+*.db
+*.db-wal
+*.db-shm

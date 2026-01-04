@@ -18,8 +18,12 @@ RUN apt-get update && apt-get install -y \
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:$PATH"
 
+# Copy only package files first for better layer caching
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+
+# Use BuildKit cache mount for bun cache
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -32,7 +36,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Ensure public directory exists (may not exist in some projects)
 RUN mkdir -p public
 
-RUN npm run build
+# Use BuildKit cache mount for Next.js build cache
+RUN --mount=type=cache,target=/app/.next/cache \
+    npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
