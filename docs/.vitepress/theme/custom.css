@@ -1,0 +1,653 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Mirror Mate - Luxury Glass Theme
+   A refined, mirror-inspired design with glass morphism and light reflections
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Google Fonts Import */
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap");
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CSS Variables - Light Theme (Default)
+   ───────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Brand Colors - Ice Blue & Silver */
+  --vp-c-brand-1: #0ea5e9;
+  --vp-c-brand-2: #38bdf8;
+  --vp-c-brand-3: #0284c7;
+  --vp-c-brand-soft: rgba(14, 165, 233, 0.12);
+
+  /* Mirror Palette */
+  --mirror-silver: #e2e8f0;
+  --mirror-platinum: #f1f5f9;
+  --mirror-ice: #e0f2fe;
+  --mirror-reflection: rgba(255, 255, 255, 0.7);
+  --mirror-glass: rgba(255, 255, 255, 0.6);
+  --mirror-edge: rgba(148, 163, 184, 0.3);
+  --mirror-glow: rgba(14, 165, 233, 0.15);
+
+  /* Typography */
+  --vp-font-family-base: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --vp-font-family-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Background */
+  --vp-c-bg: #fafbfc;
+  --vp-c-bg-alt: #f4f6f8;
+  --vp-c-bg-soft: #f1f4f7;
+  --vp-c-bg-elv: #ffffff;
+
+  /* Hero Styling */
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(
+    135deg,
+    #0f172a 0%,
+    #334155 40%,
+    #0ea5e9 100%
+  );
+  --vp-home-hero-image-background-image: radial-gradient(
+    ellipse at center,
+    rgba(14, 165, 233, 0.15) 0%,
+    rgba(148, 163, 184, 0.08) 50%,
+    transparent 70%
+  );
+  --vp-home-hero-image-filter: blur(44px);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Dark Theme - Deep Mirror
+   ───────────────────────────────────────────────────────────────────────────── */
+.dark {
+  --vp-c-brand-1: #38bdf8;
+  --vp-c-brand-2: #7dd3fc;
+  --vp-c-brand-3: #0ea5e9;
+  --vp-c-brand-soft: rgba(56, 189, 248, 0.12);
+
+  /* Dark Mirror Palette */
+  --mirror-silver: #334155;
+  --mirror-platinum: #1e293b;
+  --mirror-ice: #0c4a6e;
+  --mirror-reflection: rgba(255, 255, 255, 0.05);
+  --mirror-glass: rgba(15, 23, 42, 0.8);
+  --mirror-edge: rgba(71, 85, 105, 0.5);
+  --mirror-glow: rgba(56, 189, 248, 0.1);
+
+  /* Background */
+  --vp-c-bg: #0b0f14;
+  --vp-c-bg-alt: #0f1419;
+  --vp-c-bg-soft: #151b23;
+  --vp-c-bg-elv: #1a212b;
+
+  /* Hero */
+  --vp-home-hero-name-background: linear-gradient(
+    135deg,
+    #e2e8f0 0%,
+    #94a3b8 30%,
+    #38bdf8 70%,
+    #7dd3fc 100%
+  );
+  --vp-home-hero-image-background-image: radial-gradient(
+    ellipse at center,
+    rgba(56, 189, 248, 0.12) 0%,
+    rgba(71, 85, 105, 0.06) 50%,
+    transparent 70%
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Base & Layout
+   ───────────────────────────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle background pattern */
+.VPContent {
+  background-image:
+    radial-gradient(ellipse at 20% 0%, var(--mirror-glow) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, var(--mirror-glow) 0%, transparent 50%);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Navigation Bar - Frosted Glass
+   ───────────────────────────────────────────────────────────────────────────── */
+.VPNav {
+  background: var(--mirror-glass) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--mirror-edge) !important;
+}
+
+.VPNavBar .title {
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+}
+
+.VPNavBarMenuLink {
+  font-weight: 500;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.VPNavBarMenuLink:hover {
+  color: var(--vp-c-brand-1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Hero Section - Mirror Reflection
+   ───────────────────────────────────────────────────────────────────────────── */
+.VPHero {
+  padding-top: 80px !important;
+  padding-bottom: 80px !important;
+}
+
+.VPHero .name {
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 4rem !important;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  position: relative;
+}
+
+/* Subtle reflection effect on title */
+.VPHero .name::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.15) 45%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.15) 55%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    background-position: 200% 0;
+  }
+  50% {
+    background-position: -200% 0;
+  }
+}
+
+.VPHero .text {
+  font-family: "Outfit", sans-serif;
+  font-weight: 500;
+  font-size: 1.5rem !important;
+  letter-spacing: -0.01em;
+  color: var(--vp-c-text-1);
+  opacity: 0.9;
+}
+
+.VPHero .tagline {
+  font-size: 1.15rem !important;
+  line-height: 1.6;
+  color: var(--vp-c-text-2);
+  font-weight: 400;
+  max-width: 560px;
+}
+
+/* Hero image glow */
+.VPHero .image-container {
+  position: relative;
+}
+
+.VPHero .image-container::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(
+    circle at center,
+    var(--mirror-glow) 0%,
+    transparent 70%
+  );
+  z-index: -1;
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Action Buttons - Glass Effect
+   ───────────────────────────────────────────────────────────────────────────── */
+.VPButton.brand {
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 10px;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, var(--vp-c-brand-3) 0%, var(--vp-c-brand-1) 100%);
+  border: none;
+  box-shadow:
+    0 4px 14px -2px rgba(14, 165, 233, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.VPButton.brand::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.VPButton.brand:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 20px -4px rgba(14, 165, 233, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.VPButton.brand:hover::before {
+  left: 100%;
+}
+
+.VPButton.alt {
+  font-family: "Outfit", sans-serif;
+  font-weight: 500;
+  font-size: 0.95rem;
+  border-radius: 10px;
+  padding: 12px 28px;
+  background: var(--mirror-glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--mirror-edge);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.VPButton.alt:hover {
+  background: var(--mirror-reflection);
+  border-color: var(--vp-c-brand-1);
+  transform: translateY(-2px);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Feature Cards - Glass Morphism
+   ───────────────────────────────────────────────────────────────────────────── */
+.VPFeatures {
+  padding: 40px 0 80px !important;
+}
+
+.VPFeature {
+  background: var(--mirror-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--mirror-edge);
+  border-radius: 16px;
+  padding: 28px !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle top highlight */
+.VPFeature::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    transparent
+  );
+}
+
+.VPFeature:hover {
+  transform: translateY(-4px);
+  border-color: var(--vp-c-brand-soft);
+  box-shadow:
+    0 20px 40px -12px rgba(0, 0, 0, 0.08),
+    0 0 0 1px var(--mirror-edge),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.dark .VPFeature:hover {
+  box-shadow:
+    0 20px 40px -12px rgba(0, 0, 0, 0.4),
+    0 0 40px -10px var(--mirror-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.VPFeature .icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.VPFeature .title {
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+  color: var(--vp-c-text-1);
+}
+
+.VPFeature .details {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--vp-c-text-2);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Sidebar - Refined
+   ───────────────────────────────────────────────────────────────────────────── */
+.VPSidebar {
+  background: var(--vp-c-bg) !important;
+  border-right: 1px solid var(--mirror-edge) !important;
+}
+
+.VPSidebarItem .text {
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.VPSidebarItem.is-active > .item > .link > .text {
+  color: var(--vp-c-brand-1);
+  font-weight: 600;
+}
+
+.VPSidebar .group + .group {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--mirror-edge);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Content Area
+   ───────────────────────────────────────────────────────────────────────────── */
+.VPDoc.has-aside .content-container {
+  max-width: 780px;
+}
+
+/* Headings */
+.vp-doc h1 {
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 2.25rem;
+  letter-spacing: -0.02em;
+  border-bottom: 2px solid var(--mirror-edge);
+  padding-bottom: 16px;
+}
+
+.vp-doc h2 {
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--mirror-edge);
+}
+
+.vp-doc h3 {
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+/* Paragraphs */
+.vp-doc p {
+  line-height: 1.75;
+}
+
+/* Links */
+.vp-doc a {
+  color: var(--vp-c-brand-1);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  position: relative;
+}
+
+.vp-doc a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+
+.vp-doc a:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Code Blocks - Frosted Glass
+   ───────────────────────────────────────────────────────────────────────────── */
+div[class*="language-"] {
+  border-radius: 12px;
+  border: 1px solid var(--mirror-edge);
+  background: var(--vp-c-bg-soft) !important;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.06);
+}
+
+.dark div[class*="language-"] {
+  background: rgba(15, 23, 42, 0.6) !important;
+  box-shadow:
+    0 4px 16px -4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+div[class*="language-"] code {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.875rem;
+}
+
+.vp-code-group .tabs {
+  background: transparent;
+  border-bottom: 1px solid var(--mirror-edge);
+}
+
+.vp-code-group .tabs label {
+  font-family: "Outfit", sans-serif;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+/* Inline code */
+.vp-doc :not(pre) > code {
+  background: var(--mirror-silver);
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-size: 0.875em;
+  font-weight: 500;
+}
+
+.dark .vp-doc :not(pre) > code {
+  background: var(--mirror-platinum);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Tables - Clean & Modern
+   ───────────────────────────────────────────────────────────────────────────── */
+.vp-doc table {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--mirror-edge);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04);
+}
+
+.vp-doc th {
+  background: var(--vp-c-bg-soft);
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--vp-c-text-2);
+}
+
+.vp-doc td {
+  border-color: var(--mirror-edge);
+}
+
+.vp-doc tr:hover td {
+  background: var(--mirror-reflection);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Custom Blocks (Tips, Warnings, etc.)
+   ───────────────────────────────────────────────────────────────────────────── */
+.vp-doc .custom-block {
+  border-radius: 12px;
+  border: 1px solid var(--mirror-edge);
+  background: var(--mirror-glass);
+  backdrop-filter: blur(8px);
+}
+
+.vp-doc .custom-block.tip {
+  border-color: var(--vp-c-brand-soft);
+  background: linear-gradient(
+    135deg,
+    rgba(14, 165, 233, 0.05) 0%,
+    transparent 100%
+  );
+}
+
+.vp-doc .custom-block.warning {
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.05) 0%,
+    transparent 100%
+  );
+}
+
+.vp-doc .custom-block.danger {
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.05) 0%,
+    transparent 100%
+  );
+}
+
+.vp-doc .custom-block-title {
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Mermaid Diagrams
+   ───────────────────────────────────────────────────────────────────────────── */
+.mermaid {
+  margin: 24px 0;
+  padding: 24px;
+  background: var(--mirror-glass);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--mirror-edge);
+  border-radius: 12px;
+  text-align: center;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Footer
+   ───────────────────────────────────────────────────────────────────────────── */
+.VPFooter {
+  border-top: 1px solid var(--mirror-edge) !important;
+  background: var(--vp-c-bg) !important;
+}
+
+.VPFooter .message,
+.VPFooter .copyright {
+  font-size: 0.875rem;
+  color: var(--vp-c-text-3);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Search Modal
+   ───────────────────────────────────────────────────────────────────────────── */
+.VPLocalSearchBox .shell {
+  border-radius: 16px;
+  border: 1px solid var(--mirror-edge);
+  background: var(--mirror-glass);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Scrollbar Styling
+   ───────────────────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mirror-edge);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vp-c-text-3);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Selection Styling
+   ───────────────────────────────────────────────────────────────────────────── */
+::selection {
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Responsive Adjustments
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .VPHero .name {
+    font-size: 2.5rem !important;
+  }
+
+  .VPHero .text {
+    font-size: 1.2rem !important;
+  }
+
+  .VPHero .tagline {
+    font-size: 1rem !important;
+  }
+}
