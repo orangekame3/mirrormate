@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { getAllContexts } from "@/lib/features/registry";
 import { getLLMProvider, ChatMessage } from "@/lib/llm";
-import { getSystemPrompt } from "@/lib/character";
+import { getSystemPrompt, getSystemPromptForCharacter } from "@/lib/character";
 import { getToolDefinitions, executeTool, getPendingEffect, clearPendingEffect, ToolInfoCard } from "@/lib/tools";
 import { executeRule, formatRuleContext } from "@/lib/rules";
 import { loadProvidersConfig, getEmbeddingProvider } from "@/lib/providers";
@@ -49,7 +49,7 @@ function getMemoryService(): MemoryService | null {
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, withAudio = true, userId } = await request.json();
+    const { messages, withAudio = true, userId, characterId } = await request.json();
 
     // Determine user ID (use default if not specified)
     const currentUserId = userId || DEFAULT_USER_ID;
@@ -67,8 +67,10 @@ export async function POST(request: NextRequest) {
     const ruleResult = await executeRule(lastUserMessage);
     const ruleContext = formatRuleContext(ruleResult);
 
-    // Build system prompt with contexts
-    const systemPrompt = getSystemPrompt();
+    // Build system prompt with contexts (use character-specific prompt if characterId provided)
+    const systemPrompt = characterId
+      ? getSystemPromptForCharacter(characterId)
+      : getSystemPrompt();
     const contexts: string[] = [];
 
     // Get RAG context

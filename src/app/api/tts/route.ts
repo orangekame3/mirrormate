@@ -112,7 +112,7 @@ async function generateVoicevoxTTS(
 
 export async function POST(request: NextRequest) {
   try {
-    const { text } = await request.json();
+    const { text, speaker: speakerOverride } = await request.json();
 
     if (!text) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
@@ -130,10 +130,11 @@ export async function POST(request: NextRequest) {
     let audioBase64: string;
 
     if (provider === "voicevox") {
-      const speaker = ttsConfig?.voicevox?.speaker ?? 3;
+      // Use override if provided, otherwise use config
+      const speaker = speakerOverride ?? ttsConfig?.voicevox?.speaker ?? 3;
       const baseUrl = ttsConfig?.voicevox?.baseUrl || "http://localhost:50021";
 
-      console.log(`[TTS] Using VOICEVOX (speaker: ${speaker})`);
+      console.log(`[TTS] Using VOICEVOX (speaker: ${speaker}${speakerOverride !== undefined ? " [override]" : ""})`);
       audioBase64 = await generateVoicevoxTTS(normalizedText, speaker, baseUrl);
     } else {
       const voice = ttsConfig?.openai?.voice || "shimmer";
