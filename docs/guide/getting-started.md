@@ -36,7 +36,7 @@ For a fully local setup:
 ```bash
 # 1. Install and start Ollama
 ollama serve
-ollama pull qwen2.5:14b
+ollama pull gpt-oss:20b
 
 # 2. Clone and start Mirror Mate
 git clone https://github.com/orangekame3/mirrormate.git

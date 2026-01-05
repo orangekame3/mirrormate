@@ -32,8 +32,8 @@ export const discordShareTool: Tool = {
   },
 
   async execute(args: Record<string, unknown>): Promise<ToolExecuteResult> {
-    const title = args.title as string;
-    const content = args.content as string;
+    const title = (args.title as string) || "";
+    const content = (args.content as string) || "";
     const url = args.url as string | undefined;
     const includeSearchResults = args.includeSearchResults === "true" || args.includeSearchResults === true;
 
@@ -41,7 +41,12 @@ export const discordShareTool: Tool = {
       return { result: "Discord integration is not configured. Please set DISCORD_WEBHOOK_URL environment variable." };
     }
 
-    console.log(`[Discord] Sharing: ${title}, includeSearchResults: ${includeSearchResults}`);
+    // Validate required parameters
+    if (!title && !content) {
+      return { result: "Discord送信には title または content が必要です。" };
+    }
+
+    console.log(`[Discord] Sharing: ${title || content.substring(0, 30)}, includeSearchResults: ${includeSearchResults}`);
 
     try {
       let success = false;

@@ -87,7 +87,7 @@ ollama serve
 3. Pull a model:
 
 ```bash
-ollama pull qwen2.5:14b
+ollama pull gpt-oss:20b
 ```
 
 4. Configure in `providers.yaml`:
@@ -98,7 +98,7 @@ providers:
     enabled: true
     provider: ollama
     ollama:
-      model: "qwen2.5:14b"
+      model: "gpt-oss:20b"
       baseUrl: "http://localhost:11434"
       maxTokens: 300
       temperature: 0.7
@@ -106,12 +106,11 @@ providers:
 
 #### Recommended Models for Japanese
 
-| Model | Size | Japanese Quality | Speed |
-|-------|------|------------------|-------|
-| `qwen2.5:7b` | 7B | Good | Fast |
-| `qwen2.5:14b` | 14B | Very Good | Medium |
-| `qwen2.5:32b` | 32B | Excellent | Slow |
-| `rinna/qwen2.5-bakeneko-32b` | 32B | Excellent | Slow |
+| Model | Size | Japanese Quality | Tool Calling | Speed |
+|-------|------|------------------|--------------|-------|
+| `gpt-oss:20b` | 20B | Excellent | Native | Medium |
+| `qwen2.5:14b` | 14B | Very Good | Yes | Medium |
+| `qwen2.5:32b` | 32B | Excellent | Yes | Slow |
 
 ### LLM Options
 
@@ -295,7 +294,7 @@ providers:
   llm:
     provider: ollama
     ollama:
-      model: "qwen2.5:14b"
+      model: "gpt-oss:20b"
       baseUrl: "http://studio:11434"  # Tailscale hostname
 
   tts:

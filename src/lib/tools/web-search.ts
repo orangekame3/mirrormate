@@ -1,25 +1,23 @@
-import dns from "dns";
 import { Tool, ToolExecuteResult } from "./types";
 import { sendSearchResults, isAutoShareEnabled } from "../discord";
+import { searchOllama, isOllamaSearchEnabled, type OllamaSearchResult } from "../search/ollama-search";
 
-// Force IPv4 first to avoid ETIMEDOUT on some networks
-dns.setDefaultResultOrder("ipv4first");
-
-interface TavilySearchResult {
+// Unified search result interface
+export interface SearchResult {
   title: string;
   url: string;
   content: string;
-  score: number;
+  score?: number;
 }
 
 // Store search history for sharing (max 5 entries)
 const MAX_SEARCH_HISTORY = 5;
-const searchHistory: Array<{ query: string; results: TavilySearchResult[]; timestamp: number }> = [];
+const searchHistory: Array<{ query: string; results: SearchResult[]; timestamp: number }> = [];
 
 /**
  * Add search results to history
  */
-function addToSearchHistory(query: string, results: TavilySearchResult[]): void {
+function addToSearchHistory(query: string, results: SearchResult[]): void {
   // Remove oldest if at capacity
   if (searchHistory.length >= MAX_SEARCH_HISTORY) {
     searchHistory.shift();
@@ -30,7 +28,7 @@ function addToSearchHistory(query: string, results: TavilySearchResult[]): void 
 /**
  * Get the most recent search results
  */
-export function getLastSearchResults(): { query: string; results: TavilySearchResult[] } {
+export function getLastSearchResults(): { query: string; results: SearchResult[] } {
   if (searchHistory.length === 0) {
     return { query: "", results: [] };
   }
@@ -41,7 +39,8 @@ export function getLastSearchResults(): { query: string; results: TavilySearchRe
 /**
  * Find search results by query (partial match)
  */
-export function findSearchResultsByQuery(searchTerm: string): { query: string; results: TavilySearchResult[] } | null {
+export function findSearchResultsByQuery(searchTerm: string): { query: string; results: SearchResult[] } | null {
+  if (!searchTerm) return null;
   const normalizedTerm = searchTerm.toLowerCase().trim();
 
   // Search from newest to oldest
@@ -65,44 +64,34 @@ export function getSearchHistory(): Array<{ query: string; resultsCount: number 
   return searchHistory.map(h => ({ query: h.query, resultsCount: h.results.length }));
 }
 
-interface TavilyResponse {
-  results: TavilySearchResult[];
-  answer?: string;
+/**
+ * Perform web search using Ollama Web Search API
+ */
+async function performSearch(query: string, maxResults: number = 5): Promise<SearchResult[]> {
+  if (!isOllamaSearchEnabled()) {
+    throw new Error("OLLAMA_API_KEY is not configured");
+  }
+
+  console.log(`[WebSearch] Using Ollama Web Search`);
+  const results = await searchOllama(query, maxResults);
+  return results.map((r: OllamaSearchResult) => ({
+    title: r.title,
+    url: r.url,
+    content: r.content,
+  }));
 }
 
-async function searchTavily(query: string, maxResults: number = 5): Promise<TavilySearchResult[]> {
-  const apiKey = process.env.TAVILY_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("TAVILY_API_KEY is not configured");
-  }
-
-  const response = await fetch("https://api.tavily.com/search", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      api_key: apiKey,
-      query,
-      max_results: maxResults,
-      include_answer: true,
-      search_depth: "basic",
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Tavily API error: ${response.status}`);
-  }
-
-  const data = (await response.json()) as TavilyResponse;
-  return data.results || [];
+/**
+ * Check if search is available
+ */
+export function isSearchEnabled(): boolean {
+  return isOllamaSearchEnabled();
 }
 
 export const webSearchTool: Tool = {
   definition: {
     name: "web_search",
-    description: "インターネットで情報を検索します。最新のニュースや知らない情報を調べるときに使います。",
+    description: "インターネットで最新情報を検索します。必ず使うべき場面: ニュース、今日の出来事、知らない事柄、正確な情報が必要なとき。自分の知識に自信がないときは必ずこのツールを呼び出してください。",
     parameters: {
       type: "object",
       properties: {
@@ -125,7 +114,7 @@ export const webSearchTool: Tool = {
     console.log(`[WebSearch] Searching for: ${query}`);
 
     try {
-      const results = await searchTavily(query, 5);
+      const results = await performSearch(query, 5);
 
       if (results.length === 0) {
         return { result: `No results found for "${query}".` };

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import type { AvatarState, AnimationValues } from "@/lib/animation";
+import AvatarAura from "./AvatarAura";
 
 interface SimpleAvatarProps {
   isSpeaking: boolean;
@@ -190,6 +191,9 @@ export default function SimpleAvatar({
 
   return (
     <div className="relative w-full h-full">
+      {/* Avatar Aura (halo + orbit particles) */}
+      <AvatarAura state={avatarState || "IDLE"} size={320} />
+      {/* Avatar Canvas */}
       <div ref={containerRef} className="w-full h-full" />
     </div>
   );

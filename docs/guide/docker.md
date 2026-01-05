@@ -36,7 +36,7 @@ flowchart TB
 ```bash
 brew install ollama
 brew services start ollama
-ollama pull qwen2.5:14b
+ollama pull gpt-oss:20b
 ```
 
 2. **Start Docker Services (VOICEVOX + PLaMo)**
@@ -115,7 +115,7 @@ services:
       - GOOGLE_SERVICE_ACCOUNT_EMAIL=${GOOGLE_SERVICE_ACCOUNT_EMAIL}
       - GOOGLE_PRIVATE_KEY=${GOOGLE_PRIVATE_KEY}
       - GOOGLE_CALENDAR_ID=${GOOGLE_CALENDAR_ID}
-      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     volumes:
       - ./config:/app/config:ro
@@ -167,8 +167,9 @@ GOOGLE_SERVICE_ACCOUNT_EMAIL=...
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 GOOGLE_CALENDAR_ID=...
 
-# Optional: Web Search
-TAVILY_API_KEY=tvly-...
+# Optional: Web Search (Ollama)
+# Get API key from: https://ollama.com/settings/keys
+OLLAMA_API_KEY=your-ollama-api-key
 
 # Optional: Discord Integration
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
