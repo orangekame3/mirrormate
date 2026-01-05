@@ -1,0 +1,10 @@
+# Mac Studio deployment
+# Run heavy services: VOICEVOX (Ollama runs natively)
+# Usage: docker compose -f compose.studio.yaml up -d
+
+services:
+  voicevox:
+    image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+    ports:
+      - "50021:50021"
+    restart: unless-stopped
