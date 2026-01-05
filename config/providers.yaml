@@ -25,10 +25,10 @@ providers:
 
   embedding:
     enabled: true
-    provider: ollama
+    provider: ollama  # PLaMo server provides Ollama-compatible API
     ollama:
-      model: bge-m3
-      baseUrl: "http://studio:11434"
+      model: plamo-embedding-1b
+      baseUrl: "http://studio:8000"
 
   memory:
     enabled: true
