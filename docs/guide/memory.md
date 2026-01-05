@@ -43,10 +43,10 @@ The database is also locale-specific: `data/mirrormate.[lang].db`
 providers:
   embedding:
     enabled: true
-    provider: ollama
+    provider: ollama  # PLaMo server provides Ollama-compatible API
     ollama:
-      model: bge-m3
-      baseUrl: "http://localhost:11434"
+      model: plamo-embedding-1b
+      baseUrl: "http://studio:8000"  # PLaMo embedding server
 
   memory:
     enabled: true
@@ -59,6 +59,8 @@ providers:
       autoExtract: true      # Auto-extract from conversations
       minConfidence: 0.5     # Minimum confidence threshold
 ```
+
+> **Note**: PLaMo-Embedding-1B is recommended for Japanese. See [Recommended Setup](/guide/recommended-setup) for details. You can also use `bge-m3` via Ollama as an alternative.
 
 ## Memory Types
 
@@ -261,7 +263,13 @@ Access the memory management interface at `/control/memory`.
 
 ## Setup
 
-### 1. Install Embedding Model
+### 1. Set Up Embedding Service
+
+**Option A: PLaMo-Embedding-1B (Recommended for Japanese)**
+
+See [Recommended Setup](/guide/recommended-setup) for PLaMo server setup on Mac Studio.
+
+**Option B: Ollama with bge-m3 (Alternative)**
 
 ```bash
 # Start Ollama
@@ -289,10 +297,10 @@ Edit `config/providers.yaml`:
 providers:
   embedding:
     enabled: true
-    provider: ollama
+    provider: ollama  # PLaMo server provides Ollama-compatible API
     ollama:
-      model: bge-m3
-      baseUrl: "http://localhost:11434"
+      model: plamo-embedding-1b
+      baseUrl: "http://studio:8000"  # PLaMo (or http://localhost:11434 for Ollama)
 
   memory:
     enabled: true
@@ -331,30 +339,34 @@ volumes:
   mirrormate-data:
 ```
 
-Configure embedding to use remote Ollama:
+Configure embedding to use PLaMo server:
 
 ```yaml
 # config/providers.yaml
 providers:
   embedding:
     enabled: true
-    provider: ollama
+    provider: ollama  # PLaMo server provides Ollama-compatible API
     ollama:
-      model: bge-m3
-      baseUrl: "http://studio:11434"  # Tailscale hostname
+      model: plamo-embedding-1b
+      baseUrl: "http://studio:8000"  # PLaMo embedding server
 ```
 
-See [Docker Documentation](docker.md) for details.
+See [Docker Documentation](docker.md) and [Recommended Setup](recommended-setup.md) for details.
 
 ---
 
 ## Troubleshooting
 
-### Embedding Model Not Found
+### Embedding Service Not Available
 
-**Error**: `Ollama embed API error: 404`
+**Error**: `Ollama embed API error: 404` or connection refused
 
-**Solution**:
+**Solution (PLaMo)**:
+1. Check PLaMo server is running: `curl http://studio:8000/health`
+2. View logs: `docker compose -f compose.studio.yaml logs plamo-embedding`
+
+**Solution (Ollama/bge-m3)**:
 1. Ensure Ollama is running: `ollama serve`
 2. Pull the model: `ollama pull bge-m3`
 3. Verify the model exists: `ollama list`

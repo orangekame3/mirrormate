@@ -201,32 +201,46 @@ Embedding providers generate vector representations of text for semantic search.
 providers:
   embedding:
     enabled: true
-    provider: ollama
+    provider: ollama  # PLaMo server provides Ollama-compatible API
     ollama:
-      model: bge-m3  # Embedding model
-      baseUrl: "http://localhost:11434"
+      model: plamo-embedding-1b
+      baseUrl: "http://studio:8000"  # PLaMo embedding server
 ```
 
 #### Recommended Embedding Models
 
 | Model | Dimensions | Description |
 |-------|------------|-------------|
-| `bge-m3` | 1024 | Multi-lingual, high quality (recommended) |
+| `plamo-embedding-1b` | 2048 | Japanese-optimized, top JMTEB scores (recommended) |
+| `bge-m3` | 1024 | Multi-lingual, good quality (alternative) |
 | `nomic-embed-text` | 768 | Fast, English-focused |
-| `mxbai-embed-large` | 1024 | High quality, English |
 
 ### Setup
 
-1. Ensure Ollama is running:
+#### Option 1: PLaMo-Embedding-1B (Recommended for Japanese)
+
+PLaMo-Embedding-1B provides superior Japanese text embedding. See [Recommended Setup](/guide/recommended-setup) for full instructions.
+
+```bash
+# On Mac Studio
+docker compose -f compose.studio.yaml up -d
+```
+
+#### Option 2: Ollama with bge-m3 (Alternative)
 
 ```bash
 ollama serve
+ollama pull bge-m3
 ```
 
-2. Pull an embedding model:
-
-```bash
-ollama pull bge-m3
+```yaml
+providers:
+  embedding:
+    enabled: true
+    provider: ollama
+    ollama:
+      model: bge-m3
+      baseUrl: "http://localhost:11434"
 ```
 
 ---
@@ -273,7 +287,7 @@ See [Memory Documentation](/guide/memory) for details.
 
 ## Remote Server Configuration
 
-Recommended setup: Run heavy services (Ollama, VOICEVOX) on a powerful server (e.g., Mac Studio) and connect via Tailscale:
+Recommended setup: Run heavy services (Ollama, VOICEVOX, PLaMo) on a powerful server (e.g., Mac Studio) and connect via Tailscale:
 
 ```yaml
 # config/providers.yaml
@@ -292,10 +306,10 @@ providers:
 
   embedding:
     enabled: true
-    provider: ollama
+    provider: ollama  # PLaMo server provides Ollama-compatible API
     ollama:
-      model: bge-m3
-      baseUrl: "http://studio:11434"  # Tailscale hostname
+      model: plamo-embedding-1b
+      baseUrl: "http://studio:8000"  # PLaMo embedding server
 
   memory:
     enabled: true
