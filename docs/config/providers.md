@@ -271,31 +271,31 @@ See [Memory Documentation](/guide/memory) for details.
 
 ---
 
-## Docker Configuration
+## Remote Server Configuration
 
-When running in Docker with Ollama on the host:
+Recommended setup: Run heavy services (Ollama, VOICEVOX) on a powerful server (e.g., Mac Studio) and connect via Tailscale:
 
 ```yaml
-# config/providers.docker.yaml
+# config/providers.yaml
 providers:
   llm:
     provider: ollama
     ollama:
       model: "qwen2.5:14b"
-      baseUrl: "http://host.docker.internal:11434"
+      baseUrl: "http://studio:11434"  # Tailscale hostname
 
   tts:
     provider: voicevox
     voicevox:
       speaker: 3
-      baseUrl: "http://voicevox:50021"
+      baseUrl: "http://studio:50021"  # Tailscale hostname
 
   embedding:
     enabled: true
     provider: ollama
     ollama:
       model: bge-m3
-      baseUrl: "http://host.docker.internal:11434"
+      baseUrl: "http://studio:11434"  # Tailscale hostname
 
   memory:
     enabled: true
