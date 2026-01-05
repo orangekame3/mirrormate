@@ -32,6 +32,9 @@ export default function AvatarPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [currentSpeaker, setCurrentSpeaker] = useState<number | null>(null);
   const [currentCharacter, setCurrentCharacter] = useState<string | null>(null);
+  const [showMicOffNotice, setShowMicOffNotice] = useState(false);
+  const [isFirstRun, setIsFirstRun] = useState(false);
+  const prevSpeechEnabledRef = useRef(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const textFadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -118,6 +121,27 @@ export default function AvatarPage() {
     }
   }, [speechEnabled, dispatchState]);
 
+  // Show MIC OFF notice when mic is disabled
+  useEffect(() => {
+    if (prevSpeechEnabledRef.current && !speechEnabled) {
+      setShowMicOffNotice(true);
+      const timer = setTimeout(() => setShowMicOffNotice(false), 1500);
+      return () => clearTimeout(timer);
+    }
+    prevSpeechEnabledRef.current = speechEnabled;
+  }, [speechEnabled]);
+
+  // Check for first run
+  useEffect(() => {
+    const hasRun = localStorage.getItem("mirrormate:hasRun");
+    if (!hasRun) {
+      setIsFirstRun(true);
+      localStorage.setItem("mirrormate:hasRun", "true");
+      const timer = setTimeout(() => setIsFirstRun(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   useEffect(() => {
     if (isThinking) {
       dispatchState({ type: "PROCESSING_START" });
@@ -147,7 +171,8 @@ export default function AvatarPage() {
     setInfoCards((prev) => prev.filter((card) => card.id !== id));
   }, []);
 
-  // Auto fade-out text
+  // Auto fade-out text with duration based on text length
+  // Formula: 1-120 chars = 10-14s, then +2s per 40 chars, max 24s
   useEffect(() => {
     if (displayText && !isThinking) {
       // Clear existing timer
@@ -156,7 +181,19 @@ export default function AvatarPage() {
       }
       setIsTextFading(false);
 
-      // Start fade after 8s, clear after 10s
+      // Calculate display duration based on text length
+      const charCount = displayText.length;
+      let displayDuration: number;
+      if (charCount <= 120) {
+        // 10-14s for 1-120 chars
+        displayDuration = 10000 + (charCount / 120) * 4000;
+      } else {
+        // +2s per 40 chars beyond 120, max 24s
+        const extraChars = charCount - 120;
+        const extraTime = Math.floor(extraChars / 40) * 2000;
+        displayDuration = Math.min(14000 + extraTime, 24000);
+      }
+
       textFadeTimeoutRef.current = setTimeout(() => {
         setIsTextFading(true);
         setTimeout(() => {
@@ -164,7 +201,7 @@ export default function AvatarPage() {
           setUserText("");
           setIsTextFading(false);
         }, 2000); // Fade animation duration
-      }, 8000);
+      }, displayDuration);
     }
 
     return () => {
@@ -452,7 +489,7 @@ export default function AvatarPage() {
         setIsProcessing(false);
       }
     },
-    [isProcessing, isSpeaking, playAudio, addInfoCard, isWakeWordEnabled, wakeWordMode, wakeWordConfig, checkForWakeWord, resetWakeWordTimeout, currentSpeaker, currentCharacter]
+    [isProcessing, isSpeaking, playAudio, isWakeWordEnabled, wakeWordMode, wakeWordConfig, checkForWakeWord, resetWakeWordTimeout, currentSpeaker, currentCharacter]
   );
 
   // Speech recognition hook
@@ -611,13 +648,48 @@ export default function AvatarPage() {
     };
   }, [playAudio, start, stop, broadcastMicStatus, speechEnabled, isListening, currentSpeaker]);
 
+  // Show idle hint when in wake word waiting mode
+  const showIdleHint = isWakeWordEnabled && wakeWordMode === "waiting" && !isSpeaking && !isThinking;
+
   return (
     <main
       className="h-screen w-screen bg-black flex flex-col items-center overflow-hidden relative cursor-pointer"
       onClick={initAudioContext}
     >
+      {/* Parallax Background */}
+      <div className="parallax-container">
+        <div className="parallax-layer parallax-layer-1" />
+        <div className="parallax-layer parallax-layer-2" />
+      </div>
+
+      {/* Light Streak */}
+      <div className="light-streak" />
+
       {/* Effects */}
       <Confetti isActive={showEffect} effectType={effectType} onComplete={() => setShowEffect(false)} />
+
+      {/* MIC OFF Notice */}
+      {showMicOffNotice && (
+        <div className="mic-off-notice fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <span className="text-white/50 text-2xl font-light tracking-widest">MIC OFF</span>
+        </div>
+      )}
+
+      {/* First Run Notice */}
+      {isFirstRun && (
+        <div className="fixed bottom-8 right-8 text-white/50 text-sm animate-fade-in z-40">
+          音声の利用にはマイクをオンにしてください
+        </div>
+      )}
+
+      {/* Idle Hint */}
+      {showIdleHint && (
+        <div className="idle-hint fixed top-16 left-1/2 -translate-x-1/2 z-30">
+          <span className="text-white/40 text-sm font-light tracking-wide">
+            「{wakeWordConfig?.phrase ?? "OK ミラ"}」で呼びかけてください
+          </span>
+        </div>
+      )}
 
       {/* Mic Status Indicator */}
       <div className="absolute top-4 right-4 flex items-center gap-2">
@@ -688,23 +760,25 @@ export default function AvatarPage() {
         <FloatingInfo cards={infoCards} onDismiss={dismissInfoCard} autoHideDuration={10000} />
       </div>
 
-      {/* Response Text - Bottom */}
+      {/* Response Text - Bottom 30% */}
       <div className="w-full h-[30%] flex items-start justify-center px-8 pt-6">
-        {isThinking && !displayText ? (
-          <div className="flex gap-2">
-            <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-            <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-            <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-          </div>
-        ) : displayText ? (
-          <p
-            className={`text-white/90 text-xl text-center font-light tracking-wide leading-relaxed max-w-2xl transition-opacity duration-2000 ${
-              isTextFading ? "opacity-0" : "opacity-100"
-            }`}
-          >
-            {displayText}
-          </p>
-        ) : null}
+        <div className="w-2/3 flex flex-col items-center">
+          {isThinking && !displayText ? (
+            <div className="flex gap-2">
+              <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+          ) : displayText ? (
+            <p
+              className={`text-white/90 text-xl text-center font-light tracking-wide leading-relaxed text-enter transition-opacity duration-2000 ${
+                isTextFading ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              {displayText}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       {/* Plugin Widgets */}

@@ -99,7 +99,9 @@ export class OllamaProvider implements LLMProvider {
     });
 
     if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`[Ollama] API error ${response.status}:`, errorText);
+      throw new Error(`Ollama API error: ${response.status} - ${errorText}`);
     }
 
     const data = (await response.json()) as OllamaChatResponse;

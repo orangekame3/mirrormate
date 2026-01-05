@@ -7,7 +7,7 @@ providers:
       maxTokens: 300
       temperature: 0.7
     ollama:
-      model: huggingface.co/mmnga/Llama-3.1-Swallow-8B-Instruct-v0.5-gguf:latest
+      model: gpt-oss:20b
       baseUrl: "http://studio:11434"
       maxTokens: 300
       temperature: 0.7
