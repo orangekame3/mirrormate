@@ -3,8 +3,11 @@
 import { ReactNode, Suspense } from "react";
 import { PluginPosition } from "@/lib/plugins/types";
 
+// Visible positions only (exclude "hidden")
+export type VisiblePluginPosition = Exclude<PluginPosition, "hidden">;
+
 // Extended positions with bottom-center
-export type ExtendedPluginPosition = PluginPosition | "bottom-center";
+export type ExtendedPluginPosition = VisiblePluginPosition | "bottom-center";
 
 interface PluginContainerProps {
   position: ExtendedPluginPosition;

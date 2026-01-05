@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
-import { RulesConfig, Rule, RuleMatch, ModuleResult } from "./types";
+import { RulesConfig, RuleMatch, ModuleResult } from "./types";
 import { executeModules } from "./modules";
 import { getLocale, type Locale } from "../app";
 
@@ -50,6 +50,11 @@ export function matchRule(userMessage: string): RuleMatch | null {
   const normalizedMessage = userMessage.toLowerCase().trim();
 
   for (const [ruleName, rule] of Object.entries(config.rules)) {
+    // Skip rules that only have context triggers (no keywords)
+    if (!rule.triggers.keywords || rule.triggers.keywords.length === 0) {
+      continue;
+    }
+
     for (const keyword of rule.triggers.keywords) {
       if (normalizedMessage.includes(keyword.toLowerCase())) {
         console.log(`[RuleEngine] Matched rule: ${ruleName} (keyword: ${keyword})`);

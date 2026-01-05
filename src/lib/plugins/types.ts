@@ -5,7 +5,8 @@ export type PluginPosition =
   | "top-left"
   | "top-right"
   | "bottom-left"
-  | "bottom-right";
+  | "bottom-right"
+  | "hidden";
 
 // Plugin metadata from manifest
 export interface PluginManifest {

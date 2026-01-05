@@ -52,12 +52,21 @@ export interface MemoryConfig {
   };
 }
 
+export interface VLMProviderConfig extends ProviderConfig {
+  provider: "ollama";
+  ollama?: {
+    model?: string;
+    baseUrl?: string;
+  };
+}
+
 export interface ProvidersConfig {
   providers: {
     llm?: LLMProviderConfig;
     tts?: TTSProviderConfig;
     embedding?: EmbeddingProviderConfig;
     memory?: MemoryConfig;
+    vlm?: VLMProviderConfig;
     [key: string]: ProviderConfig | MemoryConfig | undefined;
   };
 }

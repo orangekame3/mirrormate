@@ -29,7 +29,10 @@ export interface BroadcastMessage {
     | "confirmation_request"
     | "confirmation_response"
     | "error_event"
-    | "sleep_wake";
+    | "sleep_wake"
+    // Vision chat types
+    | "camera_capture_request"
+    | "camera_capture_response";
   payload?: string;
 }
 
@@ -93,6 +96,8 @@ export function mapBroadcastToEvent(message: BroadcastMessage): AvatarEvent | nu
     case "effect":
     case "settings_changed":
     case "avatar_state_change":
+    case "camera_capture_request":
+    case "camera_capture_response":
       return null;
 
     default:

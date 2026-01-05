@@ -6,10 +6,12 @@ import { PluginsByPosition, PluginPosition } from "@/lib/plugins/types";
 
 // Static imports for plugins
 import { ClockWidget } from "mirrormate-clock-plugin";
+import { VisionCompanion } from "@plugins/vision-companion/src";
 
 // Map of plugin names to their components
 const pluginComponents: Record<string, React.ComponentType<{ config?: Record<string, unknown> }>> = {
   clock: ClockWidget,
+  "vision-companion": VisionCompanion,
 };
 
 interface PluginsApiResponse {
@@ -63,12 +65,31 @@ export default function PluginRenderer() {
     });
   };
 
+  // Render hidden plugins (invisible but functional)
+  const renderHiddenPlugins = () => {
+    const hiddenPlugins = plugins["hidden"] || [];
+    return hiddenPlugins.map((pluginInfo) => {
+      const Component = pluginComponents[pluginInfo.manifest.name];
+      if (!Component) {
+        return null;
+      }
+      const config = {
+        ...pluginInfo.manifest.defaultConfig,
+        ...pluginInfo.config.config,
+      };
+      return <Component key={pluginInfo.pluginId} config={config} />;
+    });
+  };
+
   return (
-    <PluginLayout
-      topLeft={<>{renderPluginsForPosition("top-left")}</>}
-      topRight={<>{renderPluginsForPosition("top-right")}</>}
-      bottomLeft={<>{renderPluginsForPosition("bottom-left")}</>}
-      bottomRight={<>{renderPluginsForPosition("bottom-right")}</>}
-    />
+    <>
+      {renderHiddenPlugins()}
+      <PluginLayout
+        topLeft={<>{renderPluginsForPosition("top-left")}</>}
+        topRight={<>{renderPluginsForPosition("top-right")}</>}
+        bottomLeft={<>{renderPluginsForPosition("bottom-left")}</>}
+        bottomRight={<>{renderPluginsForPosition("bottom-right")}</>}
+      />
+    </>
   );
 }

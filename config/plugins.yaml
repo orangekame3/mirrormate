@@ -12,3 +12,11 @@ plugins:
       dateFormat: "long"
       showWeekday: true
       locale: "ja-JP"
+
+  # Vision companion - Camera capture for Vision Chat
+  vision-companion:
+    source: local:vision-companion
+    enabled: true
+    position: hidden
+    config:
+      showDebug: false

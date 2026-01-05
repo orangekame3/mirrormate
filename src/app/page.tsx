@@ -13,7 +13,6 @@ import { useLongThinkingPulse } from "@/hooks/useLongThinkingPulse";
 import { FloatingInfo, InfoCard, detectInfoFromResponse } from "@/components/FloatingInfo";
 import PluginRenderer from "@/components/PluginRenderer";
 import { mapBroadcastToEvent, type BroadcastMessage } from "@/lib/animation/broadcast-adapter";
-import { getAcknowledgment } from "@/lib/quick-ack";
 
 export default function AvatarPage() {
   const t = useTranslations("mic");
@@ -42,6 +41,34 @@ export default function AvatarPage() {
   const animationRef = useRef<number>(0);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const messagesRef = useRef<Array<{ role: string; content: string }>>([]);
+  const pendingCaptureRef = useRef<{
+    resolve: (image: string | null) => void;
+    timeout: NodeJS.Timeout;
+  } | null>(null);
+
+  // Request camera capture from vision companion plugin
+  const requestCameraCapture = useCallback((): Promise<string | null> => {
+    return new Promise((resolve) => {
+      if (!channelRef.current) {
+        resolve(null);
+        return;
+      }
+
+      // Set up timeout for capture response
+      const timeout = setTimeout(() => {
+        console.warn("[Avatar] Camera capture timeout");
+        if (pendingCaptureRef.current) {
+          pendingCaptureRef.current = null;
+          resolve(null);
+        }
+      }, 2000);
+
+      pendingCaptureRef.current = { resolve, timeout };
+
+      // Request capture
+      channelRef.current.postMessage({ type: "camera_capture_request" });
+    });
+  }, []);
 
   // Load saved settings on mount (from DB with localStorage fallback)
   useEffect(() => {
@@ -233,15 +260,21 @@ export default function AvatarPage() {
   const playAudio = useCallback(async (audioBase64: string) => {
     return new Promise<void>(async (resolve) => {
       try {
+        console.log("[Avatar] playAudio: starting...");
+
         // Reuse existing AudioContext for background playback
         if (!audioContextRef.current || audioContextRef.current.state === "closed") {
           audioContextRef.current = new AudioContext();
+          console.log("[Avatar] Created new AudioContext");
         }
 
         const audioContext = audioContextRef.current;
+        console.log("[Avatar] AudioContext state:", audioContext.state);
 
         if (audioContext.state === "suspended") {
+          console.log("[Avatar] Resuming suspended AudioContext...");
           await audioContext.resume();
+          console.log("[Avatar] AudioContext resumed, state:", audioContext.state);
         }
 
         const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
@@ -249,8 +282,14 @@ export default function AvatarPage() {
 
         // Wait for audio to load
         await new Promise<void>((res) => {
-          audio.oncanplaythrough = () => res();
-          audio.onerror = () => res();
+          audio.oncanplaythrough = () => {
+            console.log("[Avatar] Audio loaded and ready");
+            res();
+          };
+          audio.onerror = (e) => {
+            console.error("[Avatar] Audio load error:", e);
+            res();
+          };
         });
 
         const analyser = audioContext.createAnalyser();
@@ -263,10 +302,12 @@ export default function AvatarPage() {
         analyser.connect(audioContext.destination);
 
         audio.onplay = () => {
+          console.log("[Avatar] Audio playback started");
           setIsSpeaking(true);
           analyzeAudio();
         };
         audio.onended = () => {
+          console.log("[Avatar] Audio playback ended");
           setIsSpeaking(false);
           setMouthOpenness(0);
           cancelAnimationFrame(animationRef.current);
@@ -274,16 +315,18 @@ export default function AvatarPage() {
           resolve();
         };
         audio.onerror = (e) => {
-          console.error("Audio error:", e);
+          console.error("[Avatar] Audio playback error:", e);
           setIsSpeaking(false);
           setMouthOpenness(0);
           cancelAnimationFrame(animationRef.current);
           resolve();
         };
 
+        console.log("[Avatar] Calling audio.play()...");
         await audio.play();
+        console.log("[Avatar] audio.play() returned");
       } catch (e) {
-        console.error("playAudio error:", e);
+        console.error("[Avatar] playAudio error:", e);
         setIsSpeaking(false);
         setMouthOpenness(0);
         resolve();
@@ -350,36 +393,9 @@ export default function AvatarPage() {
             // No wake word detected, ignore
             return;
           }
-
-          // Extract message after wake word (if any)
-          const phrase = wakeWordConfig?.phrase ?? "";
-          const normalizedPhrase = phrase.toLowerCase().replace(/\s+/g, "");
-          const normalizedTranscript = transcript.toLowerCase().replace(/\s+/g, "");
-          const phraseIndex = normalizedTranscript.indexOf(normalizedPhrase);
-
-          if (phraseIndex !== -1) {
-            // Find the actual position in original transcript
-            let charCount = 0;
-            let actualIndex = 0;
-            for (let i = 0; i < transcript.length; i++) {
-              if (!/\s/.test(transcript[i])) {
-                if (charCount === phraseIndex + normalizedPhrase.length) {
-                  actualIndex = i;
-                  break;
-                }
-                charCount++;
-              }
-              actualIndex = i + 1;
-            }
-
-            const messageAfterWakeWord = transcript.substring(actualIndex).trim();
-            if (!messageAfterWakeWord) {
-              // Just wake word, wait for next message
-              return;
-            }
-            // Use the message after wake word
-            transcript = messageAfterWakeWord;
-          }
+          // Wake word detected - just wake up and wait for next message
+          // Don't process any message in the same utterance
+          return;
         } else {
           // In conversation mode, reset timeout
           resetWakeWordTimeout();
@@ -396,50 +412,23 @@ export default function AvatarPage() {
       messagesRef.current.push({ role: "user", content: transcript });
 
       try {
-        // Generate quick acknowledgment for immediate feedback
-        const ack = getAcknowledgment(transcript);
-
-        // Start acknowledgment TTS immediately (non-blocking)
-        let ackAudioPromise: Promise<void> | null = null;
-        if (ack) {
-          setDisplayText(ack);
-          ackAudioPromise = (async () => {
-            try {
-              const ttsRes = await fetch("/api/tts", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: ack, speaker: currentSpeaker ?? undefined }),
-              });
-              if (ttsRes.ok) {
-                const ttsData = await ttsRes.json();
-                if (ttsData.audio) {
-                  await playAudio(ttsData.audio);
-                }
-              }
-            } catch (e) {
-              console.error("Ack TTS error:", e);
-            }
-          })();
+        // Always capture camera image for voice input (LLM will decide if it needs to use see_camera tool)
+        const capturedImage = await requestCameraCapture();
+        if (capturedImage) {
+          console.log("[Avatar] Camera image captured:", capturedImage.length, "chars");
         }
 
-        // Start chat API call in parallel with acknowledgment
-        const chatPromise = fetch("/api/chat", {
+        // Call chat API
+        const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             messages: messagesRef.current,
             withAudio: false,
             characterId: currentCharacter ?? undefined,
+            image: capturedImage ?? undefined,
           }),
         });
-
-        // Wait for acknowledgment to finish playing (if any)
-        if (ackAudioPromise) {
-          await ackAudioPromise;
-        }
-
-        // Now process chat response
-        const res = await chatPromise;
 
         if (res.ok) {
           const data = await res.json();
@@ -489,7 +478,7 @@ export default function AvatarPage() {
         setIsProcessing(false);
       }
     },
-    [isProcessing, isSpeaking, playAudio, isWakeWordEnabled, wakeWordMode, wakeWordConfig, checkForWakeWord, resetWakeWordTimeout, currentSpeaker, currentCharacter]
+    [isProcessing, isSpeaking, playAudio, isWakeWordEnabled, wakeWordMode, checkForWakeWord, resetWakeWordTimeout, currentSpeaker, currentCharacter, requestCameraCapture]
   );
 
   // Speech recognition hook
@@ -580,6 +569,8 @@ export default function AvatarPage() {
                 speaker = currentSpeaker ?? undefined;
               }
 
+              console.log("[Avatar] play_audio: requesting TTS", { text: text.substring(0, 50), speaker });
+
               const res = await fetch("/api/tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -588,11 +579,17 @@ export default function AvatarPage() {
               if (res.ok) {
                 const data = await res.json();
                 if (data.audio) {
+                  console.log("[Avatar] TTS success, playing audio...");
                   await playAudio(data.audio);
+                  console.log("[Avatar] Audio playback finished");
+                } else {
+                  console.warn("[Avatar] TTS returned no audio data");
                 }
+              } else {
+                console.error("[Avatar] TTS API failed:", res.status, await res.text());
               }
             } catch (e) {
-              console.error("TTS error:", e);
+              console.error("[Avatar] TTS error:", e);
             }
           }
           break;
@@ -634,6 +631,14 @@ export default function AvatarPage() {
           if (payload === "confetti" || payload === "hearts" || payload === "sparkles") {
             setEffectType(payload as EffectType);
             setShowEffect(true);
+          }
+          break;
+        case "camera_capture_response":
+          // Handle camera capture response from vision companion plugin
+          if (pendingCaptureRef.current) {
+            clearTimeout(pendingCaptureRef.current.timeout);
+            pendingCaptureRef.current.resolve(payload as string | null);
+            pendingCaptureRef.current = null;
           }
           break;
       }
