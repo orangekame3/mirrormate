@@ -331,17 +331,17 @@ volumes:
   mirrormate-data:
 ```
 
-Configure embedding to use host Ollama:
+Configure embedding to use remote Ollama:
 
 ```yaml
-# config/providers.docker.yaml
+# config/providers.yaml
 providers:
   embedding:
     enabled: true
     provider: ollama
     ollama:
       model: bge-m3
-      baseUrl: "http://host.docker.internal:11434"
+      baseUrl: "http://studio:11434"  # Tailscale hostname
 ```
 
 See [Docker Documentation](docker.md) for details.
