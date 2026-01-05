@@ -1,3 +1,6 @@
+# Configuration for Raspberry Pi deployment
+# Connects to Mac Studio via Tailscale for heavy services
+
 providers:
   llm:
     enabled: true
@@ -8,7 +11,7 @@ providers:
       temperature: 0.7
     ollama:
       model: huggingface.co/mmnga/Llama-3.1-Swallow-8B-Instruct-v0.5-gguf:latest
-      baseUrl: "http://host.docker.internal:11434"
+      baseUrl: "http://studio:11434"  # Mac Studio via Tailscale
       maxTokens: 300
       temperature: 0.7
 
@@ -21,14 +24,14 @@ providers:
       speed: 0.95
     voicevox:
       speaker: 2
-      baseUrl: "http://voicevox:50021"
+      baseUrl: "http://studio:50021"  # Mac Studio via Tailscale
 
   embedding:
     enabled: true
     provider: ollama
     ollama:
       model: bge-m3
-      baseUrl: "http://host.docker.internal:11434"
+      baseUrl: "http://studio:11434"  # Mac Studio via Tailscale
 
   memory:
     enabled: true
