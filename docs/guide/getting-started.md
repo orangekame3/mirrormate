@@ -110,6 +110,7 @@ This project uses [Bun](https://bun.sh/) as the package manager for faster insta
 
 ## Next Steps
 
+- [Recommended Setup](/guide/recommended-setup) - Production setup with Tailscale, Mac Studio & Raspberry Pi
 - [Architecture Overview](/guide/architecture) - Understand how Mirror Mate works
 - [Docker Setup](/guide/docker) - Detailed Docker configuration
 - [Providers](/config/providers) - Configure LLM and TTS providers
