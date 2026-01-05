@@ -8,7 +8,8 @@ This guide describes the recommended production setup for Mirror Mate using Tail
 flowchart TB
     subgraph Tailscale["Tailscale Network"]
         subgraph Studio["Mac Studio (studio)"]
-            Ollama["Ollama (native)<br/>LLM + Embedding<br/>:11434"]
+            Ollama["Ollama (native)<br/>LLM<br/>:11434"]
+            PLaMo["PLaMo (Docker)<br/>Embedding<br/>:8000"]
             VOICEVOX["VOICEVOX (Docker)<br/>TTS<br/>:50021"]
         end
 
@@ -25,9 +26,11 @@ flowchart TB
             Dev["npm run dev<br/>:3000"]
         end
 
-        App -->|LLM/Embedding| Ollama
+        App -->|LLM| Ollama
+        App -->|Embedding| PLaMo
         App -->|TTS| VOICEVOX
-        Dev -->|LLM/Embedding| Ollama
+        Dev -->|LLM| Ollama
+        Dev -->|Embedding| PLaMo
         Dev -->|TTS| VOICEVOX
         App --> Mirror
         App -->|Audio| Speaker
@@ -39,6 +42,7 @@ flowchart TB
 | Component | Location | Reason |
 |-----------|----------|--------|
 | **Ollama** | Mac Studio (native) | Metal GPU acceleration for fast LLM inference |
+| **PLaMo-Embedding-1B** | Mac Studio (Docker) | Japanese-optimized embedding, top JMTEB scores |
 | **VOICEVOX** | Mac Studio (Docker) | CPU-intensive, containerized for easy management |
 | **UI** | Raspberry Pi | Low power, silent, dedicated display |
 | **Development** | MacBook | Same config as production, no local services needed |
@@ -91,12 +95,11 @@ brew install ollama
 # Start as service
 brew services start ollama
 
-# Pull models
-ollama pull qwen2.5:14b           # LLM
-ollama pull bge-m3                 # Embedding
+# Pull LLM model
+ollama pull qwen2.5:14b
 ```
 
-### Start VOICEVOX (Docker)
+### Start Docker Services (VOICEVOX + PLaMo)
 
 First, install Docker via [OrbStack](https://orbstack.dev/) (recommended for Apple Silicon):
 
@@ -105,21 +108,28 @@ brew install orbstack
 open -a OrbStack
 ```
 
-Then start VOICEVOX:
+Then start services:
 
 ```bash
 cd /path/to/mirrormate
 docker compose -f compose.studio.yaml up -d
 ```
 
+This starts:
+- **VOICEVOX** (:50021) - Text-to-speech
+- **PLaMo-Embedding-1B** (:8000) - Japanese-optimized text embedding
+
 ### Verify Services
 
 ```bash
-# Ollama
+# Ollama (LLM)
 curl http://localhost:11434/api/tags
 
-# VOICEVOX
+# VOICEVOX (TTS)
 curl http://localhost:50021/speakers | head
+
+# PLaMo (Embedding)
+curl http://localhost:8000/health
 ```
 
 ## Step 3: Configuration
@@ -146,10 +156,10 @@ providers:
 
   embedding:
     enabled: true
-    provider: ollama
+    provider: ollama  # PLaMo server provides Ollama-compatible API
     ollama:
-      model: bge-m3
-      baseUrl: "http://studio:11434"  # Tailscale hostname
+      model: plamo-embedding-1b
+      baseUrl: "http://studio:8000"  # PLaMo embedding server
 
   memory:
     enabled: true
@@ -254,14 +264,20 @@ graph LR
 ### Mac Studio
 
 ```bash
-# Start VOICEVOX
+# Start services (VOICEVOX + PLaMo)
 docker compose -f compose.studio.yaml up -d
 
-# Stop VOICEVOX
+# Stop services
 docker compose -f compose.studio.yaml down
 
 # View logs
 docker compose -f compose.studio.yaml logs -f
+
+# View PLaMo logs
+docker compose -f compose.studio.yaml logs -f plamo-embedding
+
+# Rebuild PLaMo after updates
+docker compose -f compose.studio.yaml build plamo-embedding
 
 # Restart Ollama
 brew services restart ollama
