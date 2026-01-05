@@ -1,0 +1,26 @@
+# Mac Studio deployment
+# Run heavy services: VOICEVOX, PLaMo Embedding (Ollama runs natively)
+# Usage: docker compose -f compose.studio.yaml up -d
+
+services:
+  voicevox:
+    image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+    ports:
+      - "50021:50021"
+    restart: unless-stopped
+
+  plamo-embedding:
+    build:
+      context: ./plamo-server
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    # Uncomment for GPU support on Linux with NVIDIA
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]

@@ -1,72 +1,106 @@
 # Docker Setup
 
-Mirror Mate can be run using Docker with optional VOICEVOX integration.
+Mirror Mate can be deployed using Docker with a recommended split architecture.
 
-## Architecture
+## Recommended Architecture
+
+Run heavy services on a powerful server (e.g., Mac Studio) and the UI on a lightweight device (e.g., Raspberry Pi), connected via Tailscale:
 
 ```mermaid
 flowchart TB
-    subgraph Host["Host Machine"]
-        Ollama["Ollama<br/>(LLM/Embedding)<br/>:11434"]
-    end
-
-    subgraph Docker["Docker Network"]
-        subgraph MM["mirrormate :3000"]
-            App["Next.js App"]
-            SQLite[(SQLite<br/>Memory)]
+    subgraph Tailscale["Tailscale Network"]
+        subgraph Studio["Mac Studio (studio)"]
+            Ollama["Ollama (native)<br/>:11434"]
+            VOICEVOX["VOICEVOX (Docker)<br/>:50021"]
         end
-        VOICEVOX["voicevox<br/>:50021"]
 
-        MM -->|TTS Request| VOICEVOX
-        Volume[("mirrormate-data<br/>volume")] -.-> SQLite
+        subgraph RPi["Raspberry Pi"]
+            subgraph MM["mirrormate :3000"]
+                App["Next.js App"]
+                SQLite[(SQLite<br/>Memory)]
+            end
+            Volume[("mirrormate-data<br/>volume")] -.-> SQLite
+        end
+
+        MM -->|http://studio:11434| Ollama
+        MM -->|http://studio:50021| VOICEVOX
     end
-
-    MM -->|host.docker.internal:11434| Ollama
 ```
 
 ## Quick Start
 
-### 1. Create Environment File
+### Mac Studio Setup
+
+1. **Install Ollama (native)**
+
+```bash
+brew install ollama
+brew services start ollama
+ollama pull qwen2.5:14b
+```
+
+2. **Start Docker Services (VOICEVOX + PLaMo)**
+
+```bash
+docker compose -f compose.studio.yaml up -d
+```
+
+This starts:
+- **VOICEVOX** (:50021) - Text-to-speech
+- **PLaMo-Embedding-1B** (:8000) - Japanese-optimized embedding
+
+3. **Verify**
+
+```bash
+curl http://localhost:11434/api/tags    # Ollama
+curl http://localhost:50021/speakers | head  # VOICEVOX
+curl http://localhost:8000/health       # PLaMo
+```
+
+### Raspberry Pi Setup
+
+1. **Create Environment File**
 
 ```bash
 cp .env.example .env
 # Edit .env with your API keys
 ```
 
-### 2. Create Docker Config
+2. **Configure providers.yaml**
 
-Copy the Docker-specific configuration:
-
-```bash
-cp config/providers.docker.yaml config/providers.yaml
-```
-
-Or edit `config/providers.yaml` to use Docker-compatible URLs:
+Ensure `config/providers.yaml` points to your Mac Studio:
 
 ```yaml
 providers:
   llm:
     provider: ollama
     ollama:
-      baseUrl: "http://host.docker.internal:11434"  # Ollama on host
+      baseUrl: "http://studio:11434"  # Tailscale hostname
 
   tts:
     provider: voicevox
     voicevox:
-      baseUrl: "http://voicevox:50021"  # VOICEVOX container
+      baseUrl: "http://studio:50021"  # Tailscale hostname
+
+  embedding:
+    provider: ollama
+    ollama:
+      baseUrl: "http://studio:11434"  # Tailscale hostname
 ```
 
-### 3. Start Services
+3. **Start UI**
 
 ```bash
 docker compose up -d
 ```
 
-### 4. Access
+4. **Access**
 
 Open http://localhost:3000
 
-## compose.yaml
+## Compose Files
+
+### compose.yaml (UI - Raspberry Pi)
 
 ```yaml
 services:
@@ -83,37 +117,27 @@ services:
       - GOOGLE_CALENDAR_ID=${GOOGLE_CALENDAR_ID}
       - TAVILY_API_KEY=${TAVILY_API_KEY}
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     volumes:
       - ./config:/app/config:ro
-      - mirrormate-data:/app/data  # SQLite database persistence
-    depends_on:
-      - voicevox
+      - mirrormate-data:/app/data
     restart: unless-stopped
 
+volumes:
+  mirrormate-data:
+```
+
+### compose.studio.yaml (Services - Mac Studio)
+
+```yaml
+services:
   voicevox:
     image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest
     ports:
       - "50021:50021"
     restart: unless-stopped
-
-volumes:
-  mirrormate-data:  # Persistent volume for SQLite database
 ```
 
-## Service Configuration
-
-### mirrormate
-
-| Setting | Description |
-|---------|-------------|
-| Port | 3000 |
-| Config | Mounted from `./config` (read-only) |
-| Data | Persisted in `mirrormate-data` volume |
-| Host Access | `host.docker.internal` for Ollama |
-
-### Data Persistence
+## Data Persistence
 
 The SQLite database (memories, users, sessions) is stored in the `mirrormate-data` Docker volume:
 
@@ -130,30 +154,13 @@ docker run --rm -v mirrormate-data:/data -v $(pwd):/backup alpine \
   cp /backup/mirrormate-backup.db /data/mirrormate.db
 ```
 
-### voicevox
-
-| Setting | Description |
-|---------|-------------|
-| Image | `voicevox/voicevox_engine:cpu-ubuntu20.04-latest` |
-| Port | 50021 |
-| GPU | Use `nvidia-ubuntu20.04-latest` for GPU support |
-
 ## Environment Variables
 
 Create a `.env` file:
 
 ```bash
-# Required for OpenAI LLM/TTS
+# Required for OpenAI LLM/TTS (if not using Ollama/VOICEVOX)
 OPENAI_API_KEY=sk-...
-
-# Optional: Language setting (en or ja, default: ja)
-LOCALE=en
-
-# Optional: Override LLM provider (openai or ollama)
-LLM_PROVIDER=openai
-
-# Optional: Override TTS provider (openai or voicevox)
-TTS_PROVIDER=openai
 
 # Optional: Google Calendar
 GOOGLE_SERVICE_ACCOUNT_EMAIL=...
@@ -167,56 +174,9 @@ TAVILY_API_KEY=tvly-...
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 ```
 
-### Quick Start with OpenAI
-
-To use OpenAI without any config files:
-
-```bash
-docker run -p 3000:3000 \
-  -e OPENAI_API_KEY=sk-xxx \
-  -e LLM_PROVIDER=openai \
-  -e TTS_PROVIDER=openai \
-  -e LOCALE=en \
-  ghcr.io/orangekame3/mirrormate:latest
-```
-
-## Using Ollama on Host
-
-Ollama runs on the host machine (not in Docker) for better performance:
-
-### 1. Install and Start Ollama
-
-```bash
-# Install
-brew install ollama  # macOS
-# or
-curl -fsSL https://ollama.com/install.sh | sh  # Linux
-
-# Start
-ollama serve
-
-# Pull a model
-ollama pull qwen2.5:14b
-```
-
-### 2. Configure Connection
-
-In `config/providers.yaml`:
-
-```yaml
-providers:
-  llm:
-    provider: ollama
-    ollama:
-      model: "qwen2.5:14b"
-      baseUrl: "http://host.docker.internal:11434"
-```
-
-The `host.docker.internal` hostname allows the container to access the host's Ollama.
-
 ## GPU Support for VOICEVOX
 
-For faster TTS, use the GPU version:
+For faster TTS on NVIDIA GPU:
 
 ```yaml
 services:
@@ -233,45 +193,27 @@ services:
               capabilities: [gpu]
 ```
 
-## Building the Image
-
-### Development Build
-
-```bash
-docker compose build
-```
-
-### Production Build
-
-```bash
-docker build -t mirrormate .
-```
+Note: On Mac Studio (Apple Silicon), use the CPU version. Metal acceleration is not available in Docker.
 
 ## Troubleshooting
 
 ### Cannot connect to Ollama
 
-**Error**: Connection refused to `host.docker.internal:11434`
+**Error**: Connection refused to `studio:11434`
 
 **Solution**:
-1. Ensure Ollama is running: `ollama serve`
-2. Check Ollama is listening: `curl http://localhost:11434/api/tags`
-3. On Linux, ensure `extra_hosts` is configured in compose.yaml
+1. Ensure Ollama is running on Mac Studio: `ollama serve` or `brew services start ollama`
+2. Verify Tailscale connection: `ping studio`
+3. Check Ollama is listening: `curl http://studio:11434/api/tags`
 
 ### VOICEVOX not responding
 
 **Error**: Connection refused to port 50021
 
 **Solution**:
-1. Check VOICEVOX container is running: `docker compose ps`
-2. Check logs: `docker compose logs voicevox`
+1. Check VOICEVOX container: `docker compose -f compose.studio.yaml ps`
+2. Check logs: `docker compose -f compose.studio.yaml logs voicevox`
 3. Wait for startup (first launch takes time to load models)
-
-### Weather API timeout
-
-**Error**: ETIMEDOUT when fetching weather
-
-**Solution**: The Dockerfile includes `NODE_OPTIONS="--dns-result-order=ipv4first"` to fix IPv6 issues.
 
 ### Config changes not applied
 
@@ -279,20 +221,32 @@ docker build -t mirrormate .
 
 ## Commands
 
+### Mac Studio
+
 ```bash
-# Start all services
+# Start VOICEVOX
+docker compose -f compose.studio.yaml up -d
+
+# View logs
+docker compose -f compose.studio.yaml logs -f
+
+# Stop
+docker compose -f compose.studio.yaml down
+```
+
+### Raspberry Pi
+
+```bash
+# Start UI
 docker compose up -d
 
 # View logs
 docker compose logs -f
 
-# Stop services
+# Stop
 docker compose down
 
 # Rebuild after code changes
 docker compose build --no-cache
 docker compose up -d
-
-# Check status
-docker compose ps
 ```

@@ -1,3 +1,11 @@
+# Production deployment (Raspberry Pi / any host)
+# Runs UI only, connects to Mac Studio via Tailscale for heavy services
+# Usage: docker compose up -d
+#
+# Set STUDIO_IP in .env to your Mac Studio's Tailscale IP:
+#   STUDIO_IP=100.x.x.x
+# Get it with: tailscale ip -4
+
 services:
   mirrormate:
     build:
@@ -13,18 +21,10 @@ services:
       - TAVILY_API_KEY=${TAVILY_API_KEY}
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "studio:${STUDIO_IP}"
     volumes:
       - ./config:/app/config:ro
       - mirrormate-data:/app/data
-    depends_on:
-      - voicevox
-    restart: unless-stopped
-
-  voicevox:
-    image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest
-    ports:
-      - "50021:50021"
     restart: unless-stopped
 
 volumes:

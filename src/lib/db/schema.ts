@@ -11,9 +11,33 @@ export const users = sqliteTable("users", {
     .$defaultFn(() => new Date()),
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
   memories: many(memories),
+  settings: one(userSettings),
+}));
+
+// ============================================
+// User Settings
+// ============================================
+export const userSettings = sqliteTable("user_settings", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  speakerId: integer("speaker_id"), // VOICEVOX speaker ID
+  characterId: text("character_id"), // Character preset ID
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export const userSettingsRelations = relations(userSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [userSettings.userId],
+    references: [users.id],
+  }),
 }));
 
 // ============================================
@@ -124,6 +148,9 @@ export const memoryEmbeddingsRelations = relations(memoryEmbeddings, ({ one }) =
 // ============================================
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+export type UserSettings = typeof userSettings.$inferSelect;
+export type NewUserSettings = typeof userSettings.$inferInsert;
 
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
