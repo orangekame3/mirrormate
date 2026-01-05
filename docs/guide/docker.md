@@ -37,20 +37,24 @@ flowchart TB
 brew install ollama
 brew services start ollama
 ollama pull qwen2.5:14b
-ollama pull bge-m3
 ```
 
-2. **Start VOICEVOX (Docker)**
+2. **Start Docker Services (VOICEVOX + PLaMo)**
 
 ```bash
 docker compose -f compose.studio.yaml up -d
 ```
 
+This starts:
+- **VOICEVOX** (:50021) - Text-to-speech
+- **PLaMo-Embedding-1B** (:8000) - Japanese-optimized embedding
+
 3. **Verify**
 
 ```bash
-curl http://localhost:11434/api/tags
-curl http://localhost:50021/speakers | head
+curl http://localhost:11434/api/tags    # Ollama
+curl http://localhost:50021/speakers | head  # VOICEVOX
+curl http://localhost:8000/health       # PLaMo
 ```
 
 ### Raspberry Pi Setup
