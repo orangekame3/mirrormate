@@ -1,0 +1,13 @@
+name: vision-companion
+displayName: Vision Companion
+version: 0.1.0
+description: Eye contact detection for automatic greetings
+author: mirrormate
+defaultPosition: bottom-right
+defaultConfig:
+  minFaceSize: 0.15
+  cooldownSeconds: 20
+  cameraWidth: 640
+  cameraHeight: 360
+  detectionFps: 10
+  showDebug: false

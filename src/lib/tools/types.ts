@@ -38,7 +38,12 @@ export interface ToolResult {
   infoCard?: ToolInfoCard;
 }
 
+// Context passed to tool execution (e.g., attached image)
+export interface ToolContext {
+  image?: string; // Base64 encoded image from camera
+}
+
 export interface Tool {
   definition: ToolDefinition;
-  execute(args: Record<string, unknown>): Promise<string | ToolExecuteResult>;
+  execute(args: Record<string, unknown>, context?: ToolContext): Promise<string | ToolExecuteResult>;
 }

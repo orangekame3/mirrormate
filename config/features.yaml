@@ -35,3 +35,9 @@ features:
       searchResults: false  # Auto-share web search results
       weather: false       # Auto-share weather updates
       calendar: false      # Auto-share calendar events
+
+  vision:
+    enabled: true
+    eyeContactTtlSeconds: 300   # How long eye contact state is considered valid
+    greetCooldownSeconds: 300   # Minimum seconds between greetings
+    minConfidence: 0.6          # Minimum confidence threshold for eye contact

@@ -13,11 +13,12 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  hasImage?: boolean;
 }
 
 interface BroadcastMessage {
-  type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "audio" | "user_message" | "play_audio" | "mic_start" | "mic_stop" | "mic_status" | "mic_request_status" | "settings_changed";
-  payload?: string;
+  type: "speaking_start" | "speaking_end" | "thinking_start" | "thinking_end" | "response" | "audio" | "user_message" | "play_audio" | "mic_start" | "mic_stop" | "mic_status" | "mic_request_status" | "settings_changed" | "vision_toggle" | "camera_capture_request" | "camera_capture_response";
+  payload?: string | boolean | null;
 }
 
 export default function ControlPage() {
@@ -27,8 +28,14 @@ export default function ControlPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [micStatus, setMicStatus] = useState<"off" | "listening" | "paused">("off");
+  const [visionEnabled, setVisionEnabled] = useState(true);
+  const [isCapturingImage, setIsCapturingImage] = useState(false);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const pendingCaptureRef = useRef<{
+    resolve: (image: string | null) => void;
+    timeout: NodeJS.Timeout;
+  } | null>(null);
 
   // Speaker and Character selectors
   const {
@@ -52,10 +59,18 @@ export default function ControlPage() {
   useEffect(() => {
     channelRef.current = new BroadcastChannel("mirror-channel");
 
-    // Receive mic status from avatar page
+    // Receive messages from avatar page
     channelRef.current.onmessage = (event: MessageEvent<BroadcastMessage>) => {
       if (event.data.type === "mic_status") {
         setMicStatus(event.data.payload as "off" | "listening" | "paused");
+      } else if (event.data.type === "camera_capture_response") {
+        // Resolve pending camera capture request
+        if (pendingCaptureRef.current) {
+          clearTimeout(pendingCaptureRef.current.timeout);
+          pendingCaptureRef.current.resolve(event.data.payload as string | null);
+          pendingCaptureRef.current = null;
+          setIsCapturingImage(false);
+        }
       }
     };
 
@@ -75,15 +90,52 @@ export default function ControlPage() {
     channelRef.current?.postMessage(message);
   }, []);
 
+  // Request camera capture from vision companion
+  const requestCameraCapture = useCallback((): Promise<string | null> => {
+    return new Promise((resolve) => {
+      if (!channelRef.current) {
+        resolve(null);
+        return;
+      }
+
+      setIsCapturingImage(true);
+
+      // Set up timeout for capture response
+      const timeout = setTimeout(() => {
+        console.warn("[Control] Camera capture timeout");
+        if (pendingCaptureRef.current) {
+          pendingCaptureRef.current = null;
+          setIsCapturingImage(false);
+          resolve(null);
+        }
+      }, 2000);
+
+      pendingCaptureRef.current = { resolve, timeout };
+
+      // Request capture
+      channelRef.current.postMessage({ type: "camera_capture_request" });
+    });
+  }, []);
+
   const sendMessage = useCallback(
     async (content: string) => {
       if (!content.trim() || isLoading) return;
+
+      // Capture camera image when vision is enabled (LLM will decide if it needs to use see_camera tool)
+      let capturedImage: string | null = null;
+      if (visionEnabled) {
+        capturedImage = await requestCameraCapture();
+        if (capturedImage) {
+          console.log("[Control] Camera image captured for vision");
+        }
+      }
 
       const userMessage: Message = {
         id: crypto.randomUUID(),
         role: "user",
         content,
         timestamp: new Date(),
+        hasImage: !!capturedImage,
       };
 
       setMessages((prev) => [...prev, userMessage]);
@@ -107,6 +159,7 @@ export default function ControlPage() {
             })),
             withAudio: false,
             characterId: selectedCharacter || undefined,
+            image: capturedImage || undefined,
           }),
         });
 
@@ -155,7 +208,7 @@ export default function ControlPage() {
         setIsLoading(false);
       }
     },
-    [messages, isLoading, broadcast, selectedSpeaker, selectedCharacter]
+    [messages, isLoading, broadcast, selectedSpeaker, selectedCharacter, visionEnabled, requestCameraCapture]
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -282,8 +335,46 @@ export default function ControlPage() {
             label={t("preview") || "Preview"}
           />
 
+          {/* Vision Toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const newValue = !visionEnabled;
+                setVisionEnabled(newValue);
+                channelRef.current?.postMessage({
+                  type: "vision_toggle",
+                  payload: newValue,
+                });
+              }}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                visionEnabled
+                  ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                  : "bg-zinc-800 text-white/40 hover:bg-zinc-700"
+              }`}
+              title={visionEnabled ? "Vision greeting enabled" : "Vision greeting disabled"}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <span className="text-sm">{visionEnabled ? "Vision ON" : "Vision OFF"}</span>
+            </button>
+          </div>
+
           {/* Spacer */}
           <div className="flex-1" />
+
+          {/* Vision Test Link */}
+          <Link
+            href="/control/vision"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors text-white/60 hover:text-white/80"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <span className="text-sm">Vision</span>
+          </Link>
 
           {/* Memory Link */}
           <Link
@@ -317,6 +408,15 @@ export default function ControlPage() {
                   : "bg-zinc-800 text-white/80"
               }`}
             >
+              {message.hasImage && (
+                <div className="flex items-center gap-1 text-emerald-400 text-xs mb-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Camera attached</span>
+                </div>
+              )}
               <p className="text-sm leading-relaxed">{message.content}</p>
               <p className="text-[10px] text-white/30 mt-2">
                 {message.timestamp.toLocaleTimeString()}

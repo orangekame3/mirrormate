@@ -6,8 +6,50 @@ Tools are functions that the LLM can call during conversation using function cal
 
 | Tool | Description |
 |------|-------------|
+| `see_camera` | Look at what the user's camera is showing (requires VLM) |
 | `web_search` | Search the internet using Ollama Web Search API |
 | `show_effect` | Display visual effects (confetti, hearts, sparkles) |
+| `discord_share` | Share information to Discord via webhook |
+
+## See Camera (Vision)
+
+Allows the AI to look at what the user's camera is showing. The LLM decides when visual context is needed (e.g., when asked "What am I wearing?" or "What am I holding?").
+
+### Setup
+
+1. Configure VLM provider in `config/providers.yaml`:
+
+```yaml
+vlm:
+  enabled: true
+  provider: ollama
+  ollama:
+    model: llava:7b  # or moondream, granite3.2-vision
+    baseUrl: "http://localhost:11434"
+```
+
+2. Make sure the vision-companion plugin is enabled in `config/plugins.yaml`:
+
+```yaml
+vision-companion:
+  source: local:vision-companion
+  enabled: true
+  position: hidden
+```
+
+### Usage
+
+The LLM will automatically call this tool when it needs visual context:
+
+```
+User: "何を持ってるかわかる？"
+AI: [calls see_camera]
+AI: "スマートフォンを持っていますね！"
+```
+
+### Source Code
+
+`src/lib/tools/see-camera.ts`
 
 ## Web Search
 

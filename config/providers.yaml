@@ -40,3 +40,10 @@ providers:
     extraction:
       autoExtract: true
       minConfidence: 0.5
+
+  vlm:
+    enabled: true
+    provider: ollama
+    ollama:
+      model: llava:7b
+      baseUrl: "http://studio:11434"

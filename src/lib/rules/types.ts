@@ -20,11 +20,19 @@ export interface RuleAction {
 
 export type EffectType = "confetti" | "none";
 
+export interface ContextTrigger {
+  feature: string;
+  condition: string;
+}
+
+export interface RuleTriggers {
+  keywords?: string[];
+  context?: ContextTrigger;
+}
+
 export interface Rule {
   description: string;
-  triggers: {
-    keywords: string[];
-  };
+  triggers: RuleTriggers;
   actions: RuleAction[];
   response_hint: string;
   effect?: EffectType;
@@ -37,7 +45,8 @@ export interface RulesConfig {
 export interface RuleMatch {
   rule: Rule;
   ruleName: string;
-  triggeredKeyword: string;
+  triggeredKeyword?: string;
+  triggeredContext?: ContextTrigger;
 }
 
 export interface ModuleResult {

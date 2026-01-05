@@ -1,6 +1,6 @@
 # Providers
 
-Mirror Mate uses external providers for LLM (language model), TTS (text-to-speech), and Embedding (vector generation). Providers are configured in `config/providers.yaml`.
+Mirror Mate uses external providers for LLM (language model), TTS (text-to-speech), VLM (vision language model), and Embedding (vector generation). Providers are configured in `config/providers.yaml`.
 
 ## Configuration
 
@@ -14,6 +14,11 @@ providers:
   tts:
     enabled: true
     provider: voicevox  # openai or voicevox
+    # ...
+
+  vlm:
+    enabled: true
+    provider: ollama
     # ...
 
   embedding:
@@ -183,6 +188,44 @@ providers:
 | 9 | 波音リツ |
 
 ---
+
+## VLM Providers (Vision Language Model)
+
+VLM providers enable visual understanding through the `see_camera` tool.
+
+| Provider | Description | API Key Required |
+|----------|-------------|------------------|
+| Ollama | Local vision models (llava, moondream) | No |
+
+### Ollama VLM
+
+```yaml
+providers:
+  vlm:
+    enabled: true
+    provider: ollama
+    ollama:
+      model: llava:7b  # or moondream, granite3.2-vision
+      baseUrl: "http://localhost:11434"
+```
+
+#### Recommended Vision Models
+
+| Model | Size | Description | Speed |
+|-------|------|-------------|-------|
+| `moondream` | 1.8B | Lightweight, edge-friendly | Fast |
+| `llava:7b` | 7B | Good balance of quality/speed | Medium |
+| `granite3.2-vision` | 2B | Document understanding | Medium |
+
+### Usage
+
+When VLM is enabled and the user asks visual questions, the LLM will use the `see_camera` tool:
+
+```
+User: "何を持ってるかわかる？"
+AI: [calls see_camera tool]
+AI: "スマートフォンを持っていますね！"
+```
 
 ---
 
