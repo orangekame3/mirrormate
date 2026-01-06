@@ -68,6 +68,12 @@ export function loadProvidersConfig(): ProvidersConfig {
     console.log(`[Providers] TTS provider overridden by env: ${process.env.TTS_PROVIDER}`);
   }
 
+  // Allow environment variable override for STT provider
+  if (process.env.STT_PROVIDER && cachedConfig.providers?.stt) {
+    cachedConfig.providers.stt.provider = process.env.STT_PROVIDER as "openai" | "local" | "web";
+    console.log(`[Providers] STT provider overridden by env: ${process.env.STT_PROVIDER}`);
+  }
+
   return cachedConfig;
 }
 

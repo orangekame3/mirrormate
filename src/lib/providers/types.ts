@@ -60,10 +60,35 @@ export interface VLMProviderConfig extends ProviderConfig {
   };
 }
 
+export interface STTProviderConfig extends ProviderConfig {
+  provider: "openai" | "local" | "web";
+  openai?: {
+    model?: "whisper-1";
+    language?: string;
+    prompt?: string;
+    temperature?: number;
+  };
+  local?: {
+    baseUrl?: string;
+    model?: string;
+    language?: string;
+  };
+  web?: {
+    language?: string;
+  };
+  silenceDetection?: {
+    silenceThreshold?: number;
+    volumeThreshold?: number;
+    minRecordingDuration?: number;
+    maxRecordingDuration?: number;
+  };
+}
+
 export interface ProvidersConfig {
   providers: {
     llm?: LLMProviderConfig;
     tts?: TTSProviderConfig;
+    stt?: STTProviderConfig;
     embedding?: EmbeddingProviderConfig;
     memory?: MemoryConfig;
     vlm?: VLMProviderConfig;

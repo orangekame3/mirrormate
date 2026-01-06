@@ -23,6 +23,25 @@ providers:
       speaker: 2
       baseUrl: "http://studio:50021"
 
+  stt:
+    enabled: true
+    provider: web  # openai, local, or web
+    openai:
+      model: whisper-1
+      language: ja
+      temperature: 0
+    local:
+      baseUrl: "http://studio:8080"  # faster-whisper-server
+      model: large-v3
+      language: ja
+    web:
+      language: ja-JP
+    silenceDetection:
+      silenceThreshold: 1.5      # seconds of silence before stopping
+      volumeThreshold: 0.02      # RMS volume threshold (0-1)
+      minRecordingDuration: 500  # minimum ms before silence detection
+      maxRecordingDuration: 60000 # maximum recording duration in ms
+
   embedding:
     enabled: true
     provider: ollama  # PLaMo server provides Ollama-compatible API
