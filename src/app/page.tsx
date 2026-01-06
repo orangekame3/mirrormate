@@ -16,6 +16,7 @@ import { mapBroadcastToEvent, type BroadcastMessage } from "@/lib/animation/broa
 
 export default function AvatarPage() {
   const t = useTranslations("mic");
+  const tReminder = useTranslations("reminder");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [mouthOpenness, setMouthOpenness] = useState(0);
@@ -337,13 +338,13 @@ export default function AvatarPage() {
   // Handle reminder notifications
   const handleReminder = useCallback(
     async (reminder: Reminder) => {
-      const timeText = `${reminder.configuredMinutes}分後`;
+      const timeText = tReminder("timeText", { minutes: reminder.configuredMinutes });
 
       // Add reminder card
       const card: InfoCard = {
         id: reminder.id,
         type: "reminder",
-        title: `${timeText}に予定があります`,
+        title: tReminder("title", { timeText }),
         items: [reminder.summary],
         urgent: reminder.urgent,
       };
@@ -351,7 +352,7 @@ export default function AvatarPage() {
 
       // Notify via TTS if not currently speaking
       if (!isSpeaking && !isProcessing) {
-        const message = `${timeText}に「${reminder.summary}」の予定があります。`;
+        const message = tReminder("message", { timeText, summary: reminder.summary });
         setDisplayText(message);
 
         try {
@@ -371,7 +372,7 @@ export default function AvatarPage() {
         }
       }
     },
-    [isSpeaking, isProcessing, playAudio, currentSpeaker]
+    [isSpeaking, isProcessing, playAudio, currentSpeaker, tReminder]
   );
 
   // Reminder hook (config loaded from YAML)
@@ -485,7 +486,6 @@ export default function AvatarPage() {
   const { isListening, isSupported, start, stop, pause, resume } = useSpeechRecognition({
     onResult: handleSpeechResult,
     onInterimResult: setInterimText,
-    lang: "ja-JP",
   });
 
   // Pause speech recognition while speaking
@@ -683,7 +683,7 @@ export default function AvatarPage() {
       {/* First Run Notice */}
       {isFirstRun && (
         <div className="fixed bottom-8 right-8 text-white/50 text-sm animate-fade-in z-40">
-          音声の利用にはマイクをオンにしてください
+          {t("firstRunNotice")}
         </div>
       )}
 
@@ -691,7 +691,7 @@ export default function AvatarPage() {
       {showIdleHint && (
         <div className="idle-hint fixed top-16 left-1/2 -translate-x-1/2 z-30">
           <span className="text-white/40 text-sm font-light tracking-wide">
-            「{wakeWordConfig?.phrase ?? "OK ミラ"}」で呼びかけてください
+            {t("wakeWordPrompt", { phrase: wakeWordConfig?.phrase ?? "Hey Mira" })}
           </span>
         </div>
       )}

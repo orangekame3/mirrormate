@@ -1,5 +1,6 @@
 import { Feature, CalendarFeatureConfig } from "../types";
 import { fetchTodayEvents, fetchUpcomingEvents, CalendarEvent } from "./google-calendar";
+import { getLocale } from "@/lib/app";
 
 // Cache settings
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -23,11 +24,16 @@ export class CalendarFeature implements Feature {
     return Date.now() - this.cache.timestamp < CACHE_TTL_MS;
   }
 
+  private isJapanese(): boolean {
+    return getLocale() === "ja";
+  }
+
   private formatTime(date: Date): string {
-    return date.toLocaleTimeString("ja-JP", {
+    const isJa = this.isJapanese();
+    return date.toLocaleTimeString(isJa ? "ja-JP" : "en-US", {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false,
+      hour12: !isJa,
     });
   }
 
@@ -35,29 +41,32 @@ export class CalendarFeature implements Feature {
     const now = new Date();
     const diffMs = date.getTime() - now.getTime();
     const diffMins = Math.round(diffMs / 60000);
+    const isJa = this.isJapanese();
 
     if (diffMins < 0) {
-      return "進行中";
+      return isJa ? "進行中" : "in progress";
     }
     if (diffMins < 60) {
-      return `あと${diffMins}分`;
+      return isJa ? `あと${diffMins}分` : `in ${diffMins} min`;
     }
     const diffHours = Math.round(diffMins / 60);
     if (diffHours < 24) {
-      return `あと${diffHours}時間`;
+      return isJa ? `あと${diffHours}時間` : `in ${diffHours} hr`;
     }
     return "";
   }
 
   private formatTodayEvents(events: CalendarEvent[]): string {
+    const isJa = this.isJapanese();
     if (events.length === 0) {
-      return "今日の予定: なし";
+      return isJa ? "今日の予定: なし" : "Today's schedule: none";
     }
 
+    const separator = isJa ? "、" : ", ";
     const formatted = events
       .map((e) => `${this.formatTime(e.start)} ${e.summary}`)
-      .join("、");
-    return `今日の予定: ${formatted}`;
+      .join(separator);
+    return isJa ? `今日の予定: ${formatted}` : `Today's schedule: ${formatted}`;
   }
 
   private formatNextEvent(events: CalendarEvent[]): string {
@@ -65,10 +74,12 @@ export class CalendarFeature implements Feature {
       return "";
     }
 
+    const isJa = this.isJapanese();
     const next = events[0];
     const relative = this.formatRelativeTime(next.start);
-    const relativeStr = relative ? `（${relative}）` : "";
-    return `次の予定: ${this.formatTime(next.start)} ${next.summary}${relativeStr}`;
+    const relativeStr = relative ? (isJa ? `（${relative}）` : ` (${relative})`) : "";
+    const label = isJa ? "次の予定" : "Next event";
+    return `${label}: ${this.formatTime(next.start)} ${next.summary}${relativeStr}`;
   }
 
   async getContext(): Promise<string> {

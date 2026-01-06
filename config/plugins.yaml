@@ -5,13 +5,11 @@ plugins:
     enabled: true
     position: top-left
     config:
-      timezone: "Asia/Tokyo"
-      format24h: true
+      # timezone, format24h, locale are loaded from locale preset
       showSeconds: false
       showDate: true
       dateFormat: "long"
       showWeekday: true
-      locale: "ja-JP"
 
   # Vision companion - Camera capture for Vision Chat
   vision-companion:

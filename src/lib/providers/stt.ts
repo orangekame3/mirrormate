@@ -84,7 +84,7 @@ export function getSTTClientConfig(): STTClientConfig {
   const config = getSTTConfig();
 
   // Determine language based on provider
-  let language = "ja-JP";
+  let language = "en-US";
   if (config.provider === "openai" && config.openai?.language) {
     // Convert ISO 639-1 to BCP 47 for client
     language = config.openai.language === "ja" ? "ja-JP" : config.openai.language;

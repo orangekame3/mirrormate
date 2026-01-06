@@ -45,7 +45,7 @@ export function useWakeWord({
       } catch (error) {
         console.error("[WakeWord] Failed to fetch config:", error);
         // Use default config
-        setConfig({ enabled: false, phrase: "OK ミラー", timeout: 15 });
+        setConfig({ enabled: false, phrase: "Hey Mira", timeout: 15 });
       }
     }
     fetchConfig();

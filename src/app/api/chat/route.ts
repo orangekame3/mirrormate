@@ -8,6 +8,7 @@ import { executeRule, formatRuleContext } from "@/lib/rules";
 import { loadProvidersConfig, getEmbeddingProvider } from "@/lib/providers";
 import { RAGService, getSimpleContext, MemoryService } from "@/lib/memory";
 import { getUserRepository } from "@/lib/repositories";
+import { getLocale } from "@/lib/app";
 
 const MAX_TOOL_ITERATIONS = 3;
 const DEFAULT_USER_ID = "default-user";
@@ -90,8 +91,11 @@ export async function POST(request: NextRequest) {
 
     // Add tool usage hint when camera image is available
     if (image) {
+      const isJapanese = getLocale() === "ja";
       contexts.push("[Tool Usage]");
-      contexts.push("ユーザーのカメラ画像が利用可能です。ユーザーの外見や持っているものについて聞かれた場合は、see_cameraツールを使ってください。web_searchは使わないでください。");
+      contexts.push(isJapanese
+        ? "ユーザーのカメラ画像が利用可能です。ユーザーの外見や持っているものについて聞かれた場合は、see_cameraツールを使ってください。web_searchは使わないでください。"
+        : "User's camera image is available. If asked about the user's appearance or what they're holding, use the see_camera tool. Do not use web_search.");
     }
 
     // Get RAG context

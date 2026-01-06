@@ -4,7 +4,8 @@
     "listening": "Listening",
     "paused": "Paused",
     "wakeWordPrompt": "Say \"{phrase}\"",
-    "inConversation": "In Conversation"
+    "inConversation": "In Conversation",
+    "firstRunNotice": "Turn on mic to use voice"
   },
   "control": {
     "title": "Control Panel",
@@ -26,5 +27,10 @@
     "thinking": "Thinking...",
     "speaking": "Speaking...",
     "ready": "Ready"
+  },
+  "reminder": {
+    "timeText": "In {minutes} minutes",
+    "title": "You have an event {timeText}",
+    "message": "You have \"{summary}\" {timeText}."
   }
 }
