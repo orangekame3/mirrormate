@@ -5,13 +5,13 @@ plugins:
     enabled: true
     position: top-left
     config:
-      timezone: "Asia/Tokyo"
-      format24h: true
+      timezone: "America/Los_Angeles"
+      format24h: false
       showSeconds: false
       showDate: true
       dateFormat: "long"
       showWeekday: true
-      locale: "ja-JP"
+      locale: "en-US"
 
   # Vision companion - Camera capture for Vision Chat
   vision-companion:

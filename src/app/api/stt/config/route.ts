@@ -29,7 +29,7 @@ export async function GET() {
         minRecordingDuration: 500,
         maxRecordingDuration: 60000,
       },
-      language: "ja-JP",
+      language: "en-US",
     });
   }
 }

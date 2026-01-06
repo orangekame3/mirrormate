@@ -3,13 +3,13 @@ features:
     enabled: true
     provider: open-meteo
     locations:
-      - name: "東京"
-        latitude: 35.6762
-        longitude: 139.6503
-      - name: "大阪"
-        latitude: 34.6937
-        longitude: 135.5023
-    defaultLocation: "東京"
+      - name: "San Francisco"
+        latitude: 37.7749
+        longitude: -122.4194
+      - name: "New York"
+        latitude: 40.7128
+        longitude: -74.0060
+    defaultLocation: "San Francisco"
 
   calendar:
     enabled: true
@@ -17,7 +17,7 @@ features:
 
   time:
     enabled: true
-    timezone: "Asia/Tokyo"
+    timezone: "America/Los_Angeles"
 
   reminder:
     enabled: true

@@ -182,7 +182,7 @@ export function getWakeWordConfig(): WakeWordConfig {
   const config = loadCharacterConfig();
   const defaultConfig: WakeWordConfig = {
     enabled: false,
-    phrase: "OK ミラー",
+    phrase: "Hey Mira",
     timeout: 15,
   };
 

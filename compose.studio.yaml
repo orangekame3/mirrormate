@@ -11,7 +11,7 @@ services:
     ports:
       - "8080:8000"
     environment:
-      - WHISPER__MODEL=large-v3  # tiny, base, small, medium, large-v3
+      - WHISPER__MODEL=large-v3 # tiny, base, small, medium, large-v3
       - WHISPER__INFERENCE_DEVICE=cpu
     restart: unless-stopped
 

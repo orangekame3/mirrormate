@@ -8,7 +8,7 @@ export async function GET() {
   } catch (error) {
     console.error("[WakeWord API] Error:", error);
     return NextResponse.json(
-      { enabled: false, phrase: "OK ミラー", timeout: 15 },
+      { enabled: false, phrase: "Hey Mira", timeout: 15 },
       { status: 200 }
     );
   }

@@ -47,7 +47,7 @@ interface UseSpeechRecognitionOptions {
   onRecordingStateChange?: (isRecording: boolean) => void;
   /** Called with volume level for visualization (Whisper mode) */
   onVolumeChange?: (volume: number) => void;
-  /** Language code (default: "ja-JP") */
+  /** Language code (default: "en-US") */
   lang?: string;
   /** Override provider selection from config */
   provider?: SpeechRecognitionProvider;
@@ -88,7 +88,7 @@ export function useSpeechRecognition({
   onInterimResult,
   onRecordingStateChange,
   onVolumeChange,
-  lang = "ja-JP",
+  lang = "en-US",
   provider: providerOverride,
 }: UseSpeechRecognitionOptions): UseSpeechRecognitionReturn {
   // State
@@ -164,13 +164,14 @@ export function useSpeechRecognition({
   const handleWhisperTranscription = useCallback(
     async (audioBlob: Blob) => {
       setIsTranscribing(true);
-      onInterimResultRef.current?.("...(文字起こし中)");
+      onInterimResultRef.current?.("...");
 
       try {
         const formData = new FormData();
         formData.append("audio", audioBlob, "audio.webm");
-        // Convert BCP 47 to ISO 639-1 for Whisper
-        const whisperLang = lang.split("-")[0];
+        // Use language from server config, fallback to prop, then convert BCP 47 to ISO 639-1
+        const effectiveLang = sttConfig?.language || lang;
+        const whisperLang = effectiveLang.split("-")[0];
         formData.append("language", whisperLang);
 
         console.log(
@@ -210,7 +211,7 @@ export function useSpeechRecognition({
         setIsTranscribing(false);
       }
     },
-    [lang]
+    [lang, sttConfig?.language]
   );
 
   /**
@@ -258,9 +259,9 @@ export function useSpeechRecognition({
   useEffect(() => {
     if (activeProvider === "whisper") {
       if (isRecording && hasAudioStarted) {
-        onInterimResultRef.current?.("...(聴いています)");
+        onInterimResultRef.current?.("...");
       } else if (isRecording && !hasAudioStarted) {
-        onInterimResultRef.current?.("...(音声を待っています)");
+        onInterimResultRef.current?.("...");
       } else if (!isRecording && !isTranscribing) {
         // Clear interim when not recording and not transcribing
       }

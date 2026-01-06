@@ -1,4 +1,5 @@
 import { Feature, TimeFeatureConfig } from "../types";
+import { getLocale } from "@/lib/app";
 
 export class TimeFeature implements Feature {
   name = "time";
@@ -8,11 +9,6 @@ export class TimeFeature implements Feature {
     this.config = config;
   }
 
-  private getJapaneseWeekday(date: Date): string {
-    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
-    return weekdays[date.getDay()];
-  }
-
   async getContext(): Promise<string> {
     if (!this.config.enabled) {
       return "";
@@ -20,9 +16,12 @@ export class TimeFeature implements Feature {
 
     const now = new Date();
     const timezone = this.config.timezone || "Asia/Tokyo";
+    const locale = getLocale();
+    const isJapanese = locale === "ja";
 
     // Format date and time in the specified timezone
-    const formatter = new Intl.DateTimeFormat("ja-JP", {
+    const localeCode = isJapanese ? "ja-JP" : "en-US";
+    const formatter = new Intl.DateTimeFormat(localeCode, {
       timeZone: timezone,
       year: "numeric",
       month: "long",
@@ -30,24 +29,39 @@ export class TimeFeature implements Feature {
       hour: "2-digit",
       minute: "2-digit",
       weekday: "short",
-      hour12: false,
+      hour12: !isJapanese,
     });
 
     const parts = formatter.formatToParts(now);
     const getPart = (type: string) => parts.find((p) => p.type === type)?.value || "";
 
-    const year = getPart("year");
-    const month = getPart("month");
-    const day = getPart("day");
-    const weekday = getPart("weekday");
-    const hour = getPart("hour");
-    const minute = getPart("minute");
+    let timeStr: string;
+    let dateStr: string;
 
-    const timeStr = `${hour}時${minute}分`;
-    const dateStr = `${year}年${month}月${day}日（${weekday}）`;
+    if (isJapanese) {
+      const year = getPart("year");
+      const month = getPart("month");
+      const day = getPart("day");
+      const weekday = getPart("weekday");
+      const hour = getPart("hour");
+      const minute = getPart("minute");
+      timeStr = `${hour}時${minute}分`;
+      dateStr = `${year}年${month}月${day}日（${weekday}）`;
+    } else {
+      const weekday = getPart("weekday");
+      const month = getPart("month");
+      const day = getPart("day");
+      const year = getPart("year");
+      const hour = getPart("hour");
+      const minute = getPart("minute");
+      const dayPeriod = getPart("dayPeriod");
+      timeStr = `${hour}:${minute} ${dayPeriod}`;
+      dateStr = `${weekday}, ${month} ${day}, ${year}`;
+    }
 
     console.log(`[Time] Current time: ${dateStr} ${timeStr}`);
 
-    return `現在時刻: ${dateStr} ${timeStr}`;
+    const label = isJapanese ? "現在時刻" : "Current time";
+    return `${label}: ${dateStr} ${timeStr}`;
   }
 }

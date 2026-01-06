@@ -5,7 +5,7 @@ character:
   # Wake word configuration
   wakeWord:
     enabled: true
-    phrase: "OK Mira"
+    phrase: "Hey Mira"
     timeout: 60
 
   appearance:

@@ -4,4 +4,4 @@ app:
   # Language setting
   # "ja" - Japanese (default): Uses config/locales/ja/
   # "en" - English: Uses config/locales/en/
-  locale: "ja"
+  locale: "en"

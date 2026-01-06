@@ -82,7 +82,7 @@ export default function SimpleAvatar({
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
-    camera.position.z = 4;
+    camera.position.z = 2.8;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
@@ -192,7 +192,7 @@ export default function SimpleAvatar({
   return (
     <div className="relative w-full h-full">
       {/* Avatar Aura (halo + orbit particles) */}
-      <AvatarAura state={avatarState || "IDLE"} size={320} />
+      <AvatarAura state={avatarState || "IDLE"} size={420} />
       {/* Avatar Canvas */}
       <div ref={containerRef} className="w-full h-full" />
     </div>
