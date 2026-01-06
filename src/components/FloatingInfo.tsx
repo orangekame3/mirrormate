@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 
 export interface InfoCard {
   id: string;
@@ -17,16 +17,54 @@ interface FloatingInfoProps {
 }
 
 export function FloatingInfo({ cards, onDismiss, autoHideDuration = 8000 }: FloatingInfoProps) {
+  const [history, setHistory] = useState<InfoCard[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Track dismissed cards in history (max 3)
+  const handleDismiss = useCallback(
+    (id: string) => {
+      const card = cards.find((c) => c.id === id);
+      if (card) {
+        setHistory((prev) => [card, ...prev].slice(0, 3));
+      }
+      onDismiss(id);
+    },
+    [cards, onDismiss]
+  );
+
   return (
-    <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-10">
+    <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-end gap-3 z-10">
+      {/* Active Cards */}
       {cards.map((card) => (
         <InfoCardComponent
           key={card.id}
           card={card}
-          onDismiss={() => onDismiss(card.id)}
+          onDismiss={() => handleDismiss(card.id)}
           autoHideDuration={autoHideDuration}
         />
       ))}
+
+      {/* History Tray Handle */}
+      {history.length > 0 && (
+        <div className="relative">
+          <button
+            className="text-white/30 hover:text-white/50 transition-colors text-sm tracking-widest px-2 py-1"
+            onClick={() => setShowHistory(!showHistory)}
+            aria-label="Toggle history"
+          >
+            •••
+          </button>
+
+          {/* History Tray */}
+          {showHistory && (
+            <div className="absolute right-0 top-full mt-2 flex flex-col gap-2">
+              {history.map((card) => (
+                <HistoryCard key={card.id} card={card} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -42,9 +80,12 @@ function InfoCardComponent({
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
   const [progress, setProgress] = useState(100);
   const startTimeRef = useRef(Date.now());
   const onDismissRef = useRef(onDismiss);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Keep onDismiss ref up to date
   useEffect(() => {
@@ -55,24 +96,51 @@ function InfoCardComponent({
     // Animate in
     requestAnimationFrame(() => setIsVisible(true));
 
-    // Progress animation
-    const progressInterval = setInterval(() => {
-      const elapsed = Date.now() - startTimeRef.current;
-      const remaining = Math.max(0, 100 - (elapsed / autoHideDuration) * 100);
-      setProgress(remaining);
-    }, 50);
+    if (!isPinned) {
+      // Progress animation
+      intervalRef.current = setInterval(() => {
+        const elapsed = Date.now() - startTimeRef.current;
+        const remaining = Math.max(0, 100 - (elapsed / autoHideDuration) * 100);
+        setProgress(remaining);
+      }, 50);
 
-    // Auto-hide after duration
-    const timer = setTimeout(() => {
-      setIsLeaving(true);
-      setTimeout(() => onDismissRef.current(), 300);
-    }, autoHideDuration);
+      // Auto-hide after duration
+      timerRef.current = setTimeout(() => {
+        setIsLeaving(true);
+        setTimeout(() => onDismissRef.current(), 260);
+      }, autoHideDuration);
+    }
 
     return () => {
-      clearTimeout(timer);
-      clearInterval(progressInterval);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [autoHideDuration]); // Only depend on autoHideDuration
+  }, [autoHideDuration, isPinned]);
+
+  // Handle pin toggle
+  const togglePin = useCallback(() => {
+    setIsPinned((prev) => {
+      if (!prev) {
+        // Pinning: stop auto-hide
+        if (timerRef.current) clearTimeout(timerRef.current);
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setProgress(100);
+      } else {
+        // Unpinning: restart auto-hide
+        startTimeRef.current = Date.now();
+        intervalRef.current = setInterval(() => {
+          const elapsed = Date.now() - startTimeRef.current;
+          const remaining = Math.max(0, 100 - (elapsed / autoHideDuration) * 100);
+          setProgress(remaining);
+        }, 50);
+        timerRef.current = setTimeout(() => {
+          setIsLeaving(true);
+          setTimeout(() => onDismissRef.current(), 260);
+        }, autoHideDuration);
+      }
+      return !prev;
+    });
+  }, [autoHideDuration]);
 
   const getIcon = () => {
     switch (card.type) {
@@ -115,88 +183,33 @@ function InfoCardComponent({
     }
   };
 
-  const getStyles = () => {
-    switch (card.type) {
-      case "weather":
-        return {
-          bgColor: "from-sky-500/20 to-blue-500/20",
-          borderColor: "border-sky-500/30",
-          iconColor: "text-sky-400",
-        };
-      case "calendar":
-        return {
-          bgColor: "from-violet-500/20 to-purple-500/20",
-          borderColor: "border-violet-500/30",
-          iconColor: "text-violet-400",
-        };
-      case "time":
-        return {
-          bgColor: "from-amber-500/20 to-orange-500/20",
-          borderColor: "border-amber-500/30",
-          iconColor: "text-amber-400",
-        };
-      case "reminder":
-        return card.urgent
-          ? {
-              bgColor: "from-red-500/30 to-rose-500/30",
-              borderColor: "border-red-500/50",
-              iconColor: "text-red-400",
-            }
-          : {
-              bgColor: "from-emerald-500/20 to-teal-500/20",
-              borderColor: "border-emerald-500/30",
-              iconColor: "text-emerald-400",
-            };
-      case "discord":
-        return {
-          bgColor: "from-indigo-500/20 to-purple-500/20",
-          borderColor: "border-indigo-500/30",
-          iconColor: "text-indigo-400",
-        };
-      case "search":
-        return {
-          bgColor: "from-cyan-500/20 to-teal-500/20",
-          borderColor: "border-cyan-500/30",
-          iconColor: "text-cyan-400",
-        };
-    }
-  };
-
   const icon = getIcon();
-  const { bgColor, borderColor, iconColor } = getStyles();
-
-  // Progress bar color based on type
-  const getProgressColor = () => {
-    switch (card.type) {
-      case "weather":
-        return "bg-sky-400";
-      case "calendar":
-        return "bg-violet-400";
-      case "time":
-        return "bg-amber-400";
-      case "reminder":
-        return card.urgent ? "bg-red-400" : "bg-emerald-400";
-      case "discord":
-        return "bg-indigo-400";
-      case "search":
-        return "bg-cyan-400";
-    }
-  };
 
   return (
     <div
       className={`
-        bg-gradient-to-br ${bgColor} backdrop-blur-md
-        border ${borderColor} rounded-xl p-4 min-w-[200px] max-w-[280px]
-        shadow-lg shadow-black/20
-        transition-all duration-300 ease-out overflow-hidden
-        ${isVisible && !isLeaving ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"}
-        ${card.urgent ? "animate-pulse" : ""}
+        glass-card ${isPinned ? "glass-card--pinned" : ""}
+        ${card.urgent ? "card-urgent" : ""}
+        rounded-xl p-4 min-w-[200px] max-w-[280px]
+        transition-all duration-[260ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden
+        ${isVisible && !isLeaving ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[10px]"}
       `}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <span className={`${iconColor} ${card.urgent ? "animate-bounce" : ""}`}>{icon}</span>
-        <span className="text-white/80 text-sm font-medium">{card.title}</span>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className={`text-white/60 ${card.urgent ? "animate-bounce" : ""}`}>{icon}</span>
+          <span className="text-white/80 text-sm font-medium">{card.title}</span>
+        </div>
+        {/* Pin Button */}
+        <button
+          onClick={togglePin}
+          className={`p-1 transition-colors ${isPinned ? "text-white/60" : "text-white/30 hover:text-white/50"}`}
+          aria-label={isPinned ? "Unpin" : "Pin"}
+        >
+          <svg className="w-3.5 h-3.5" fill={isPinned ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+          </svg>
+        </button>
       </div>
       <ul className="space-y-1 mb-3">
         {card.items.map((item, index) => (
@@ -205,13 +218,26 @@ function InfoCardComponent({
           </li>
         ))}
       </ul>
-      {/* Progress bar */}
-      <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-        <div
-          className={`h-full ${getProgressColor()} transition-all duration-100 ease-linear`}
-          style={{ width: `${progress}%` }}
-        />
+      {/* Progress bar - only show when not pinned */}
+      {!isPinned && (
+        <div className="h-0.5 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-white/40 transition-all duration-100 ease-linear"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HistoryCard({ card }: { card: InfoCard }) {
+  return (
+    <div className="glass-card rounded-lg p-3 min-w-[180px] max-w-[240px] opacity-60">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-white/50 text-xs">{card.title}</span>
       </div>
+      <p className="text-white/40 text-xs truncate">{card.items[0]}</p>
     </div>
   );
 }

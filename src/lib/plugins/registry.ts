@@ -25,6 +25,7 @@ export function getEnabledPluginsByPosition(): PluginsByPosition {
     "top-right": [],
     "bottom-left": [],
     "bottom-right": [],
+    "hidden": [],
   };
 
   // Process each configured plugin

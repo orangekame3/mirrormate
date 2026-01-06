@@ -6,20 +6,62 @@ Tools are functions that the LLM can call during conversation using function cal
 
 | Tool | Description |
 |------|-------------|
-| `web_search` | Search the internet using Tavily API |
+| `see_camera` | Look at what the user's camera is showing (requires VLM) |
+| `web_search` | Search the internet using Ollama Web Search API |
 | `show_effect` | Display visual effects (confetti, hearts, sparkles) |
+| `discord_share` | Share information to Discord via webhook |
 
-## Web Search
+## See Camera (Vision)
 
-Allows the AI to search the internet for current information.
+Allows the AI to look at what the user's camera is showing. The LLM decides when visual context is needed (e.g., when asked "What am I wearing?" or "What am I holding?").
 
 ### Setup
 
-1. Get an API key from [Tavily](https://tavily.com/)
+1. Configure VLM provider in `config/providers.yaml`:
+
+```yaml
+vlm:
+  enabled: true
+  provider: ollama
+  ollama:
+    model: llava:7b  # or moondream, granite3.2-vision
+    baseUrl: "http://localhost:11434"
+```
+
+2. Make sure the vision-companion plugin is enabled in `config/plugins.yaml`:
+
+```yaml
+vision-companion:
+  source: local:vision-companion
+  enabled: true
+  position: hidden
+```
+
+### Usage
+
+The LLM will automatically call this tool when it needs visual context:
+
+```
+User: "何を持ってるかわかる？"
+AI: [calls see_camera]
+AI: "スマートフォンを持っていますね！"
+```
+
+### Source Code
+
+`src/lib/tools/see-camera.ts`
+
+## Web Search
+
+Allows the AI to search the internet for current information using Ollama Web Search API.
+
+### Setup
+
+1. Get an API key from [Ollama](https://ollama.com/settings/keys)
 2. Add to `.env`:
 
 ```bash
-TAVILY_API_KEY=tvly-your-api-key-here
+OLLAMA_API_KEY=your-ollama-api-key-here
 ```
 
 ### Usage
@@ -43,7 +85,7 @@ No additional configuration required. The tool is automatically available when t
 ```typescript
 {
   name: "web_search",
-  description: "インターネットで情報を検索します。最新のニュースやイベント、事実確認に使用してください。",
+  description: "インターネットで最新情報を検索します。必ず使うべき場面: ニュース、今日の出来事、知らない事柄、正確な情報が必要なとき。自分の知識に自信がないときは必ずこのツールを呼び出してください。",
   parameters: {
     type: "object",
     properties: {

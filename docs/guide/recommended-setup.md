@@ -96,7 +96,7 @@ brew install ollama
 brew services start ollama
 
 # Pull LLM model
-ollama pull qwen2.5:14b
+ollama pull gpt-oss:20b
 ```
 
 ### Start Docker Services (VOICEVOX + PLaMo)
@@ -142,7 +142,7 @@ providers:
     enabled: true
     provider: ollama
     ollama:
-      model: qwen2.5:14b
+      model: gpt-oss:20b
       baseUrl: "http://studio:11434"  # Tailscale hostname
       maxTokens: 300
       temperature: 0.7
@@ -171,7 +171,18 @@ providers:
       minConfidence: 0.5
 ```
 
-## Step 4: Raspberry Pi Setup
+## Step 4: Web Search Setup (Optional)
+
+To enable web search functionality:
+
+1. Get an API key from [Ollama](https://ollama.com/settings/keys)
+2. Add to `.env` on the Raspberry Pi:
+
+```bash
+OLLAMA_API_KEY=your-ollama-api-key-here
+```
+
+## Step 5: Raspberry Pi Setup
 
 ### Clone Repository
 
@@ -204,7 +215,7 @@ cd /home/pi/mirrormate && docker compose up -d
 
 Open http://localhost:3000 on the RPi's browser, or http://rpi:3000 from another device.
 
-## Step 5: Development (MacBook)
+## Step 6: Development (MacBook)
 
 With this setup, development requires no local services:
 
@@ -353,5 +364,6 @@ scp data/mirrormate.ja.db pi@rpi:~/mirrormate/data/
 ## Next Steps
 
 - [Docker Setup](docker.md) - Detailed Docker configuration
+- [Locale Presets](../config/presets.md) - Configure timezone, weather, and STT by locale
 - [Providers Configuration](../config/providers.md) - LLM/TTS provider options
 - [Memory System](memory.md) - RAG and memory management

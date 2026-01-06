@@ -7,21 +7,40 @@ providers:
       maxTokens: 300
       temperature: 0.7
     ollama:
-      model: huggingface.co/mmnga/Llama-3.1-Swallow-8B-Instruct-v0.5-gguf:latest
+      model: gpt-oss:20b
       baseUrl: "http://studio:11434"
       maxTokens: 300
       temperature: 0.7
 
   tts:
     enabled: true
-    provider: voicevox  # openai or voicevox
+    provider: openai  # openai or voicevox
     openai:
-      voice: shimmer  # alloy, echo, fable, onyx, nova, shimmer
+      voice: echo  # alloy, echo, fable, onyx, nova, shimmer
       model: tts-1    # tts-1 or tts-1-hd
       speed: 0.95
     voicevox:
       speaker: 2
       baseUrl: "http://studio:50021"
+
+  stt:
+    enabled: true
+    provider: web  # openai, local, or web
+    openai:
+      model: whisper-1
+      # language is loaded from locale preset
+      temperature: 0
+    local:
+      baseUrl: "http://studio:8080"  # faster-whisper-server
+      model: large-v3
+      # language is loaded from locale preset
+    web:
+      # language is loaded from locale preset
+    silenceDetection:
+      silenceThreshold: 1.5      # seconds of silence before stopping
+      volumeThreshold: 0.02      # RMS volume threshold (0-1)
+      minRecordingDuration: 500  # minimum ms before silence detection
+      maxRecordingDuration: 60000 # maximum recording duration in ms
 
   embedding:
     enabled: true
@@ -40,3 +59,10 @@ providers:
     extraction:
       autoExtract: true
       minConfidence: 0.5
+
+  vlm:
+    enabled: true
+    provider: ollama
+    ollama:
+      model: llava:7b
+      baseUrl: "http://studio:11434"

@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
 import { ProvidersConfig } from "./types";
+import { getSTTPreset } from "../presets";
 
 let cachedConfig: ProvidersConfig | null = null;
 
@@ -66,6 +67,29 @@ export function loadProvidersConfig(): ProvidersConfig {
   if (process.env.TTS_PROVIDER && cachedConfig.providers?.tts) {
     cachedConfig.providers.tts.provider = process.env.TTS_PROVIDER as "openai" | "voicevox";
     console.log(`[Providers] TTS provider overridden by env: ${process.env.TTS_PROVIDER}`);
+  }
+
+  // Allow environment variable override for STT provider
+  if (process.env.STT_PROVIDER && cachedConfig.providers?.stt) {
+    cachedConfig.providers.stt.provider = process.env.STT_PROVIDER as "openai" | "local" | "web";
+    console.log(`[Providers] STT provider overridden by env: ${process.env.STT_PROVIDER}`);
+  }
+
+  // Apply locale preset to STT settings
+  if (cachedConfig.providers?.stt) {
+    const sttPreset = getSTTPreset();
+    const stt = cachedConfig.providers.stt;
+
+    // Apply preset language settings if not explicitly set
+    if (stt.openai) {
+      stt.openai.language = stt.openai.language || sttPreset.language;
+    }
+    if (stt.local) {
+      stt.local.language = stt.local.language || sttPreset.language;
+    }
+    if (stt.web) {
+      stt.web.language = stt.web.language || sttPreset.webLanguage;
+    }
   }
 
   return cachedConfig;

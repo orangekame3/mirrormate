@@ -47,9 +47,23 @@ export class MemoryExtractor {
     };
 
     try {
-      // Extract JSON block
-      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : content;
+      // Extract JSON from markdown code block (handles ```json, ```JSON, ``` etc.)
+      let jsonStr = content;
+
+      // Try to extract from code block with closing ```
+      const jsonMatch = content.match(/```(?:json|JSON)?\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[1];
+      } else {
+        // Handle case where closing ``` is missing (LLM output may be truncated)
+        const startMatch = content.match(/```(?:json|JSON)?\s*\n?([\s\S]*)/);
+        if (startMatch) {
+          jsonStr = startMatch[1];
+        }
+      }
+
+      // Remove any trailing ``` if still present
+      jsonStr = jsonStr.replace(/```\s*$/, "").trim();
 
       // Parse JSON
       const parsed = JSON.parse(jsonStr.trim());

@@ -47,6 +47,12 @@ export interface DiscordFeatureConfig extends FeatureConfig {
   };
 }
 
+export interface VisionFeatureConfig extends FeatureConfig {
+  eyeContactTtlSeconds: number;
+  greetCooldownSeconds: number;
+  minConfidence: number;
+}
+
 export interface FeaturesConfig {
   features: {
     weather?: WeatherFeatureConfig;
@@ -54,6 +60,7 @@ export interface FeaturesConfig {
     time?: TimeFeatureConfig;
     reminder?: ReminderFeatureConfig;
     discord?: DiscordFeatureConfig;
+    vision?: VisionFeatureConfig;
     [key: string]: FeatureConfig | undefined;
   };
 }

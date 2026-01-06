@@ -13,10 +13,10 @@ import { useLongThinkingPulse } from "@/hooks/useLongThinkingPulse";
 import { FloatingInfo, InfoCard, detectInfoFromResponse } from "@/components/FloatingInfo";
 import PluginRenderer from "@/components/PluginRenderer";
 import { mapBroadcastToEvent, type BroadcastMessage } from "@/lib/animation/broadcast-adapter";
-import { getAcknowledgment } from "@/lib/quick-ack";
 
 export default function AvatarPage() {
   const t = useTranslations("mic");
+  const tReminder = useTranslations("reminder");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [mouthOpenness, setMouthOpenness] = useState(0);
@@ -32,6 +32,9 @@ export default function AvatarPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [currentSpeaker, setCurrentSpeaker] = useState<number | null>(null);
   const [currentCharacter, setCurrentCharacter] = useState<string | null>(null);
+  const [showMicOffNotice, setShowMicOffNotice] = useState(false);
+  const [isFirstRun, setIsFirstRun] = useState(false);
+  const prevSpeechEnabledRef = useRef(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const textFadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -39,6 +42,34 @@ export default function AvatarPage() {
   const animationRef = useRef<number>(0);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const messagesRef = useRef<Array<{ role: string; content: string }>>([]);
+  const pendingCaptureRef = useRef<{
+    resolve: (image: string | null) => void;
+    timeout: NodeJS.Timeout;
+  } | null>(null);
+
+  // Request camera capture from vision companion plugin
+  const requestCameraCapture = useCallback((): Promise<string | null> => {
+    return new Promise((resolve) => {
+      if (!channelRef.current) {
+        resolve(null);
+        return;
+      }
+
+      // Set up timeout for capture response
+      const timeout = setTimeout(() => {
+        console.warn("[Avatar] Camera capture timeout");
+        if (pendingCaptureRef.current) {
+          pendingCaptureRef.current = null;
+          resolve(null);
+        }
+      }, 2000);
+
+      pendingCaptureRef.current = { resolve, timeout };
+
+      // Request capture
+      channelRef.current.postMessage({ type: "camera_capture_request" });
+    });
+  }, []);
 
   // Load saved settings on mount (from DB with localStorage fallback)
   useEffect(() => {
@@ -118,6 +149,27 @@ export default function AvatarPage() {
     }
   }, [speechEnabled, dispatchState]);
 
+  // Show MIC OFF notice when mic is disabled
+  useEffect(() => {
+    if (prevSpeechEnabledRef.current && !speechEnabled) {
+      setShowMicOffNotice(true);
+      const timer = setTimeout(() => setShowMicOffNotice(false), 1500);
+      return () => clearTimeout(timer);
+    }
+    prevSpeechEnabledRef.current = speechEnabled;
+  }, [speechEnabled]);
+
+  // Check for first run
+  useEffect(() => {
+    const hasRun = localStorage.getItem("mirrormate:hasRun");
+    if (!hasRun) {
+      setIsFirstRun(true);
+      localStorage.setItem("mirrormate:hasRun", "true");
+      const timer = setTimeout(() => setIsFirstRun(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   useEffect(() => {
     if (isThinking) {
       dispatchState({ type: "PROCESSING_START" });
@@ -147,7 +199,8 @@ export default function AvatarPage() {
     setInfoCards((prev) => prev.filter((card) => card.id !== id));
   }, []);
 
-  // Auto fade-out text
+  // Auto fade-out text with duration based on text length
+  // Formula: 1-120 chars = 10-14s, then +2s per 40 chars, max 24s
   useEffect(() => {
     if (displayText && !isThinking) {
       // Clear existing timer
@@ -156,7 +209,19 @@ export default function AvatarPage() {
       }
       setIsTextFading(false);
 
-      // Start fade after 8s, clear after 10s
+      // Calculate display duration based on text length
+      const charCount = displayText.length;
+      let displayDuration: number;
+      if (charCount <= 120) {
+        // 10-14s for 1-120 chars
+        displayDuration = 10000 + (charCount / 120) * 4000;
+      } else {
+        // +2s per 40 chars beyond 120, max 24s
+        const extraChars = charCount - 120;
+        const extraTime = Math.floor(extraChars / 40) * 2000;
+        displayDuration = Math.min(14000 + extraTime, 24000);
+      }
+
       textFadeTimeoutRef.current = setTimeout(() => {
         setIsTextFading(true);
         setTimeout(() => {
@@ -164,7 +229,7 @@ export default function AvatarPage() {
           setUserText("");
           setIsTextFading(false);
         }, 2000); // Fade animation duration
-      }, 8000);
+      }, displayDuration);
     }
 
     return () => {
@@ -196,15 +261,21 @@ export default function AvatarPage() {
   const playAudio = useCallback(async (audioBase64: string) => {
     return new Promise<void>(async (resolve) => {
       try {
+        console.log("[Avatar] playAudio: starting...");
+
         // Reuse existing AudioContext for background playback
         if (!audioContextRef.current || audioContextRef.current.state === "closed") {
           audioContextRef.current = new AudioContext();
+          console.log("[Avatar] Created new AudioContext");
         }
 
         const audioContext = audioContextRef.current;
+        console.log("[Avatar] AudioContext state:", audioContext.state);
 
         if (audioContext.state === "suspended") {
+          console.log("[Avatar] Resuming suspended AudioContext...");
           await audioContext.resume();
+          console.log("[Avatar] AudioContext resumed, state:", audioContext.state);
         }
 
         const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
@@ -212,8 +283,14 @@ export default function AvatarPage() {
 
         // Wait for audio to load
         await new Promise<void>((res) => {
-          audio.oncanplaythrough = () => res();
-          audio.onerror = () => res();
+          audio.oncanplaythrough = () => {
+            console.log("[Avatar] Audio loaded and ready");
+            res();
+          };
+          audio.onerror = (e) => {
+            console.error("[Avatar] Audio load error:", e);
+            res();
+          };
         });
 
         const analyser = audioContext.createAnalyser();
@@ -226,10 +303,12 @@ export default function AvatarPage() {
         analyser.connect(audioContext.destination);
 
         audio.onplay = () => {
+          console.log("[Avatar] Audio playback started");
           setIsSpeaking(true);
           analyzeAudio();
         };
         audio.onended = () => {
+          console.log("[Avatar] Audio playback ended");
           setIsSpeaking(false);
           setMouthOpenness(0);
           cancelAnimationFrame(animationRef.current);
@@ -237,16 +316,18 @@ export default function AvatarPage() {
           resolve();
         };
         audio.onerror = (e) => {
-          console.error("Audio error:", e);
+          console.error("[Avatar] Audio playback error:", e);
           setIsSpeaking(false);
           setMouthOpenness(0);
           cancelAnimationFrame(animationRef.current);
           resolve();
         };
 
+        console.log("[Avatar] Calling audio.play()...");
         await audio.play();
+        console.log("[Avatar] audio.play() returned");
       } catch (e) {
-        console.error("playAudio error:", e);
+        console.error("[Avatar] playAudio error:", e);
         setIsSpeaking(false);
         setMouthOpenness(0);
         resolve();
@@ -257,13 +338,13 @@ export default function AvatarPage() {
   // Handle reminder notifications
   const handleReminder = useCallback(
     async (reminder: Reminder) => {
-      const timeText = `${reminder.configuredMinutes}分後`;
+      const timeText = tReminder("timeText", { minutes: reminder.configuredMinutes });
 
       // Add reminder card
       const card: InfoCard = {
         id: reminder.id,
         type: "reminder",
-        title: `${timeText}に予定があります`,
+        title: tReminder("title", { timeText }),
         items: [reminder.summary],
         urgent: reminder.urgent,
       };
@@ -271,7 +352,7 @@ export default function AvatarPage() {
 
       // Notify via TTS if not currently speaking
       if (!isSpeaking && !isProcessing) {
-        const message = `${timeText}に「${reminder.summary}」の予定があります。`;
+        const message = tReminder("message", { timeText, summary: reminder.summary });
         setDisplayText(message);
 
         try {
@@ -291,7 +372,7 @@ export default function AvatarPage() {
         }
       }
     },
-    [isSpeaking, isProcessing, playAudio, currentSpeaker]
+    [isSpeaking, isProcessing, playAudio, currentSpeaker, tReminder]
   );
 
   // Reminder hook (config loaded from YAML)
@@ -313,36 +394,9 @@ export default function AvatarPage() {
             // No wake word detected, ignore
             return;
           }
-
-          // Extract message after wake word (if any)
-          const phrase = wakeWordConfig?.phrase ?? "";
-          const normalizedPhrase = phrase.toLowerCase().replace(/\s+/g, "");
-          const normalizedTranscript = transcript.toLowerCase().replace(/\s+/g, "");
-          const phraseIndex = normalizedTranscript.indexOf(normalizedPhrase);
-
-          if (phraseIndex !== -1) {
-            // Find the actual position in original transcript
-            let charCount = 0;
-            let actualIndex = 0;
-            for (let i = 0; i < transcript.length; i++) {
-              if (!/\s/.test(transcript[i])) {
-                if (charCount === phraseIndex + normalizedPhrase.length) {
-                  actualIndex = i;
-                  break;
-                }
-                charCount++;
-              }
-              actualIndex = i + 1;
-            }
-
-            const messageAfterWakeWord = transcript.substring(actualIndex).trim();
-            if (!messageAfterWakeWord) {
-              // Just wake word, wait for next message
-              return;
-            }
-            // Use the message after wake word
-            transcript = messageAfterWakeWord;
-          }
+          // Wake word detected - just wake up and wait for next message
+          // Don't process any message in the same utterance
+          return;
         } else {
           // In conversation mode, reset timeout
           resetWakeWordTimeout();
@@ -359,50 +413,23 @@ export default function AvatarPage() {
       messagesRef.current.push({ role: "user", content: transcript });
 
       try {
-        // Generate quick acknowledgment for immediate feedback
-        const ack = getAcknowledgment(transcript);
-
-        // Start acknowledgment TTS immediately (non-blocking)
-        let ackAudioPromise: Promise<void> | null = null;
-        if (ack) {
-          setDisplayText(ack);
-          ackAudioPromise = (async () => {
-            try {
-              const ttsRes = await fetch("/api/tts", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: ack, speaker: currentSpeaker ?? undefined }),
-              });
-              if (ttsRes.ok) {
-                const ttsData = await ttsRes.json();
-                if (ttsData.audio) {
-                  await playAudio(ttsData.audio);
-                }
-              }
-            } catch (e) {
-              console.error("Ack TTS error:", e);
-            }
-          })();
+        // Always capture camera image for voice input (LLM will decide if it needs to use see_camera tool)
+        const capturedImage = await requestCameraCapture();
+        if (capturedImage) {
+          console.log("[Avatar] Camera image captured:", capturedImage.length, "chars");
         }
 
-        // Start chat API call in parallel with acknowledgment
-        const chatPromise = fetch("/api/chat", {
+        // Call chat API
+        const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             messages: messagesRef.current,
             withAudio: false,
             characterId: currentCharacter ?? undefined,
+            image: capturedImage ?? undefined,
           }),
         });
-
-        // Wait for acknowledgment to finish playing (if any)
-        if (ackAudioPromise) {
-          await ackAudioPromise;
-        }
-
-        // Now process chat response
-        const res = await chatPromise;
 
         if (res.ok) {
           const data = await res.json();
@@ -452,14 +479,13 @@ export default function AvatarPage() {
         setIsProcessing(false);
       }
     },
-    [isProcessing, isSpeaking, playAudio, addInfoCard, isWakeWordEnabled, wakeWordMode, wakeWordConfig, checkForWakeWord, resetWakeWordTimeout, currentSpeaker, currentCharacter]
+    [isProcessing, isSpeaking, playAudio, isWakeWordEnabled, wakeWordMode, checkForWakeWord, resetWakeWordTimeout, currentSpeaker, currentCharacter, requestCameraCapture]
   );
 
   // Speech recognition hook
   const { isListening, isSupported, start, stop, pause, resume } = useSpeechRecognition({
     onResult: handleSpeechResult,
     onInterimResult: setInterimText,
-    lang: "ja-JP",
   });
 
   // Pause speech recognition while speaking
@@ -543,6 +569,8 @@ export default function AvatarPage() {
                 speaker = currentSpeaker ?? undefined;
               }
 
+              console.log("[Avatar] play_audio: requesting TTS", { text: text.substring(0, 50), speaker });
+
               const res = await fetch("/api/tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -551,11 +579,17 @@ export default function AvatarPage() {
               if (res.ok) {
                 const data = await res.json();
                 if (data.audio) {
+                  console.log("[Avatar] TTS success, playing audio...");
                   await playAudio(data.audio);
+                  console.log("[Avatar] Audio playback finished");
+                } else {
+                  console.warn("[Avatar] TTS returned no audio data");
                 }
+              } else {
+                console.error("[Avatar] TTS API failed:", res.status, await res.text());
               }
             } catch (e) {
-              console.error("TTS error:", e);
+              console.error("[Avatar] TTS error:", e);
             }
           }
           break;
@@ -599,6 +633,14 @@ export default function AvatarPage() {
             setShowEffect(true);
           }
           break;
+        case "camera_capture_response":
+          // Handle camera capture response from vision companion plugin
+          if (pendingCaptureRef.current) {
+            clearTimeout(pendingCaptureRef.current.timeout);
+            pendingCaptureRef.current.resolve(payload as string | null);
+            pendingCaptureRef.current = null;
+          }
+          break;
       }
     };
 
@@ -611,13 +653,48 @@ export default function AvatarPage() {
     };
   }, [playAudio, start, stop, broadcastMicStatus, speechEnabled, isListening, currentSpeaker]);
 
+  // Show idle hint when in wake word waiting mode
+  const showIdleHint = isWakeWordEnabled && wakeWordMode === "waiting" && !isSpeaking && !isThinking;
+
   return (
     <main
       className="h-screen w-screen bg-black flex flex-col items-center overflow-hidden relative cursor-pointer"
       onClick={initAudioContext}
     >
+      {/* Parallax Background */}
+      <div className="parallax-container">
+        <div className="parallax-layer parallax-layer-1" />
+        <div className="parallax-layer parallax-layer-2" />
+      </div>
+
+      {/* Light Streak */}
+      <div className="light-streak" />
+
       {/* Effects */}
       <Confetti isActive={showEffect} effectType={effectType} onComplete={() => setShowEffect(false)} />
+
+      {/* MIC OFF Notice */}
+      {showMicOffNotice && (
+        <div className="mic-off-notice fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <span className="text-white/50 text-2xl font-light tracking-widest">MIC OFF</span>
+        </div>
+      )}
+
+      {/* First Run Notice */}
+      {isFirstRun && (
+        <div className="fixed bottom-8 right-8 text-white/50 text-sm animate-fade-in z-40">
+          {t("firstRunNotice")}
+        </div>
+      )}
+
+      {/* Idle Hint */}
+      {showIdleHint && (
+        <div className="idle-hint fixed top-16 left-1/2 -translate-x-1/2 z-30">
+          <span className="text-white/40 text-sm font-light tracking-wide">
+            {t("wakeWordPrompt", { phrase: wakeWordConfig?.phrase ?? "Hey Mira" })}
+          </span>
+        </div>
+      )}
 
       {/* Mic Status Indicator */}
       <div className="absolute top-4 right-4 flex items-center gap-2">
@@ -688,23 +765,25 @@ export default function AvatarPage() {
         <FloatingInfo cards={infoCards} onDismiss={dismissInfoCard} autoHideDuration={10000} />
       </div>
 
-      {/* Response Text - Bottom */}
+      {/* Response Text - Bottom 30% */}
       <div className="w-full h-[30%] flex items-start justify-center px-8 pt-6">
-        {isThinking && !displayText ? (
-          <div className="flex gap-2">
-            <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-            <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-            <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-          </div>
-        ) : displayText ? (
-          <p
-            className={`text-white/90 text-xl text-center font-light tracking-wide leading-relaxed max-w-2xl transition-opacity duration-2000 ${
-              isTextFading ? "opacity-0" : "opacity-100"
-            }`}
-          >
-            {displayText}
-          </p>
-        ) : null}
+        <div className="w-2/3 flex flex-col items-center">
+          {isThinking && !displayText ? (
+            <div className="flex gap-2">
+              <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+          ) : displayText ? (
+            <p
+              className={`text-white/90 text-xl text-center font-light tracking-wide leading-relaxed text-enter transition-opacity duration-2000 ${
+                isTextFading ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              {displayText}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       {/* Plugin Widgets */}

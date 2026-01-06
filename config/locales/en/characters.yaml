@@ -5,7 +5,7 @@ characters:
     recommendedVoice: 2
     wakeWord:
       enabled: true
-      phrase: "OK Mira"
+      phrase: "Hey Mira"
       timeout: 60
     appearance:
       - round white eyes

@@ -40,6 +40,8 @@ features:
     defaultLocation: "Tokyo"
 ```
 
+> **Note**: Weather locations can be automatically set based on your locale using [Locale Presets](presets.md). When not explicitly set, the preset values are used (e.g., Tokyo/Osaka for Japanese, San Francisco/New York for English).
+
 ### Options
 
 | Option | Type | Description |
@@ -265,12 +267,14 @@ features:
     timezone: "Asia/Tokyo"
 ```
 
+> **Note**: The timezone can be automatically set based on your locale using [Locale Presets](presets.md). When not explicitly set, the preset value is used.
+
 ### Options
 
 | Option | Type | Description |
 |--------|------|-------------|
 | `enabled` | boolean | Enable/disable the feature |
-| `timezone` | string | IANA timezone identifier (default: `Asia/Tokyo`) |
+| `timezone` | string | IANA timezone identifier (default from locale preset) |
 
 ### Output Example
 

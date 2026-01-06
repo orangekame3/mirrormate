@@ -2,14 +2,7 @@ features:
   weather:
     enabled: true
     provider: open-meteo
-    locations:
-      - name: "東京"
-        latitude: 35.6762
-        longitude: 139.6503
-      - name: "大阪"
-        latitude: 34.6937
-        longitude: 135.5023
-    defaultLocation: "東京"
+    # locations and defaultLocation are loaded from locale preset
 
   calendar:
     enabled: true
@@ -17,7 +10,7 @@ features:
 
   time:
     enabled: true
-    timezone: "Asia/Tokyo"
+    # timezone is loaded from locale preset
 
   reminder:
     enabled: true
@@ -35,3 +28,9 @@ features:
       searchResults: false  # Auto-share web search results
       weather: false       # Auto-share weather updates
       calendar: false      # Auto-share calendar events
+
+  vision:
+    enabled: true
+    eyeContactTtlSeconds: 300   # How long eye contact state is considered valid
+    greetCooldownSeconds: 300   # Minimum seconds between greetings
+    minConfidence: 0.6          # Minimum confidence threshold for eye contact

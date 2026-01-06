@@ -52,6 +52,7 @@ RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/config ./config
+COPY --from=builder /app/messages ./messages
 
 # Copy plugin package.json files for runtime manifest loading
 # Each plugin needs its package.json for manifest loading

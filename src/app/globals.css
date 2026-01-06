@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;500&family=JetBrains+Mono:wght@300;400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -20,7 +20,7 @@
 }
 
 html, body {
-  background: #000000;
+  background: linear-gradient(180deg, #000000 0%, #0c0c0c 100%);
   color: var(--white);
   font-family: 'Zen Kaku Gothic New', sans-serif;
   font-weight: 300;
@@ -29,6 +29,12 @@ html, body {
   width: 100vw;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Monospace font for numbers (time/timer) */
+.font-mono-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Subtle noise texture overlay */
@@ -135,4 +141,159 @@ input:focus, textarea:focus {
 /* Placeholder */
 ::placeholder {
   color: var(--white-ghost);
+}
+
+/* ========== Parallax Background ========== */
+.parallax-container {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.parallax-layer {
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(ellipse at center, rgba(12, 12, 12, 0.3) 0%, transparent 70%);
+}
+
+.parallax-layer-1 {
+  animation: parallax-drift-1 60s linear infinite;
+}
+
+.parallax-layer-2 {
+  animation: parallax-drift-2 80s linear infinite;
+  opacity: 0.5;
+}
+
+@keyframes parallax-drift-1 {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(15px, -20px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes parallax-drift-2 {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(-15px, 25px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ========== Light Streak ========== */
+.light-streak {
+  position: fixed;
+  left: 50%;
+  top: -100%;
+  width: 1px;
+  height: 300%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.015) 40%,
+    rgba(255, 255, 255, 0.02) 50%,
+    rgba(255, 255, 255, 0.015) 60%,
+    transparent 100%
+  );
+  animation: light-streak-move 10s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes light-streak-move {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(20%); }
+}
+
+/* ========== MIC OFF Notification ========== */
+@keyframes mic-off-fade {
+  0% { opacity: 0; transform: translateY(10px); }
+  15% { opacity: 0.5; transform: translateY(0); }
+  85% { opacity: 0.5; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-5px); }
+}
+
+.mic-off-notice {
+  animation: mic-off-fade 1.5s ease-out forwards;
+}
+
+/* ========== Text Entrance Animation ========== */
+@keyframes text-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.text-enter {
+  animation: text-slide-in 200ms ease-out forwards;
+}
+
+.text-stagger > span {
+  display: inline-block;
+  opacity: 0;
+  animation: text-slide-in 200ms ease-out forwards;
+}
+
+/* ========== Idle Hint Animation ========== */
+@keyframes idle-hint-breath {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.45; }
+}
+
+.idle-hint {
+  animation: idle-hint-breath 3s ease-in-out infinite;
+}
+
+/* ========== Glass Card Style ========== */
+.glass-card {
+  background: rgba(16, 16, 16, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.glass-card--pinned {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ========== Card Urgent Pulse ========== */
+@keyframes card-urgent-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+.card-urgent {
+  animation: card-urgent-pulse 1.8s ease-in-out infinite;
+}
+
+/* ========== Plugin Shadow ========== */
+.plugin-shadow {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+/* ========== Reduce Motion ========== */
+@media (prefers-reduced-motion: reduce) {
+  .parallax-layer,
+  .light-streak,
+  .idle-hint,
+  .card-urgent,
+  .animate-breathe,
+  .animate-float {
+    animation: none !important;
+  }
+
+  .text-enter,
+  .text-stagger > span {
+    animation: none !important;
+    opacity: 1;
+  }
+
+  /* Disable canvas animations via data attribute */
+  .avatar-aura-reduced {
+    display: none;
+  }
 }

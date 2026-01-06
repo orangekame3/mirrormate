@@ -1,8 +1,20 @@
 # Mac Studio deployment
-# Run heavy services: VOICEVOX, PLaMo Embedding (Ollama runs natively)
+# Run heavy services: VOICEVOX, PLaMo Embedding, Whisper (Ollama runs natively)
 # Usage: docker compose -f compose.studio.yaml up -d
 
 services:
+  # faster-whisper-server (OpenAI API compatible)
+  # CPU version for Apple Silicon (M1/M2 Ultra is fast enough)
+  # For NVIDIA GPU, use: image: fedirz/faster-whisper-server:latest-cuda
+  faster-whisper:
+    image: fedirz/faster-whisper-server:latest-cpu
+    ports:
+      - "8080:8000"
+    environment:
+      - WHISPER__MODEL=large-v3 # tiny, base, small, medium, large-v3
+      - WHISPER__INFERENCE_DEVICE=cpu
+    restart: unless-stopped
+
   voicevox:
     image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest
     ports:

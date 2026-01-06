@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import { getAllContexts } from "@/lib/features/registry";
+import { getAllContexts, initializeFeatures } from "@/lib/features/registry";
 import { getLLMProvider, ChatMessage } from "@/lib/llm";
 import { getSystemPrompt, getSystemPromptForCharacter } from "@/lib/character";
-import { getToolDefinitions, executeTool, getPendingEffect, clearPendingEffect, ToolInfoCard } from "@/lib/tools";
+import { getToolDefinitions, executeTool, getPendingEffect, clearPendingEffect, ToolInfoCard, ToolContext } from "@/lib/tools";
 import { executeRule, formatRuleContext } from "@/lib/rules";
 import { loadProvidersConfig, getEmbeddingProvider } from "@/lib/providers";
 import { RAGService, getSimpleContext, MemoryService } from "@/lib/memory";
 import { getUserRepository } from "@/lib/repositories";
+import { getLocale } from "@/lib/app";
 
 const MAX_TOOL_ITERATIONS = 3;
 const DEFAULT_USER_ID = "default-user";
@@ -49,7 +50,17 @@ function getMemoryService(): MemoryService | null {
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, withAudio = true, userId, characterId } = await request.json();
+    const { messages, withAudio = true, userId, characterId, image } = await request.json();
+
+    console.log("[Chat] Request received:", {
+      messageCount: messages?.length,
+      hasImage: !!image,
+      imageLength: image ? image.length : 0,
+      characterId,
+    });
+
+    // Ensure features are initialized (needed for vision)
+    initializeFeatures();
 
     // Determine user ID (use default if not specified)
     const currentUserId = userId || DEFAULT_USER_ID;
@@ -63,15 +74,29 @@ export async function POST(request: NextRequest) {
       .filter((m: { role: string }) => m.role === "user")
       .pop()?.content || "";
 
-    // Check if any rule matches
+    // Check if any keyword rule matches
     const ruleResult = await executeRule(lastUserMessage);
     const ruleContext = formatRuleContext(ruleResult);
+
+    // Build tool context (image will be passed to tools like see_camera)
+    const toolContext: ToolContext = {
+      image: image || undefined,
+    };
 
     // Build system prompt with contexts (use character-specific prompt if characterId provided)
     const systemPrompt = characterId
       ? getSystemPromptForCharacter(characterId)
       : getSystemPrompt();
     const contexts: string[] = [];
+
+    // Add tool usage hint when camera image is available
+    if (image) {
+      const isJapanese = getLocale() === "ja";
+      contexts.push("[Tool Usage]");
+      contexts.push(isJapanese
+        ? "ユーザーのカメラ画像が利用可能です。ユーザーの外見や持っているものについて聞かれた場合は、see_cameraツールを使ってください。web_searchは使わないでください。"
+        : "User's camera image is available. If asked about the user's appearance or what they're holding, use the see_camera tool. Do not use web_search.");
+    }
 
     // Get RAG context
     let usedMemoryIds: string[] = [];
@@ -169,7 +194,7 @@ export async function POST(request: NextRequest) {
       // Execute tools and add results
       for (const toolCall of result.toolCalls) {
         console.log(`[Chat] Executing tool: ${toolCall.name}`);
-        const toolResult = await executeTool(toolCall);
+        const toolResult = await executeTool(toolCall, toolContext);
 
         // Collect info cards from tools
         if (toolResult.infoCard) {

@@ -1,6 +1,6 @@
 # Providers
 
-Mirror Mate uses external providers for LLM (language model), TTS (text-to-speech), and Embedding (vector generation). Providers are configured in `config/providers.yaml`.
+Mirror Mate uses external providers for LLM (language model), TTS (text-to-speech), STT (speech-to-text), VLM (vision language model), and Embedding (vector generation). Providers are configured in `config/providers.yaml`.
 
 ## Configuration
 
@@ -14,6 +14,16 @@ providers:
   tts:
     enabled: true
     provider: voicevox  # openai or voicevox
+    # ...
+
+  stt:
+    enabled: true
+    provider: web  # openai, local, or web
+    # ...
+
+  vlm:
+    enabled: true
+    provider: ollama
     # ...
 
   embedding:
@@ -87,7 +97,7 @@ ollama serve
 3. Pull a model:
 
 ```bash
-ollama pull qwen2.5:14b
+ollama pull gpt-oss:20b
 ```
 
 4. Configure in `providers.yaml`:
@@ -98,7 +108,7 @@ providers:
     enabled: true
     provider: ollama
     ollama:
-      model: "qwen2.5:14b"
+      model: "gpt-oss:20b"
       baseUrl: "http://localhost:11434"
       maxTokens: 300
       temperature: 0.7
@@ -106,12 +116,11 @@ providers:
 
 #### Recommended Models for Japanese
 
-| Model | Size | Japanese Quality | Speed |
-|-------|------|------------------|-------|
-| `qwen2.5:7b` | 7B | Good | Fast |
-| `qwen2.5:14b` | 14B | Very Good | Medium |
-| `qwen2.5:32b` | 32B | Excellent | Slow |
-| `rinna/qwen2.5-bakeneko-32b` | 32B | Excellent | Slow |
+| Model | Size | Japanese Quality | Tool Calling | Speed |
+|-------|------|------------------|--------------|-------|
+| `gpt-oss:20b` | 20B | Excellent | Native | Medium |
+| `qwen2.5:14b` | 14B | Very Good | Yes | Medium |
+| `qwen2.5:32b` | 32B | Excellent | Yes | Slow |
 
 ### LLM Options
 
@@ -184,6 +193,160 @@ providers:
 | 9 | 波音リツ |
 
 ---
+
+## STT Providers (Speech-to-Text)
+
+STT providers enable speech recognition for voice input. Mirror Mate supports multiple providers with automatic silence detection.
+
+> **Note**: STT language settings can be automatically configured based on your app locale using [Locale Presets](presets.md). When you change your locale (e.g., `ja` to `en`), the STT language is automatically updated.
+
+| Provider | Description | API Key Required | Accuracy |
+|----------|-------------|------------------|----------|
+| Web Speech API | Browser native (Chrome/Edge) | No | Good |
+| OpenAI Whisper | Cloud API | Yes | Excellent |
+| Local Whisper | Self-hosted (faster-whisper) | No | Excellent |
+
+### Web Speech API (Default)
+
+Uses the browser's built-in speech recognition. Best for quick setup with no additional configuration.
+
+```yaml
+providers:
+  stt:
+    enabled: true
+    provider: web
+    web:
+      language: ja-JP  # BCP 47 language tag
+```
+
+**Pros**: Zero cost, instant setup, real-time interim results
+**Cons**: Browser-dependent quality, requires Chrome/Edge
+
+### OpenAI Whisper
+
+High-accuracy speech recognition using OpenAI's Whisper API.
+
+```yaml
+providers:
+  stt:
+    enabled: true
+    provider: openai
+    openai:
+      model: whisper-1
+      language: ja  # ISO 639-1 code (or omit for auto-detect)
+      temperature: 0
+```
+
+**Pros**: Excellent accuracy (especially Japanese), 99+ languages
+**Cons**: API cost ($0.006/minute), requires internet
+
+### Local Whisper (faster-whisper)
+
+Self-hosted Whisper for privacy and cost savings. Uses [faster-whisper-server](https://github.com/fedirz/faster-whisper-server) with OpenAI-compatible API.
+
+```yaml
+providers:
+  stt:
+    enabled: true
+    provider: local
+    local:
+      baseUrl: "http://studio:8080"  # Your whisper server
+      model: large-v3  # tiny, base, small, medium, large-v3
+      language: ja
+```
+
+#### Setup with Docker
+
+```bash
+# On Mac Studio (or any server)
+docker compose -f compose.studio.yaml up -d faster-whisper
+```
+
+See [Docker Documentation](/guide/docker) for details.
+
+#### Models
+
+| Model | Size | Accuracy | Speed (30s audio) |
+|-------|------|----------|-------------------|
+| `tiny` | 39M | Low | ~2s |
+| `base` | 74M | Medium | ~4s |
+| `small` | 244M | Good | ~8s |
+| `medium` | 769M | Very Good | ~12s |
+| `large-v3` | 1.5G | Excellent | ~15s |
+
+*Speed measured on Apple M1/M2 Ultra (CPU mode)*
+
+### Silence Detection
+
+All STT providers support automatic silence detection to determine when the user has finished speaking.
+
+```yaml
+providers:
+  stt:
+    silenceDetection:
+      silenceThreshold: 1.5      # Seconds of silence before sending
+      volumeThreshold: 0.02      # RMS volume threshold (0-1)
+      minRecordingDuration: 500  # Minimum recording time (ms)
+      maxRecordingDuration: 60000 # Maximum recording time (ms)
+```
+
+| Option | Type | Description | Default |
+|--------|------|-------------|---------|
+| `silenceThreshold` | number | Seconds of silence before auto-send | `1.5` |
+| `volumeThreshold` | number | RMS volume below which is silence | `0.02` |
+| `minRecordingDuration` | number | Min time before silence detection (ms) | `500` |
+| `maxRecordingDuration` | number | Max recording duration (ms) | `60000` |
+
+### STT Options Summary
+
+| Option | Type | Description | Default |
+|--------|------|-------------|---------|
+| `provider` | string | `web`, `openai`, or `local` | `web` |
+| `openai.model` | string | Whisper model | `whisper-1` |
+| `openai.language` | string | Language code (ISO 639-1) | auto |
+| `local.baseUrl` | string | Whisper server URL | `http://localhost:8080` |
+| `local.model` | string | Model name | `base` |
+| `local.language` | string | Language code | auto |
+
+---
+
+## VLM Providers (Vision Language Model)
+
+VLM providers enable visual understanding through the `see_camera` tool.
+
+| Provider | Description | API Key Required |
+|----------|-------------|------------------|
+| Ollama | Local vision models (llava, moondream) | No |
+
+### Ollama VLM
+
+```yaml
+providers:
+  vlm:
+    enabled: true
+    provider: ollama
+    ollama:
+      model: llava:7b  # or moondream, granite3.2-vision
+      baseUrl: "http://localhost:11434"
+```
+
+#### Recommended Vision Models
+
+| Model | Size | Description | Speed |
+|-------|------|-------------|-------|
+| `moondream` | 1.8B | Lightweight, edge-friendly | Fast |
+| `llava:7b` | 7B | Good balance of quality/speed | Medium |
+| `granite3.2-vision` | 2B | Document understanding | Medium |
+
+### Usage
+
+When VLM is enabled and the user asks visual questions, the LLM will use the `see_camera` tool:
+
+```
+User: "何を持ってるかわかる？"
+AI: [calls see_camera tool]
+AI: "スマートフォンを持っていますね！"
+```
 
 ---
 
@@ -295,7 +458,7 @@ providers:
   llm:
     provider: ollama
     ollama:
-      model: "qwen2.5:14b"
+      model: "gpt-oss:20b"
       baseUrl: "http://studio:11434"  # Tailscale hostname
 
   tts:

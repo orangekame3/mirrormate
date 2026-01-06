@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
 import { FeaturesConfig } from "./types";
+import { getTimePreset, getWeatherPreset } from "../presets";
 
 let cachedConfig: FeaturesConfig | null = null;
 
@@ -35,8 +36,26 @@ export function loadFeaturesConfig(): FeaturesConfig {
   }
 
   const fileContents = fs.readFileSync(configPath, "utf8");
-  cachedConfig = yaml.load(fileContents) as FeaturesConfig;
+  const config = yaml.load(fileContents) as FeaturesConfig;
 
+  // Apply locale presets
+  const timePreset = getTimePreset();
+  const weatherPreset = getWeatherPreset();
+
+  // Merge time settings from preset (preset takes precedence if not explicitly set)
+  if (config.features.time) {
+    config.features.time.timezone = config.features.time.timezone || timePreset.timezone;
+  }
+
+  // Merge weather settings from preset
+  if (config.features.weather) {
+    if (!config.features.weather.locations || config.features.weather.locations.length === 0) {
+      config.features.weather.locations = weatherPreset.locations;
+    }
+    config.features.weather.defaultLocation = config.features.weather.defaultLocation || weatherPreset.defaultLocation;
+  }
+
+  cachedConfig = config;
   return cachedConfig;
 }
 

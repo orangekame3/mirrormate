@@ -1,0 +1,28 @@
+# Japanese locale preset
+# Applied when app.locale is "ja"
+
+# Time settings
+time:
+  timezone: "Asia/Tokyo"
+
+# Weather settings
+weather:
+  locations:
+    - name: "東京"
+      latitude: 35.6762
+      longitude: 139.6503
+    - name: "大阪"
+      latitude: 34.6937
+      longitude: 135.5023
+  defaultLocation: "東京"
+
+# Clock plugin settings
+clock:
+  timezone: "Asia/Tokyo"
+  format24h: true
+  locale: "ja-JP"
+
+# Speech-to-Text settings
+stt:
+  language: "ja"
+  webLanguage: "ja-JP"
