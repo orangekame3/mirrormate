@@ -142,6 +142,8 @@ plugins:
       locale: "ja-JP"
 ```
 
+> **Note**: Clock settings (timezone, format24h, locale) can be automatically set based on your app locale using [Locale Presets](presets.md). When not explicitly set, the preset values are used.
+
 **Options:**
 
 | Option | Type | Default | Description |

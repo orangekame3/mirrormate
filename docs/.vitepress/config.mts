@@ -46,6 +46,7 @@ export default withMermaid(
             text: "Configuration",
             items: [
               { text: "Providers (LLM & TTS)", link: "/config/providers" },
+              { text: "Locale Presets", link: "/config/presets" },
               { text: "Features", link: "/config/features" },
               { text: "Character", link: "/config/character" },
               { text: "Plugins", link: "/config/plugins" },

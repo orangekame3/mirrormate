@@ -62,6 +62,7 @@ All configuration is done via YAML files in the `config/` directory:
 | File | Description |
 |------|-------------|
 | `app.yaml` | Application settings (language/locale) |
+| `presets/[lang].yaml` | Locale-specific defaults (timezone, weather, STT) |
 | `providers.yaml` | LLM and TTS provider settings |
 | `features.yaml` | Weather, calendar, time, reminder settings |
 | `plugins.yaml` | Visual widget plugins (clock, etc.) |
@@ -69,19 +70,27 @@ All configuration is done via YAML files in the `config/` directory:
 
 ### Language Support
 
-Mirror Mate supports multiple languages. Set the locale in `config/app.yaml`:
+Mirror Mate supports multiple languages with automatic locale presets. Set the locale in `config/app.yaml`:
 
 ```yaml
 app:
   locale: "en"  # or "ja" for Japanese
 ```
 
-This affects:
+This single setting automatically configures:
+- **Locale presets**: Time zone, weather locations, STT language, clock format (`config/presets/[lang].yaml`)
 - Character personality and speech style (`config/locales/[lang]/character.yaml`)
 - Memory extraction prompts (`config/locales/[lang]/memory.yaml`)
 - Rules and modules (`config/locales/[lang]/rules.yaml`, `modules.yaml`)
 - Database file (`data/mirrormate.[lang].db`)
 - Wikipedia API language for "today's info"
+
+| Locale | Timezone | Weather | STT | Clock |
+|--------|----------|---------|-----|-------|
+| `ja` | Asia/Tokyo | Tokyo, Osaka | Japanese | 24h |
+| `en` | America/Los_Angeles | San Francisco, New York | English | 12h |
+
+You can customize these defaults by editing `config/presets/[lang].yaml`. See [Locale Presets](/config/presets) for details.
 
 You can also set the locale via environment variable (overrides config file):
 
@@ -113,5 +122,6 @@ This project uses [Bun](https://bun.sh/) as the package manager for faster insta
 - [Recommended Setup](/guide/recommended-setup) - Production setup with Tailscale, Mac Studio & Raspberry Pi
 - [Architecture Overview](/guide/architecture) - Understand how Mirror Mate works
 - [Docker Setup](/guide/docker) - Detailed Docker configuration
+- [Locale Presets](/config/presets) - Configure locale-specific settings
 - [Providers](/config/providers) - Configure LLM and TTS providers
 - [Character](/config/character) - Customize AI personality
