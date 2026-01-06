@@ -2,14 +2,7 @@ features:
   weather:
     enabled: true
     provider: open-meteo
-    locations:
-      - name: "San Francisco"
-        latitude: 37.7749
-        longitude: -122.4194
-      - name: "New York"
-        latitude: 40.7128
-        longitude: -74.0060
-    defaultLocation: "San Francisco"
+    # locations and defaultLocation are loaded from locale preset
 
   calendar:
     enabled: true
@@ -17,7 +10,7 @@ features:
 
   time:
     enabled: true
-    timezone: "America/Los_Angeles"
+    # timezone is loaded from locale preset
 
   reminder:
     enabled: true

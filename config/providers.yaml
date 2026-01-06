@@ -28,14 +28,14 @@ providers:
     provider: web  # openai, local, or web
     openai:
       model: whisper-1
-      language: en
+      # language is loaded from locale preset
       temperature: 0
     local:
       baseUrl: "http://studio:8080"  # faster-whisper-server
       model: large-v3
-      language: en
+      # language is loaded from locale preset
     web:
-      language: en-US
+      # language is loaded from locale preset
     silenceDetection:
       silenceThreshold: 1.5      # seconds of silence before stopping
       volumeThreshold: 0.02      # RMS volume threshold (0-1)

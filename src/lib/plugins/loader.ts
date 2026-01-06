@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
 import { PluginManifest, PluginsConfig, PluginSource } from "./types";
+import { getClockPreset } from "../presets";
 
 // Cache for loaded plugin manifests
 const manifestCache: Map<string, PluginManifest> = new Map();
@@ -46,7 +47,18 @@ export function loadPluginsConfig(): PluginsConfig {
   }
 
   const fileContents = fs.readFileSync(configPath, "utf8");
-  configCache = yaml.load(fileContents) as PluginsConfig;
+  const config = yaml.load(fileContents) as PluginsConfig;
+
+  // Apply locale presets to clock plugin
+  if (config.plugins.clock) {
+    const clockPreset = getClockPreset();
+    config.plugins.clock.config = {
+      ...clockPreset,
+      ...config.plugins.clock.config,
+    };
+  }
+
+  configCache = config;
   return configCache;
 }
 

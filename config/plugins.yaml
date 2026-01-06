@@ -5,13 +5,11 @@ plugins:
     enabled: true
     position: top-left
     config:
-      timezone: "America/Los_Angeles"
-      format24h: false
+      # timezone, format24h, locale are loaded from locale preset
       showSeconds: false
       showDate: true
       dateFormat: "long"
       showWeekday: true
-      locale: "en-US"
 
   # Vision companion - Camera capture for Vision Chat
   vision-companion:
