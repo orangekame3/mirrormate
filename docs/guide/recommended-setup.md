@@ -364,5 +364,6 @@ scp data/mirrormate.ja.db pi@rpi:~/mirrormate/data/
 ## Next Steps
 
 - [Docker Setup](docker.md) - Detailed Docker configuration
+- [Locale Presets](../config/presets.md) - Configure timezone, weather, and STT by locale
 - [Providers Configuration](../config/providers.md) - LLM/TTS provider options
 - [Memory System](memory.md) - RAG and memory management

@@ -198,6 +198,8 @@ providers:
 
 STT providers enable speech recognition for voice input. Mirror Mate supports multiple providers with automatic silence detection.
 
+> **Note**: STT language settings can be automatically configured based on your app locale using [Locale Presets](presets.md). When you change your locale (e.g., `ja` to `en`), the STT language is automatically updated.
+
 | Provider | Description | API Key Required | Accuracy |
 |----------|-------------|------------------|----------|
 | Web Speech API | Browser native (Chrome/Edge) | No | Good |
