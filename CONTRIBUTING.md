@@ -34,7 +34,7 @@ For questions about usage or development, create an issue using the **Question**
 ### Prerequisites
 
 - Node.js 22+
-- npm
+- bun
 - Docker (optional, for VOICEVOX)
 
 ### Local Development
@@ -45,13 +45,13 @@ git clone https://github.com/orangekame3/mirrormate.git
 cd mirrormate
 
 # Install dependencies
-npm install
+bun install
 
 # Copy environment file
 cp .env.example .env
 
 # Start development server
-npm run dev
+bun run dev
 ```
 
 ### Docker Development
@@ -89,10 +89,10 @@ Run tests before submitting changes:
 
 ```bash
 # Run tests once
-npm run test
+bun run test
 
 # Run tests in watch mode during development
-npm run test:watch
+bun run test:watch
 ```
 
 ### Pull Requests
@@ -100,9 +100,9 @@ npm run test:watch
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feat/amazing-feature`)
 3. Make your changes
-4. Run lint check (`npm run lint`)
-5. Run tests (`npm run test`)
-6. Run build (`npm run build`)
+4. Run lint check (`bun run lint`)
+5. Run tests (`bun run test`)
+6. Run build (`bun run build`)
 7. Commit your changes
 8. Push to your fork
 9. Open a Pull Request

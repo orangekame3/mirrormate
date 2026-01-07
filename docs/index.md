@@ -22,7 +22,7 @@ hero:
 features:
   - icon: 🎙️
     title: Voice Interaction
-    details: Real-time speech recognition with wake word activation. Just say "OK Mirror" to start.
+    details: Real-time speech recognition with wake word activation. Just say "Hey Mira" to start.
   - icon: 🧠
     title: Personalized Memory
     details: RAG-based memory system that remembers your preferences and conversation context.
