@@ -27,7 +27,7 @@ Open http://localhost:3000 in Chrome.
 
 > Set `LOCALE=en` for English or `LOCALE=ja` for Japanese (default).
 
-Say **"OK Mira"** (English) or **"OK ミラ"** (Japanese) to start talking!
+Say **"Hey Mira"** (English) or **"OK ミラ"** (Japanese) to start talking!
 
 ### Option 2: Ollama + VOICEVOX (No API key required)
 
