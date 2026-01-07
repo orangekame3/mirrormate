@@ -23,7 +23,7 @@ flowchart TB
         end
 
         subgraph MacBook["MacBook (Development)"]
-            Dev["npm run dev<br/>:3000"]
+            Dev["bun run dev<br/>:3000"]
         end
 
         App -->|LLM| Ollama
@@ -221,8 +221,8 @@ With this setup, development requires no local services:
 
 ```bash
 cd mirrormate
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 The app connects to Mac Studio for all heavy processing via Tailscale.
@@ -316,13 +316,13 @@ docker compose up -d
 
 ```bash
 # Start dev server
-npm run dev
+bun run dev
 
 # Build
-npm run build
+bun run build
 
 # Test
-npm run test
+bun run test
 ```
 
 ## Troubleshooting

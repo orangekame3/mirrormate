@@ -116,7 +116,7 @@ cd mirrormate
 docker compose up -d
 ```
 
-**Wake word**: Say "OK Mira" to activate.
+**Wake word**: Say "Hey Mira" to activate.
 
 ---
 

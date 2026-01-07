@@ -27,7 +27,7 @@ character:
 
   wakeWord:
     enabled: true
-    phrase: "OK Mira"
+    phrase: "Hey Mira"
     timeout: 60
 
   appearance:
@@ -107,7 +107,7 @@ character:
 | `name` | string | Character's name |
 | `description` | string | Brief description of the character |
 | `wakeWord.enabled` | boolean | Enable wake word detection |
-| `wakeWord.phrase` | string | Wake word phrase (e.g., "OK Mirror") |
+| `wakeWord.phrase` | string | Wake word phrase (e.g., "Hey Mira") |
 | `wakeWord.timeout` | number | Seconds before returning to waiting mode |
 | `appearance` | list | Physical appearance traits |
 | `personality` | list | Personality traits |
